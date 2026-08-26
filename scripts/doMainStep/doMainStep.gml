@@ -340,7 +340,8 @@ renderF=0 // incremental render - current set being rendered
             strandCount = 0;
             {
                 maxStrands = 2200;
-                rootRange = random((life / (rootPosition * 50))) / 3;
+                // (removed: rootRange was overwritten per strand below, and this
+                //  line divided by zero when Root Position was dragged to 0)
 
                 #region // MAIN CALCULATION - REFACTORED v2.0
 
@@ -365,20 +366,14 @@ renderF=0 // incremental render - current set being rendered
                 var f = renderF;
 
                 // -------------------------------------------------------------
-                // V1.94 PER-SET SEED
-                // The preview (mainCalc) and the pre-random tables (updatePreRands)
-                // both seed from randomSeedVal[set] at the start of every set. The
-                // renderer used to seed ONCE, from seedVal, at renderF==0 - and it
-                // renders one set per frame, so by the time set 1 began the stream
-                // had been moved on by set 0's draws AND by whatever mainCalc did in
-                // the Draw event in between. That made the render disagree with the
-                // preview and, worse, not reproduce itself. Seeding here puts every
-                // set on its own seed, frame boundaries and preview activity be
-                // damned, and matches where the cached strand tables came from.
+                // PER-SET SEED. Now that every per-strand value comes from the
+                // pre-random tables, the only thing left in this render that draws
+                // from the stream is the frizz map's irandom() further down. This
+                // keeps that deterministic per set instead of depending on frame
+                // boundaries and on whatever the preview did in between. The
+                // +f*7919 stops all eleven sets sharing a stream, since
+                // randomSeedVal defaults to 1 for every set.
                 // -------------------------------------------------------------
-                // The +f*7919 keeps each set on its own stream. randomSeedVal
-                // defaults to 1 for every set, so seeding with it alone would make
-                // every set an exact clone beyond the cached strands.
                 random_set_seed(randomSeedVal[f] + (f * 7919));
                 if (doLogOnce == 1) { file_text_write_string(logFile, "SET ID:" + string(f)); file_text_writeln(logFile); }
                 
@@ -399,6 +394,7 @@ renderF=0 // incremental render - current set being rendered
                 if (_hlF <= 0) _hlF = length;
                 hairLength = _hlF + preRandLifeVariant[f];
                 if (setCountOverrode[f] == 1) strandSet = strandCountOverride[f]; else strandSet = strands;
+                strandSet = min(strandSet, 100);   // the pre-random tables hold 100 strands per set
 
                 // -------------------------------------------------------------
                 // PER-STRAND GENERATION LOOP
@@ -407,12 +403,17 @@ renderF=0 // incremental render - current set being rendered
                     checkSum++;
                     var d = clamp(floor((255 / strandSet) * h), 20, 255);
                     depthTone = make_color_rgb(d, d, d);
-                    dpth = random(100) / 100;
-                    // V1.94 - every other per-strand value below reuses the preview's
-                    // cached value for the first maxPreviewStrandsPerSet strands; dpth
-                    // was the one that did not, so the render's depth/tone blend never
-                    // matched what the preview showed.
-                    if (h < maxPreviewStrandsPerSet) dpth = strandDepth[f, h];
+                    // -----------------------------------------------------------
+                    // Every per-strand value below comes straight from the per-set
+                    // pre-random tables, exactly as doCalc reads them for the
+                    // preview. It used to roll each one live and then overwrite it
+                    // from the preview's cache only when h < maxPreviewStrandsPerSet
+                    // - a PREVIEW QUALITY setting (20 / 30 / 50 / 100). So in the
+                    // default 50 mode, strands 50-99 of every set were freshly
+                    // random and had never been previewed: the render genuinely had
+                    // its own randomness for half of every set.
+                    // -----------------------------------------------------------
+                    dpth = preRandDepth[f, h];
 					xxx = (1024 / 11) * h
 					yyy = 400
                     subSpriteChoice = preRandSubSprite[f, h];
@@ -422,16 +423,7 @@ renderF=0 // incremental render - current set being rendered
                     // preview value, which both discarded that value and pulled extra
                     // numbers out of the random stream - so an overridden set drifted
                     // away from its own preview. One draw, clamps chosen up front.
-                    var _thickVaryS = setThickVaryAdj[f];   // per-set variance
-                    var _tbLo = 0.8;
-                    var _tbHi = maxScale;
-                    if (setThickMinOverrode[f] == 1) _tbLo = setThickMinAdj[f];
-                    if (setThickMaxOverrode[f] == 1) _tbHi = setThickMaxAdj[f];
-                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), _tbLo, _tbHi);
-
-                    // The first maxPreviewStrandsPerSet strands reuse exactly what the
-                    // preview drew, so preview and final are the same strands.
-                    if (h < maxPreviewStrandsPerSet) thicknessBase = strandThickBase[f, h];
+                    thicknessBase = preRandThickBase[f, h];
 
                     if (idMode == 0) {
                         idChoice = colorIDarray[idList];
@@ -442,53 +434,34 @@ renderF=0 // incremental render - current set being rendered
                     lifeVariant = strandSetVariAdj[f];
                     
                     // Spacing and initial X position logic
-                    xx = (320 - (strandSetSpaceAdj[f] * 10)) + ((strandSetSpaceAdj[f] * 10) / 2) + ((random_range(0, strandSetSpaceAdj[f] * 10) + (f * ((setDistance * 2) * 5))));
-                    if (h < maxPreviewStrandsPerSet) xx = strandXX[f, h];
+                    xx = (320 - (strandSetSpaceAdj[f] * 10)) + ((strandSetSpaceAdj[f] * 10) * 0.5) + ((preRandSpacing[f, h] + (f * ((setDistance * 2) * 5))));
                     setXpos = (320 - (strandSetSpaceAdj[f] * 10)) + (strandSetSpaceAdj[f] * 10) + (f * ((setDistance * 2) * 5));
                     sx = xx;
 
-                    life = random_range(
-                        clamp(hairLength * (1 - (lifeVariant / 100)), 10, 3900),
-                        clamp(hairLength * (1 + (lifeVariant / 100)), 10, 3900)
-                    );
-                    if (h < maxPreviewStrandsPerSet) life = strandLife[f, h];
+                    life = preRandLife[f, h];
 
                     scaleIn = life * 0.75;
                     scaleOut = life * 0.12;
                     avgLife = median(life, avgLife);
 
-                    freq = random_range(strandSetWaveFreqMinAdj[f], strandSetWaveFreqMaxAdj[f]);
-                    if (h < maxPreviewStrandsPerSet) freq = strandFrq[f, h];
+                    freq = preRandFreq[f, h];
 
-                    amp = random(1000) / 10000;
-                    if (h < maxPreviewStrandsPerSet) amp = strandAmp[f, h];
+                    amp = preRandAmp[f, h];
 
                     yp = 0;
-                    // V1.94 - was random(yjit)+120, i.e. [120,320). preRandYY (which the
-                    // cached strands below 100 come from) is [-yRan, yRan*3)+120, so the
-                    // uncached strands used to sit in a different, wider band - a visible
-                    // seam in the root line at strand 100.
-                    yy = (random_range(-strandYRanRange[f], strandYRanRange[f] * 3) + 120) + yOffset[f];
-                    if (h < maxPreviewStrandsPerSet) yy = strandYY[f, h] + yOffset[f];
+                    yy = preRandYY[f, h] + yOffset[f];
 
                     nx = 0;
-                    rootRange = random((rootPosition * 50)) / 3;
-                    if (h < maxPreviewStrandsPerSet) rootRange = strandRootRange[f, h];
-
-                    root = (random_range(round(random_range(0, (rootPosition * 50))), (rootPosition * 50) + rootRange));
-                    if (h < maxPreviewStrandsPerSet) root = strandRoot[f, h];
+                    rootRange = preRandRootRange[f, h];
+                    root      = preRandRoot[f, h];
 
                     tip = ((tipPosition * 10));
 
-                    if (pleaseGen == true) {
-                        strandDecision = random(100) / 100;
-                        if (h < maxPreviewStrandsPerSet) strandDecision = strandDecide[f, h];
-                    }
+                    // The pleaseGen guard here was dead - pleaseGen is false for the
+                    // whole render, so these two were never assigned during a render.
+                    strandDecision = preRandStrandDecision[f, h];
 
-                    if (pleaseGen == true) {
-                        straggleChoice = choose(editingPath[0], editingPath[1], editingPath[2]);
-                        if (h < maxPreviewStrandsPerSet) straggleChoice = strandStraggleChoice[f, h];
-                    }
+                    straggleChoice = preRandStraggleChoice[f, h];
 
                     cache_strandPointer = 0;
                     if (doLogOnce == 1) { file_text_write_string(logFile, "Strand ID: " + string(h) + " Life:" + string(life)); file_text_writeln(logFile); }
@@ -502,7 +475,7 @@ renderF=0 // incremental render - current set being rendered
                     // uses one value per strand from preRandDepthAdd. Same table now, so
                     // the depth/colour blend agrees. (Reinstating the per-point speckle
                     // means moving this line back into the loop as random_range.)
-                    dpthAdd = preRandDepthAdd[f, min(h, 99)];
+                    dpthAdd = preRandDepthAdd[f, h];
                     var _fadeInS  = clamp(setFadeInAdj[f],  1, 40); // V1.91 per-set
                     var _fadeOutS = clamp(setFadeOutAdj[f], 1, 40); // V1.91 per-set
                     var padFactor = 0.05 + (padding / 1000);

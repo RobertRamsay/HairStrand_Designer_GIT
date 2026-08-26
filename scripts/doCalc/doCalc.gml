@@ -6,15 +6,10 @@ function doCalc(){
 						    
 							
 						
-							// V1.92 - identical rule to doMainStep so the preview and the
-							// final render agree: one random draw, per-set variance, and
-							// the per-set thickness range as the clamp when overridden.
-							var _thickVaryS = setThickVaryAdj[b] // per-set variance
-							var _tbLo = 0.8
-							var _tbHi = maxScale
-							if setThickMinOverrode[b]==1 _tbLo = setThickMinAdj[b]
-							if setThickMaxOverrode[b]==1 _tbHi = setThickMaxAdj[b]
-							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),_tbLo,_tbHi)
+							// From the table, like every other per-strand value. doCalc now
+							// draws NOTHING from the random stream, so running the preview
+							// can no longer move the generator under the renderer's feet.
+							thicknessBase = preRandThickBase[b,v]
 							strandThickBase[b,v]=thicknessBase // store
 							// DEPTH TONE
 							//var d=clamp(24+((231/(floor((strands)-(b*diminish))))*v),24,255) // new limited base at 24
@@ -35,10 +30,7 @@ function doCalc(){
 							// LIFE 
 							//life=(hairLength-(lifeVariant*20))+random((lifeVariant*20))
 							
-							life=random_range(   
-							clamp (hairLength*   (1-(lifeVariant*0.01)) , 10 , 3900)     ,
-							clamp (hairLength*   (1+(lifeVariant*0.01)) , 10 , 3900)
-							)
+							life=preRandLife[b,v] // table, built per set in updatePreRands
 							/*
 							life=random_range(   
 							clamp (hairLength*   (1-(preRandLifeVariant[b]/100)) , 10 , 3900)     ,

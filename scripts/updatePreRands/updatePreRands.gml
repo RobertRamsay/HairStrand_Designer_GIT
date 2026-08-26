@@ -21,6 +21,10 @@ function updatePreRands(argument0){
 					{
 						preRandAmp[e,pr]=random(1000)/10000
 						preRandSpacing[e,pr]=random_range(0,strandSetSpaceAdj[e]*10)
+						// NOTE: this value is overwritten by the appended loop below.
+						// The draw itself must stay - it holds the stream position for
+						// every pre-random after it, so deleting it would change every
+						// existing project.
 						preRandLife[e,pr]=random_range(   
 									clamp (hairLength*   (1-(lifeVariant/100)) , 10 , 3900)     ,
 									clamp (hairLength*   (1+(lifeVariant/100)) , 10 , 3900)
@@ -52,16 +56,51 @@ function updatePreRands(argument0){
 						}
 
 					}
+
+				// ---------------------------------------------------------------
+				// life and thickness were the only two per-strand values still
+				// being rolled live inside doCalc, which meant the renderer could
+				// only match them for the strands the PREVIEW happened to have
+				// drawn. They are tables now, so both paths read the same numbers
+				// for all 100 strands regardless of the preview quality setting.
+				// This second loop is appended deliberately: inserting draws into
+				// the loop above would have shifted every existing pre-random.
+				// ---------------------------------------------------------------
+				var _lvA = strandSetVariAdj[e]
+				var _hlA = strandLengthOverride[e]
+				if _hlA<=0 _hlA = length
+				_hlA += preRandLifeVariant[e]
+
+				var _tvA = setThickVaryAdj[e]
+				var _tbLoA = 0.8
+				var _tbHiA = maxScale
+				if setThickMinOverrode[e]==1 _tbLoA = setThickMinAdj[e]
+				if setThickMaxOverrode[e]==1 _tbHiA = setThickMaxAdj[e]
+
+				for (pr=0;pr<100;pr++)
+					{
+					preRandLife[e,pr]=random_range(
+								clamp(_hlA*(1-(_lvA*0.01)),10,3900),
+								clamp(_hlA*(1+(_lvA*0.01)),10,3900))
+					preRandThickBase[e,pr]=clamp(random_range(_tvA/100,_tvA/20),_tbLoA,_tbHiA)
+					}
 				}
 			}
 		else
 		{ // optimised approach.
 			var c=clamp(argument0,0,10);
+
+			// The all-sets branch seeds per set; this one never did, so every value
+			// it produced depended on wherever the global stream happened to sit.
+			// Harmless while every caller passes -1, but this is the branch the
+			// local-preview rebuild would use, so it has to be seeded the same way.
+			random_set_seed(randomSeedVal[c])
 			preRandLifeVariant[c]=random(strandSetVariAdj[c]*2) // V1.95 - see the all-sets path
 			for (pr=0;pr<100;pr++) // pre randomization feature to keep hairs consistent (see doCalc)
 					{
 						preRandAmp[c,pr]=random(1000)/10000
 						preRandSpacing[c,pr]=random_range(0,strandSetSpaceAdj[c]*10)
+						// overwritten below; the draw holds the stream position - see above
 						preRandLife[c,pr]=random_range(   
 									clamp (hairLength*   (1-(lifeVariant/100)) , 10 , 3900)     ,
 									clamp (hairLength*   (1+(lifeVariant/100)) , 10 , 3900)
@@ -86,6 +125,26 @@ function updatePreRands(argument0){
 						preRandCurling[c,pr]=0
 						}
 					}
+
+			// see the all-sets path above
+			var _lvB = strandSetVariAdj[c]
+			var _hlB = strandLengthOverride[c]
+			if _hlB<=0 _hlB = length
+			_hlB += preRandLifeVariant[c]
+
+			var _tvB = setThickVaryAdj[c]
+			var _tbLoB = 0.8
+			var _tbHiB = maxScale
+			if setThickMinOverrode[c]==1 _tbLoB = setThickMinAdj[c]
+			if setThickMaxOverrode[c]==1 _tbHiB = setThickMaxAdj[c]
+
+			for (pr=0;pr<100;pr++)
+				{
+				preRandLife[c,pr]=random_range(
+							clamp(_hlB*(1-(_lvB*0.01)),10,3900),
+							clamp(_hlB*(1+(_lvB*0.01)),10,3900))
+				preRandThickBase[c,pr]=clamp(random_range(_tvB/100,_tvB/20),_tbLoB,_tbHiB)
+				}
 		}
 		
 		
