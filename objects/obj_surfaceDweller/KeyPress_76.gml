@@ -586,6 +586,8 @@ var tString="" ;// temp string for reading and analizing
 			
 #endregion
 
+			v191ManualLoadOk=1
+
 			}
 			else
 			{
@@ -620,6 +622,33 @@ canLoad=true
 				path_change_point(editingPath[2],a,pathLoadCx[a],pathLoadCy[a],100)
 				}
 			}
+
+// V1.91 - clearOverrides() ran BEFORE this event parsed the file, so the per-set
+// arrays were seeded from the OUTGOING globals. Re-seed them from the globals the
+// file just supplied, otherwise every render path keeps using the old project's
+// thickness / fade / noise while the UI shows the new values.
+// (doAutoLoad does this correctly already; only the manual L path needed it.)
+// Gated on an actual load: pressing L and then cancelling the file dialog must
+// not force a full rebuild, which would flash the whole preview blank.
+if v191ManualLoadOk==1
+	{
+	for (var _reseedSet=0;_reseedSet<maxSets;_reseedSet++)
+		{
+		if setThickMinOverrode[_reseedSet]==0  setThickMinAdj[_reseedSet]=minScale
+		if setThickMaxOverrode[_reseedSet]==0  setThickMaxAdj[_reseedSet]=maxScale
+		if setTipThickOverrode[_reseedSet]==0  setTipThickAdj[_reseedSet]=tipThick
+		if setRootThickOverrode[_reseedSet]==0 setRootThickAdj[_reseedSet]=rootThick
+		if setThickVaryOverrode[_reseedSet]==0 setThickVaryAdj[_reseedSet]=thickVary
+		if setFadeInOverrode[_reseedSet]==0    setFadeInAdj[_reseedSet]=fadeIn
+		if setFadeOutOverrode[_reseedSet]==0   setFadeOutAdj[_reseedSet]=fadeOut
+		if setNoiseAmtOverrode[_reseedSet]==0  setNoiseAmtAdj[_reseedSet]=noiseAmt
+		if setNoiseFreqOverrode[_reseedSet]==0 setNoiseFreqAdj[_reseedSet]=noiseFreq
+		}
+	localUpdateSet=-1
+	forceUpdate=1
+	previewCanvasComplete=0
+	v191ManualLoadOk=0
+	}
 			
 				
 			

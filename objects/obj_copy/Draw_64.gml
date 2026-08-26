@@ -143,7 +143,23 @@ if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
         setColVarAOverrode : _o.setColVarAOverrode[_src],
         setColVarBOverrode : _o.setColVarBOverrode[_src],
         setRootColOverrode : _o.setRootColOverrode[_src],
-        setTipColOverrode : _o.setTipColOverrode[_src]
+        setTipColOverrode : _o.setTipColOverrode[_src],
+
+        // V1.91 per-set thickness / fade / noise
+        setTipThickAdj : _o.setTipThickAdj[_src],
+        setTipThickOverrode : _o.setTipThickOverrode[_src],
+        setRootThickAdj : _o.setRootThickAdj[_src],
+        setRootThickOverrode : _o.setRootThickOverrode[_src],
+        setThickVaryAdj : _o.setThickVaryAdj[_src],
+        setThickVaryOverrode : _o.setThickVaryOverrode[_src],
+        setFadeInAdj : _o.setFadeInAdj[_src],
+        setFadeInOverrode : _o.setFadeInOverrode[_src],
+        setFadeOutAdj : _o.setFadeOutAdj[_src],
+        setFadeOutOverrode : _o.setFadeOutOverrode[_src],
+        setNoiseAmtAdj : _o.setNoiseAmtAdj[_src],
+        setNoiseAmtOverrode : _o.setNoiseAmtOverrode[_src],
+        setNoiseFreqAdj : _o.setNoiseFreqAdj[_src],
+        setNoiseFreqOverrode : _o.setNoiseFreqOverrode[_src]
     }
 
     copyBufferReady = 1
@@ -215,6 +231,22 @@ and copyBufferReady and _selected != -1
     _o.setColVarBOverrode[_dst] = copyBuffer.setColVarBOverrode
     _o.setRootColOverrode[_dst] = copyBuffer.setRootColOverrode
     _o.setTipColOverrode[_dst] = copyBuffer.setTipColOverrode
+
+    // V1.91 per-set thickness / fade / noise
+    _o.setTipThickAdj[_dst] = copyBuffer.setTipThickAdj
+    _o.setTipThickOverrode[_dst] = copyBuffer.setTipThickOverrode
+    _o.setRootThickAdj[_dst] = copyBuffer.setRootThickAdj
+    _o.setRootThickOverrode[_dst] = copyBuffer.setRootThickOverrode
+    _o.setThickVaryAdj[_dst] = copyBuffer.setThickVaryAdj
+    _o.setThickVaryOverrode[_dst] = copyBuffer.setThickVaryOverrode
+    _o.setFadeInAdj[_dst] = copyBuffer.setFadeInAdj
+    _o.setFadeInOverrode[_dst] = copyBuffer.setFadeInOverrode
+    _o.setFadeOutAdj[_dst] = copyBuffer.setFadeOutAdj
+    _o.setFadeOutOverrode[_dst] = copyBuffer.setFadeOutOverrode
+    _o.setNoiseAmtAdj[_dst] = copyBuffer.setNoiseAmtAdj
+    _o.setNoiseAmtOverrode[_dst] = copyBuffer.setNoiseAmtOverrode
+    _o.setNoiseFreqAdj[_dst] = copyBuffer.setNoiseFreqAdj
+    _o.setNoiseFreqOverrode[_dst] = copyBuffer.setNoiseFreqOverrode
 
     // The colour picker exposes the selected set via custom*. Keep it in sync,
     // but also update the last-value trackers so Step_0 does not mistake Paste

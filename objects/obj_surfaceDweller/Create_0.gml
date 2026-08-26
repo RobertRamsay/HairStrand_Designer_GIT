@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.90.0.0"
+versionHSD="1.91.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -100,6 +100,17 @@ readyToCheckAutoloads=0
 // The splash owns the "load a previous session?" decision now, so the old
 // show_question() popup in doMainStep has gone.
 splashAutosaveFound=-1
+
+// V1.91 - which set (if any) the pending preview rebuild is limited to.
+// -1 = rebuild every set, as before. A per-set slider edit sets this to the
+// selected set so mainCalc only clears and redraws that one preview surface.
+localUpdateSet=-1
+liveLocalEvery=3   // rebuild the selected set every N frames while dragging
+liveLocalTick=3
+
+// Set by the manual (L) loader only when a project file was really read, so a
+// cancelled file dialog cannot trigger a full preview rebuild.
+v191ManualLoadOk=0
 yRanRange=20 // new is 1.53
 
 editingPath[0]=StragglePath_A1
@@ -382,6 +393,24 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
 	setThickMinAdj[s]=minScale
 	setThickMaxAdj[s]=maxScale
 
+	// New in 1.91 - every notched slider row can now be overridden per set.
+	// These arrays are always populated: a global slider writes through to
+	// every set that is not overridden, so the calc scripts just read [set].
+	setTipThickOverrode[s]=0
+	setRootThickOverrode[s]=0
+	setThickVaryOverrode[s]=0
+	setFadeInOverrode[s]=0
+	setFadeOutOverrode[s]=0
+	setNoiseAmtOverrode[s]=0
+	setNoiseFreqOverrode[s]=0
+
+	setFadeInAdj[s]=fadeIn
+	setFadeOutAdj[s]=fadeOut
+	setNoiseAmtAdj[s]=noiseAmt
+	setNoiseFreqAdj[s]=noiseFreq
+	// setTipThickAdj / setRootThickAdj / setThickVaryAdj are seeded just after
+	// tipThick / rootThick / thickVary are declared, further down this event.
+
 	
 	// new in 1.70.0 (implemented 21/5/23 RR)
 	
@@ -464,6 +493,14 @@ sc=1
 tipThick=10
 rootThick=6
 thickVary=3
+
+// V1.91 - seed the per-set thickness arrays now that their globals exist.
+for (s=0;s<maxSets;s++)
+	{
+	setTipThickAdj[s]=tipThick
+	setRootThickAdj[s]=rootThick
+	setThickVaryAdj[s]=thickVary
+	}
 colorMode=1 // rgb=0 hsv=1 grey=2
 a=1
 
@@ -660,7 +697,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

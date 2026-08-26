@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			
@@ -477,6 +477,43 @@ var o=obj_surfaceDweller
 							file_text_writeln(theFile);
 							file_text_write_string(theFile,"noiseFreq:"+string(o.noiseFreq)+";");
 							file_text_writeln(theFile);
+
+							// V1.91 - per-set thickness / fade / noise overrides.
+							// Appended after the V1.90 block, so a 1.90 project
+							// simply hits EOF here and keeps its globals.
+							file_text_write_string(theFile,"V1.91 - Per Set Thickness Fade Noise");
+							file_text_writeln(theFile);
+							for (set=0;set<11;set++)
+								{
+							file_text_write_string(theFile,"setTipThickOverrode["+string(set)+"]:"+string(o.setTipThickOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setTipThickAdj["+string(set)+"]:"+string(o.setTipThickAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setRootThickOverrode["+string(set)+"]:"+string(o.setRootThickOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setRootThickAdj["+string(set)+"]:"+string(o.setRootThickAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setThickVaryOverrode["+string(set)+"]:"+string(o.setThickVaryOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setThickVaryAdj["+string(set)+"]:"+string(o.setThickVaryAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setFadeInOverrode["+string(set)+"]:"+string(o.setFadeInOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setFadeInAdj["+string(set)+"]:"+string(o.setFadeInAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setFadeOutOverrode["+string(set)+"]:"+string(o.setFadeOutOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setFadeOutAdj["+string(set)+"]:"+string(o.setFadeOutAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setNoiseAmtOverrode["+string(set)+"]:"+string(o.setNoiseAmtOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setNoiseAmtAdj["+string(set)+"]:"+string(o.setNoiseAmtAdj[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setNoiseFreqOverrode["+string(set)+"]:"+string(o.setNoiseFreqOverrode[set])+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"setNoiseFreqAdj["+string(set)+"]:"+string(o.setNoiseFreqAdj[set])+";");
+							file_text_writeln(theFile);
+								}
 
 
 				}

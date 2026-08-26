@@ -223,6 +223,28 @@ if mouse_check_button_pressed(mb_left)  // edit mixers clicking mixer edit mixer
 				strandSetSpaceAdj[setSelectedID]=distancings // distancings=21
 				strandYRanRange[setSelectedID]=yRanRange // jitterY
 
+				// V1.91 - the rest of the notched rows. setThickMin/Max were
+				// already overridable but were never cleared here.
+				setThickMinOverrode[setSelectedID]=0
+				setThickMaxOverrode[setSelectedID]=0
+				setTipThickOverrode[setSelectedID]=0
+				setRootThickOverrode[setSelectedID]=0
+				setThickVaryOverrode[setSelectedID]=0
+				setFadeInOverrode[setSelectedID]=0
+				setFadeOutOverrode[setSelectedID]=0
+				setNoiseAmtOverrode[setSelectedID]=0
+				setNoiseFreqOverrode[setSelectedID]=0
+
+				setThickMinAdj[setSelectedID]=minScale
+				setThickMaxAdj[setSelectedID]=maxScale
+				setTipThickAdj[setSelectedID]=tipThick
+				setRootThickAdj[setSelectedID]=rootThick
+				setThickVaryAdj[setSelectedID]=thickVary
+				setFadeInAdj[setSelectedID]=fadeIn
+				setFadeOutAdj[setSelectedID]=fadeOut
+				setNoiseAmtAdj[setSelectedID]=noiseAmt
+				setNoiseFreqAdj[setSelectedID]=noiseFreq
+
 				}
 
 		}
@@ -267,6 +289,27 @@ if keyboard_check_pressed(vk_f5)
 				strandSetVariAdj[setToReset]=lifeVariant // default 6
 				strandSetSpaceAdj[setToReset]=distancings // distancings=21
 				strandYRanRange[setToReset]=yRanRange // jitterY
+
+				// V1.91 - the rest of the notched rows
+				setThickMinOverrode[setToReset]=0
+				setThickMaxOverrode[setToReset]=0
+				setTipThickOverrode[setToReset]=0
+				setRootThickOverrode[setToReset]=0
+				setThickVaryOverrode[setToReset]=0
+				setFadeInOverrode[setToReset]=0
+				setFadeOutOverrode[setToReset]=0
+				setNoiseAmtOverrode[setToReset]=0
+				setNoiseFreqOverrode[setToReset]=0
+
+				setThickMinAdj[setToReset]=minScale
+				setThickMaxAdj[setToReset]=maxScale
+				setTipThickAdj[setToReset]=tipThick
+				setRootThickAdj[setToReset]=rootThick
+				setThickVaryAdj[setToReset]=thickVary
+				setFadeInAdj[setToReset]=fadeIn
+				setFadeOutAdj[setToReset]=fadeOut
+				setNoiseAmtAdj[setToReset]=noiseAmt
+				setNoiseFreqAdj[setToReset]=noiseFreq
 			}
 		
 		}

@@ -399,6 +399,12 @@ if sprite_exists(ghostSprite) and !mouse_check_button(mb_right)
 
 mainCalc() // === MAIN STRAND CALCULATION ===
 
+// V1.91 - localUpdateSet describes the per-set edit made on the PREVIOUS frame.
+// mainCalc() has just consumed it, and the slider blocks further down this event
+// will set it again if the user is still editing one set. Clearing it here is
+// what keeps a global edit from being mistaken for a local one.
+localUpdateSet = -1
+
 draw_set_color(c_white)
 if pleaseGen draw_sprite(spr_genMessage, 0, 512, 32)
 
@@ -558,6 +564,7 @@ if mouse_check_button(mb_left) && slider_interract_strands
 	{
 		strandCountOverride[setSelectedID] = clamp(slx-ex, 0, 100)
 		setCountOverrode[setSelectedID]    = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -693,6 +700,7 @@ if mouse_check_button(mb_left) && slider_interract_distancings
 	{
 		strandSetSpaceAdj[setSelectedID]   = clamp(slx-ex, 0, 100)
 		setSpacingOverrode[setSelectedID]  = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -915,6 +923,7 @@ if mouse_check_button(mb_left) && slider_interract_wavyness
 	{
 		strandSetWavynessAdj[setSelectedID]  = clamp(slx-ex, 0, 100)
 		setWaveynessOverrode[setSelectedID]  = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1042,6 +1051,7 @@ if mouse_check_button(mb_left) && slider_interract_minFreq
 	{
 		strandSetWaveFreqMinAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
 		setWaveFreqMinOverrode[setSelectedID]   = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1164,6 +1174,7 @@ if mouse_check_button(mb_left) && slider_interract_maxFreq
 	{
 		strandSetWaveFreqMaxAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
 		setWaveFreqMaxOverrode[setSelectedID]   = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1290,6 +1301,7 @@ if mouse_check_button(mb_left) && slider_interract_tapering
 	{
 		strandSetTaperAdj[setSelectedID]  = clamp(slx-ex, 0, 100)
 		setTaperOverrode[setSelectedID]   = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1415,6 +1427,7 @@ if mouse_check_button(mb_left) && slider_interract_lifeVariant
 	{
 		strandSetVariAdj[setSelectedID]  = clamp(slx-ex, 1, 100)
 		setVariOverrode[setSelectedID]   = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1540,6 +1553,7 @@ if mouse_check_button(mb_left) && slider_interract_yRanRange
 	{
 		strandYRanRange[setSelectedID]         = clamp(slx-ex, 1, 100)
 		strandYRanRangeOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1665,6 +1679,7 @@ if mouse_check_button(mb_left) && slider_interract_minScale
 	{
 		setThickMinAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
 		setThickMinOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1786,6 +1801,7 @@ if mouse_check_button(mb_left) && slider_interract_maxScale
 	{
 		setThickMaxAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
 		setThickMaxOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -1886,6 +1902,7 @@ if textBox_maxScale == 1
 
 // ============================================================
 // DUAL SLIDERS: TIP THICK + ROOT THICK (root/tip thickness range)
+// V1.91 - now per-set overridable (the row carries a notch in the panel art)
 // ============================================================
 
 // ---- Tip Thick (left) ----
@@ -1896,6 +1913,7 @@ var ex   = 1198
 var ey   = 436 + (28*10)
 var sly  = ey
 var slx  = ex + tipThick
+if setSelectedID != -1 slx = ex + setTipThickAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -1907,15 +1925,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_tipThick
 {
-	over     = 1
-	slx      = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	tipThick = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setTipThickAdj[setSelectedID] = clamp(slx-ex, 0, 40)
+		setTipThickOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		tipThick = clamp(slx-ex, 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setTipThickOverrode[setChange] != 1 setTipThickAdj[setChange] = tipThick
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setTipThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318, ey+11, string(tipThick))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+tipThick), sly);                        draw_text(1318, ey+11, string(tipThick)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setTipThickAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
@@ -1923,9 +1956,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                    = string(tipThick)
-		textBox_tipThick       = 1
-		textBox_tipThick_value = string(tipThick)
+		textBox_tipThick = 1
+		if setSelectedID == -1 { str = string(tipThick);                        textBox_tipThick_value = string(tipThick) }
+		if setSelectedID != -1 { str = string(setTipThickAdj[setSelectedID]);   textBox_tipThick_value = string(setTipThickAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_tipThick = 0 }
@@ -1934,9 +1967,10 @@ if textBox_tipThick == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318, ey+11, string(tipThick))
+	if setSelectedID == -1 draw_text(1318, ey+11, string(tipThick))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+string_width(string(tipThick)), ey-9, 1320+string_width(string(tipThick)), ey+7, 2)
+		draw_line_width(1318+2+string_width(string(tipThick)), ey-9, 1318+2+string_width(string(tipThick)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -1962,7 +1996,6 @@ if textBox_tipThick == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		tipThick = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -1973,7 +2006,20 @@ if textBox_tipThick == 1
 	textBox_tipThick_value = str
 
 	if real(textBox_tipThick_value) > 40 { textBox_tipThick_value="40"; str="40" }
-	tipThick = clamp(real(textBox_tipThick_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setTipThickAdj[setSelectedID] = clamp(real(textBox_tipThick_value), 0, 40)
+		setTipThickOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		tipThick = clamp(real(textBox_tipThick_value), 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setTipThickOverrode[setChange] != 1 setTipThickAdj[setChange] = tipThick
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -1989,6 +2035,7 @@ var ex   = 1198 + 60
 var ey   = 436 + (28*10)
 var sly  = ey
 var slx  = ex + rootThick
+if setSelectedID != -1 slx = ex + setRootThickAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -2000,15 +2047,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_rootThick
 {
-	over      = 1
-	slx       = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	rootThick = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setRootThickAdj[setSelectedID] = clamp(slx-ex, 0, 40)
+		setRootThickOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		rootThick = clamp(slx-ex, 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setRootThickOverrode[setChange] != 1 setRootThickAdj[setChange] = rootThick
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setRootThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318+34, ey+11, string(rootThick))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+rootThick), sly);                        draw_text(1318+34, ey+11, string(rootThick)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setRootThickAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
@@ -2016,9 +2078,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                     = string(rootThick)
-		textBox_rootThick       = 1
-		textBox_rootThick_value = string(rootThick)
+		textBox_rootThick = 1
+		if setSelectedID == -1 { str = string(rootThick);                        textBox_rootThick_value = string(rootThick) }
+		if setSelectedID != -1 { str = string(setRootThickAdj[setSelectedID]);   textBox_rootThick_value = string(setRootThickAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_rootThick = 0 }
@@ -2027,9 +2089,10 @@ if textBox_rootThick == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318+34, ey+11, string(rootThick))
+	if setSelectedID == -1 draw_text(1318+34, ey+11, string(rootThick))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+34+string_width(string(rootThick)), ey-9, 1320+34+string_width(string(rootThick)), ey+7, 2)
+		draw_line_width(1318+34+2+string_width(string(rootThick)), ey-9, 1318+34+2+string_width(string(rootThick)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2055,7 +2118,6 @@ if textBox_rootThick == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		rootThick = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2066,7 +2128,20 @@ if textBox_rootThick == 1
 	textBox_rootThick_value = str
 
 	if real(textBox_rootThick_value) > 40 { textBox_rootThick_value="40"; str="40" }
-	rootThick = clamp(real(textBox_rootThick_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setRootThickAdj[setSelectedID] = clamp(real(textBox_rootThick_value), 0, 40)
+		setRootThickOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		rootThick = clamp(real(textBox_rootThick_value), 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setRootThickOverrode[setChange] != 1 setRootThickAdj[setChange] = rootThick
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2077,7 +2152,10 @@ if textBox_rootThick == 1
 
 // ============================================================
 // SLIDER: THICK VARY (thickness variance)
+// V1.91 - now per-set overridable
 // ============================================================
+
+// ---- Thick Vary ----
 #region
 
 var over = 0
@@ -2085,6 +2163,7 @@ var ex   = 1198
 var ey   = 436 + (28*11)
 var sly  = ey
 var slx  = ex + thickVary
+if setSelectedID != -1 slx = ex + setThickVaryAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+100
 {
@@ -2096,15 +2175,30 @@ if mouse_x >= ex and mouse_x <= ex+100
 
 if mouse_check_button(mb_left) && slider_interract_thickVary
 {
-	over      = 1
-	slx       = clamp(mouse_x, ex, ex+100); pleaseGen = true
-	thickVary = clamp(slx-ex, 0, 100)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+100); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setThickVaryAdj[setSelectedID] = clamp(slx-ex, 0, 100)
+		setThickVaryOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		thickVary = clamp(slx-ex, 0, 100)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setThickVaryOverrode[setChange] != 1 setThickVaryAdj[setChange] = thickVary
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setThickVaryOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318, ey+11, string(thickVary))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+thickVary), sly);                        draw_text(1318, ey+11, string(thickVary)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setThickVaryAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
@@ -2112,9 +2206,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                    = string(thickVary)
-		textBox_thickVary      = 1
-		textBox_thickVary_value = string(thickVary)
+		textBox_thickVary = 1
+		if setSelectedID == -1 { str = string(thickVary);                        textBox_thickVary_value = string(thickVary) }
+		if setSelectedID != -1 { str = string(setThickVaryAdj[setSelectedID]);   textBox_thickVary_value = string(setThickVaryAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_thickVary = 0 }
@@ -2123,9 +2217,10 @@ if textBox_thickVary == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318, ey+11, string(thickVary))
+	if setSelectedID == -1 draw_text(1318, ey+11, string(thickVary))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+string_width(string(thickVary)), ey-9, 1320+string_width(string(thickVary)), ey+7, 2)
+		draw_line_width(1318+2+string_width(string(thickVary)), ey-9, 1318+2+string_width(string(thickVary)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2151,7 +2246,6 @@ if textBox_thickVary == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		thickVary = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2162,7 +2256,20 @@ if textBox_thickVary == 1
 	textBox_thickVary_value = str
 
 	if real(textBox_thickVary_value) > 100 { textBox_thickVary_value="100"; str="100" }
-	thickVary = clamp(real(textBox_thickVary_value), 0, 100)
+
+	if setSelectedID != -1
+	{
+		setThickVaryAdj[setSelectedID] = clamp(real(textBox_thickVary_value), 0, 100)
+		setThickVaryOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		thickVary = clamp(real(textBox_thickVary_value), 0, 100)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setThickVaryOverrode[setChange] != 1 setThickVaryAdj[setChange] = thickVary
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2173,6 +2280,7 @@ if textBox_thickVary == 1
 
 // ============================================================
 // DUAL SLIDERS: FADE IN + FADE OUT
+// V1.91 - now per-set overridable
 // ============================================================
 
 // ---- Fade In (left) ----
@@ -2183,6 +2291,7 @@ var ex   = 1198
 var ey   = 436 + (28*12)
 var sly  = ey
 var slx  = ex + fadeIn
+if setSelectedID != -1 slx = ex + setFadeInAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -2194,15 +2303,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_fadeIn
 {
-	over   = 1
-	slx    = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	fadeIn = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setFadeInAdj[setSelectedID] = clamp(slx-ex, 1, 40)
+		setFadeInOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		fadeIn = clamp(slx-ex, 1, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setFadeInOverrode[setChange] != 1 setFadeInAdj[setChange] = fadeIn
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setFadeInOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318, ey+11, string(fadeIn))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeIn), sly);                        draw_text(1318, ey+11, string(fadeIn)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeInAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
@@ -2210,9 +2334,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                  = string(fadeIn)
-		textBox_fadeIn       = 1
-		textBox_fadeIn_value = string(fadeIn)
+		textBox_fadeIn = 1
+		if setSelectedID == -1 { str = string(fadeIn);                        textBox_fadeIn_value = string(fadeIn) }
+		if setSelectedID != -1 { str = string(setFadeInAdj[setSelectedID]);   textBox_fadeIn_value = string(setFadeInAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_fadeIn = 0 }
@@ -2221,9 +2345,10 @@ if textBox_fadeIn == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318, ey+11, string(fadeIn))
+	if setSelectedID == -1 draw_text(1318, ey+11, string(fadeIn))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+string_width(string(fadeIn)), ey-9, 1320+string_width(string(fadeIn)), ey+7, 2)
+		draw_line_width(1318+2+string_width(string(fadeIn)), ey-9, 1318+2+string_width(string(fadeIn)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2249,7 +2374,6 @@ if textBox_fadeIn == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		fadeIn = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2260,7 +2384,20 @@ if textBox_fadeIn == 1
 	textBox_fadeIn_value = str
 
 	if real(textBox_fadeIn_value) > 40 { textBox_fadeIn_value="40"; str="40" }
-	fadeIn = clamp(real(textBox_fadeIn_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setFadeInAdj[setSelectedID] = clamp(real(textBox_fadeIn_value), 1, 40)
+		setFadeInOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		fadeIn = clamp(real(textBox_fadeIn_value), 1, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setFadeInOverrode[setChange] != 1 setFadeInAdj[setChange] = fadeIn
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2276,6 +2413,7 @@ var ex   = 1198 + 60
 var ey   = 436 + (28*12)
 var sly  = ey
 var slx  = ex + fadeOut
+if setSelectedID != -1 slx = ex + setFadeOutAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -2287,15 +2425,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_fadeOut
 {
-	over    = 1
-	slx     = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	fadeOut = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setFadeOutAdj[setSelectedID] = clamp(slx-ex, 1, 40)
+		setFadeOutOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		fadeOut = clamp(slx-ex, 1, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setFadeOutOverrode[setChange] != 1 setFadeOutAdj[setChange] = fadeOut
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setFadeOutOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318+34, ey+11, string(fadeOut))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeOut), sly);                        draw_text(1318+34, ey+11, string(fadeOut)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeOutAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
@@ -2303,9 +2456,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                   = string(fadeOut)
-		textBox_fadeOut       = 1
-		textBox_fadeOut_value = string(fadeOut)
+		textBox_fadeOut = 1
+		if setSelectedID == -1 { str = string(fadeOut);                        textBox_fadeOut_value = string(fadeOut) }
+		if setSelectedID != -1 { str = string(setFadeOutAdj[setSelectedID]);   textBox_fadeOut_value = string(setFadeOutAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_fadeOut = 0 }
@@ -2314,9 +2467,10 @@ if textBox_fadeOut == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318+34, ey+11, string(fadeOut))
+	if setSelectedID == -1 draw_text(1318+34, ey+11, string(fadeOut))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+34+string_width(string(fadeOut)), ey-9, 1320+34+string_width(string(fadeOut)), ey+7, 2)
+		draw_line_width(1318+34+2+string_width(string(fadeOut)), ey-9, 1318+34+2+string_width(string(fadeOut)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2342,7 +2496,6 @@ if textBox_fadeOut == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		fadeOut = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2353,7 +2506,20 @@ if textBox_fadeOut == 1
 	textBox_fadeOut_value = str
 
 	if real(textBox_fadeOut_value) > 40 { textBox_fadeOut_value="40"; str="40" }
-	fadeOut = clamp(real(textBox_fadeOut_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setFadeOutAdj[setSelectedID] = clamp(real(textBox_fadeOut_value), 1, 40)
+		setFadeOutOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		fadeOut = clamp(real(textBox_fadeOut_value), 1, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setFadeOutOverrode[setChange] != 1 setFadeOutAdj[setChange] = fadeOut
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2364,8 +2530,8 @@ if textBox_fadeOut == 1
 
 // ============================================================
 // DUAL SLIDERS: NOISE AMOUNT + NOISE FREQUENCY  (V1.90)
-// Row 13, directly under Fading.
-// Amount 0 = off. Above 0 enables the per-point three-octave deviation.
+// Row 13, directly under Fading. Amount 0 = off.
+// V1.91 - now per-set overridable
 // ============================================================
 
 // ---- Noise Amount (left) ----
@@ -2376,6 +2542,7 @@ var ex   = 1198
 var ey   = 436 + (28*13)
 var sly  = ey
 var slx  = ex + noiseAmt
+if setSelectedID != -1 slx = ex + setNoiseAmtAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -2387,15 +2554,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_noiseAmt
 {
-	over     = 1
-	slx      = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	noiseAmt = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setNoiseAmtAdj[setSelectedID] = clamp(slx-ex, 0, 40)
+		setNoiseAmtOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		noiseAmt = clamp(slx-ex, 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setNoiseAmtOverrode[setChange] != 1 setNoiseAmtAdj[setChange] = noiseAmt
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setNoiseAmtOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318, ey+11, string(noiseAmt))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseAmt), sly);                        draw_text(1318, ey+11, string(noiseAmt)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseAmtAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
@@ -2403,9 +2585,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                    = string(noiseAmt)
-		textBox_noiseAmt       = 1
-		textBox_noiseAmt_value = string(noiseAmt)
+		textBox_noiseAmt = 1
+		if setSelectedID == -1 { str = string(noiseAmt);                        textBox_noiseAmt_value = string(noiseAmt) }
+		if setSelectedID != -1 { str = string(setNoiseAmtAdj[setSelectedID]);   textBox_noiseAmt_value = string(setNoiseAmtAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_noiseAmt = 0 }
@@ -2414,9 +2596,10 @@ if textBox_noiseAmt == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318, ey+11, string(noiseAmt))
+	if setSelectedID == -1 draw_text(1318, ey+11, string(noiseAmt))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+string_width(string(noiseAmt)), ey-9, 1320+string_width(string(noiseAmt)), ey+7, 2)
+		draw_line_width(1318+2+string_width(string(noiseAmt)), ey-9, 1318+2+string_width(string(noiseAmt)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2442,7 +2625,6 @@ if textBox_noiseAmt == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		noiseAmt = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2453,7 +2635,20 @@ if textBox_noiseAmt == 1
 	textBox_noiseAmt_value = str
 
 	if real(textBox_noiseAmt_value) > 40 { textBox_noiseAmt_value="40"; str="40" }
-	noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setNoiseAmtAdj[setSelectedID] = clamp(real(textBox_noiseAmt_value), 0, 40)
+		setNoiseAmtOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setNoiseAmtOverrode[setChange] != 1 setNoiseAmtAdj[setChange] = noiseAmt
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2469,6 +2664,7 @@ var ex   = 1198 + 60
 var ey   = 436 + (28*13)
 var sly  = ey
 var slx  = ex + noiseFreq
+if setSelectedID != -1 slx = ex + setNoiseFreqAdj[setSelectedID]
 
 if mouse_x >= ex and mouse_x <= ex+40
 {
@@ -2480,15 +2676,30 @@ if mouse_x >= ex and mouse_x <= ex+40
 
 if mouse_check_button(mb_left) && slider_interract_noiseFreq
 {
-	over      = 1
-	slx       = clamp(mouse_x, ex, ex+40); pleaseGen = true
-	noiseFreq = clamp(slx-ex, 0, 40)
+	over = 1
+	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
+
+	if setSelectedID != -1
+	{
+		setNoiseFreqAdj[setSelectedID] = clamp(slx-ex, 0, 40)
+		setNoiseFreqOverrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
+	}
+	else
+	{
+		noiseFreq = clamp(slx-ex, 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setNoiseFreqOverrode[setChange] != 1 setNoiseFreqAdj[setChange] = noiseFreq
+		}
+	}
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
+if (setSelectedID != -1 && setNoiseFreqOverrode[setSelectedID] != 0) draw_set_color(or_color)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1318+34, ey+11, string(noiseFreq))
+if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseFreq), sly);                        draw_text(1318+34, ey+11, string(noiseFreq)) }
+if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseFreqAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
 draw_set_color(c_white)
 
 if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
@@ -2496,9 +2707,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
 	if mouse_check_button_pressed(mb_left)
 	{
 		reset_textBoxes(); pleaseGen = true
-		str                     = string(noiseFreq)
-		textBox_noiseFreq       = 1
-		textBox_noiseFreq_value = string(noiseFreq)
+		textBox_noiseFreq = 1
+		if setSelectedID == -1 { str = string(noiseFreq);                        textBox_noiseFreq_value = string(noiseFreq) }
+		if setSelectedID != -1 { str = string(setNoiseFreqAdj[setSelectedID]);   textBox_noiseFreq_value = string(setNoiseFreqAdj[setSelectedID]) }
 	}
 }
 else { if mouse_check_button_pressed(mb_left) textBox_noiseFreq = 0 }
@@ -2507,9 +2718,10 @@ if textBox_noiseFreq == 1
 {
 	draw_set_color(c_black)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-	draw_text(1318+34, ey+11, string(noiseFreq))
+	if setSelectedID == -1 draw_text(1318+34, ey+11, string(noiseFreq))
+	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
-		draw_line_width(1320+34+string_width(string(noiseFreq)), ey-9, 1320+34+string_width(string(noiseFreq)), ey+7, 2)
+		draw_line_width(1318+34+2+string_width(string(noiseFreq)), ey-9, 1318+34+2+string_width(string(noiseFreq)), ey+7, 2)
 	draw_set_color(c_white)
 
 	#region // Numpad input
@@ -2535,7 +2747,6 @@ if textBox_noiseFreq == 1
 	{
 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
 			str += keyboard_lastchar
-		noiseFreq = real(str)
 		if keyboard_lastkey == 8
 		{
 			str = string_copy(str, 1, string_length(str)-1)
@@ -2546,7 +2757,20 @@ if textBox_noiseFreq == 1
 	textBox_noiseFreq_value = str
 
 	if real(textBox_noiseFreq_value) > 40 { textBox_noiseFreq_value="40"; str="40" }
-	noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
+
+	if setSelectedID != -1
+	{
+		setNoiseFreqAdj[setSelectedID] = clamp(real(textBox_noiseFreq_value), 0, 40)
+		setNoiseFreqOverrode[setSelectedID] = 1
+	}
+	else
+	{
+		noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
+		for (setChange = 0; setChange < 12; setChange++)
+		{
+			if setNoiseFreqOverrode[setChange] != 1 setNoiseFreqAdj[setChange] = noiseFreq
+		}
+	}
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
@@ -2585,6 +2809,7 @@ if mouse_check_button(mb_left) && slider_interract_length
 	{
 		strandLengthOverride[setSelectedID] = clamp(slx-ex, 0, 100) * 38
 		setLengthOverrode[setSelectedID]    = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -2713,6 +2938,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer1
 	{
 		strandSetMixerAdj1[setSelectedID]    = clamp(slx-ex, 0, 40)
 		setMixerAmt1Overrode[setSelectedID]  = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -2835,6 +3061,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer1_offset
 	{
 		strandSetMixerOffsetAdj1[setSelectedID] = clamp(slx-ex, 0, 40)
 		setMixerOfs1Overrode[setSelectedID]     = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -2952,6 +3179,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer2
 	{
 		strandSetMixerAdj2[setSelectedID]   = clamp(slx-ex, 0, 40)
 		setMixerAmt2Overrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -3067,6 +3295,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer2_offset
 	{
 		strandSetMixerOffsetAdj2[setSelectedID] = clamp(slx-ex, 0, 40)
 		setMixerOfs2Overrode[setSelectedID]     = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -3184,6 +3413,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer3
 	{
 		strandSetMixerAdj3[setSelectedID]   = clamp(slx-ex, 0, 40)
 		setMixerAmt3Overrode[setSelectedID] = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -3299,6 +3529,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer3_offset
 	{
 		strandSetMixerOffsetAdj3[setSelectedID] = clamp(slx-ex, 0, 40)
 		setMixerOfs3Overrode[setSelectedID]     = 1
+		localUpdateSet = setSelectedID
 	}
 	else
 	{
@@ -4241,6 +4472,29 @@ if uiExtras == 1
 			draw_circle(1112+(scan*80), 1051, 3, 0)
 			draw_circle(1120+(scan*7),  659,  2, 0)
 		}
+
+		// V1.91 - the remaining notched rows. Row y = 436 + (28*row).
+		// Thick Rng row 9, Thick Adj row 10, Thick Var row 11,
+		// Fading row 12, Noise row 13.
+		draw_set_color(blu_color)
+		if setThickMinOverrode[scan] != 0 or setThickMaxOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 688, 2, 0)
+
+		draw_set_color(grn_color)
+		if setRootThickOverrode[scan] != 0 or setTipThickOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 716, 2, 0)
+
+		draw_set_color(pur_color)
+		if setThickVaryOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 744, 2, 0)
+
+		draw_set_color(yel_color)
+		if setFadeInOverrode[scan] != 0 or setFadeOutOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 772, 2, 0)
+
+		draw_set_color(red_color)
+		if setNoiseAmtOverrode[scan] != 0 or setNoiseFreqOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 800, 2, 0)
 	}
 }
 
@@ -4379,7 +4633,7 @@ if firstTime and skipIntro == 0
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.90  -  Noise: Amount + Frequency")
+	draw_text(_cx, _ct + 158, "New in 1.91  -  Per-set overrides on every notched slider")
 
 	if demoMode == 1
 	{

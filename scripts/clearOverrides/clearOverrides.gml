@@ -35,6 +35,17 @@ for (a=0;a<20;a++)
 	setRootColOverrode[a]=0
 	setTipColOverrode[a]=0
 
+	// V1.91 - thickness / fade / noise per-set override flags
+	setThickMinOverrode[a]=0
+	setThickMaxOverrode[a]=0
+	setTipThickOverrode[a]=0
+	setRootThickOverrode[a]=0
+	setThickVaryOverrode[a]=0
+	setFadeInOverrode[a]=0
+	setFadeOutOverrode[a]=0
+	setNoiseAmtOverrode[a]=0
+	setNoiseFreqOverrode[a]=0
+
 	}
 	
 for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
@@ -66,7 +77,18 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
 	strandSetWaveFreqMaxAdj[s]=10 // default 10
 	strandSetVariAdj[s]=6 // default 6
 	strandSetSpaceAdj[s]=21 // distancings=21
-	
-	
+
+	// V1.91 - seed the new per-set arrays from the current globals so a project
+	// saved before 1.91 still renders exactly as it did.
+	setThickMinAdj[s]=minScale
+	setThickMaxAdj[s]=maxScale
+	setTipThickAdj[s]=tipThick
+	setRootThickAdj[s]=rootThick
+	setThickVaryAdj[s]=thickVary
+	setFadeInAdj[s]=fadeIn
+	setFadeOutAdj[s]=fadeOut
+	setNoiseAmtAdj[s]=noiseAmt
+	setNoiseFreqAdj[s]=noiseFreq
+
 	}
 }

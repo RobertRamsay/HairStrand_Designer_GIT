@@ -159,8 +159,8 @@ if keyboard_check_pressed(ord("L")) and fileCustom!="" and file_exists(fileCusto
 	forceUpdate=1
 	
 	// The loaded header was needed for compatibility checks above. From this
-	// point onward this running 1.90 build saves projects as the current format.
-	mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
+	// point onward this running 1.91 build saves projects as the current format.
+	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
 	}
 
 if bkCol_active==1 

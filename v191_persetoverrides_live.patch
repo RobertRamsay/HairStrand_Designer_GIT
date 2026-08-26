@@ -1,0 +1,1766 @@
+diff --git a/objects/g/KeyPress_83.gml b/objects/g/KeyPress_83.gml
+index d19bfd6..48245a7 100644
+--- a/objects/g/KeyPress_83.gml
++++ b/objects/g/KeyPress_83.gml
+@@ -6,7 +6,7 @@ if instance_exists(obj_surfaceDweller)
+         {
+         if canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             alarm[1]=2
+diff --git a/objects/g/Step_1.gml b/objects/g/Step_1.gml
+index 4076d83..7797a9e 100644
+--- a/objects/g/Step_1.gml
++++ b/objects/g/Step_1.gml
+@@ -16,7 +16,7 @@ if instance_exists(obj_surfaceDweller)
+         // then let Alarm 1 append the authoritative colour block next frame.
+         if keyboard_check_pressed(ord("S")) and canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             // Begin Step runs before Alarm processing, so use 2 to guarantee the
+diff --git a/objects/obj_copy/Draw_64.gml b/objects/obj_copy/Draw_64.gml
+index 803950b..67ab277 100644
+--- a/objects/obj_copy/Draw_64.gml
++++ b/objects/obj_copy/Draw_64.gml
+@@ -143,7 +143,23 @@ if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
+         setColVarAOverrode : _o.setColVarAOverrode[_src],
+         setColVarBOverrode : _o.setColVarBOverrode[_src],
+         setRootColOverrode : _o.setRootColOverrode[_src],
+-        setTipColOverrode : _o.setTipColOverrode[_src]
++        setTipColOverrode : _o.setTipColOverrode[_src],
++
++        // V1.91 per-set thickness / fade / noise
++        setTipThickAdj : _o.setTipThickAdj[_src],
++        setTipThickOverrode : _o.setTipThickOverrode[_src],
++        setRootThickAdj : _o.setRootThickAdj[_src],
++        setRootThickOverrode : _o.setRootThickOverrode[_src],
++        setThickVaryAdj : _o.setThickVaryAdj[_src],
++        setThickVaryOverrode : _o.setThickVaryOverrode[_src],
++        setFadeInAdj : _o.setFadeInAdj[_src],
++        setFadeInOverrode : _o.setFadeInOverrode[_src],
++        setFadeOutAdj : _o.setFadeOutAdj[_src],
++        setFadeOutOverrode : _o.setFadeOutOverrode[_src],
++        setNoiseAmtAdj : _o.setNoiseAmtAdj[_src],
++        setNoiseAmtOverrode : _o.setNoiseAmtOverrode[_src],
++        setNoiseFreqAdj : _o.setNoiseFreqAdj[_src],
++        setNoiseFreqOverrode : _o.setNoiseFreqOverrode[_src]
+     }
+ 
+     copyBufferReady = 1
+@@ -216,6 +232,22 @@ and copyBufferReady and _selected != -1
+     _o.setRootColOverrode[_dst] = copyBuffer.setRootColOverrode
+     _o.setTipColOverrode[_dst] = copyBuffer.setTipColOverrode
+ 
++    // V1.91 per-set thickness / fade / noise
++    _o.setTipThickAdj[_dst] = copyBuffer.setTipThickAdj
++    _o.setTipThickOverrode[_dst] = copyBuffer.setTipThickOverrode
++    _o.setRootThickAdj[_dst] = copyBuffer.setRootThickAdj
++    _o.setRootThickOverrode[_dst] = copyBuffer.setRootThickOverrode
++    _o.setThickVaryAdj[_dst] = copyBuffer.setThickVaryAdj
++    _o.setThickVaryOverrode[_dst] = copyBuffer.setThickVaryOverrode
++    _o.setFadeInAdj[_dst] = copyBuffer.setFadeInAdj
++    _o.setFadeInOverrode[_dst] = copyBuffer.setFadeInOverrode
++    _o.setFadeOutAdj[_dst] = copyBuffer.setFadeOutAdj
++    _o.setFadeOutOverrode[_dst] = copyBuffer.setFadeOutOverrode
++    _o.setNoiseAmtAdj[_dst] = copyBuffer.setNoiseAmtAdj
++    _o.setNoiseAmtOverrode[_dst] = copyBuffer.setNoiseAmtOverrode
++    _o.setNoiseFreqAdj[_dst] = copyBuffer.setNoiseFreqAdj
++    _o.setNoiseFreqOverrode[_dst] = copyBuffer.setNoiseFreqOverrode
++
+     // The colour picker exposes the selected set via custom*. Keep it in sync,
+     // but also update the last-value trackers so Step_0 does not mistake Paste
+     // for a new user colour edit and alter the override flags again.
+diff --git a/objects/obj_save/Create_0.gml b/objects/obj_save/Create_0.gml
+index 92ac9c4..5d18e13 100644
+--- a/objects/obj_save/Create_0.gml
++++ b/objects/obj_save/Create_0.gml
+@@ -1,7 +1,7 @@
+ /// @description Insert description here
+ // You can write your code in this editor
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ 
+diff --git a/objects/obj_surfaceDweller/Alarm_1.gml b/objects/obj_surfaceDweller/Alarm_1.gml
+index 15e222f..93a3e55 100644
+--- a/objects/obj_surfaceDweller/Alarm_1.gml
++++ b/objects/obj_surfaceDweller/Alarm_1.gml
+@@ -228,7 +228,7 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
+     pleaseGen=true
+ 
+     // This running build always saves the current project format afterwards.
+-    mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++    mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+ 
+     // Synchronise the Begin-Step snapshot so the restore itself does not cause
+     // an unnecessary autosave on the following frame.
+diff --git a/objects/obj_surfaceDweller/Create_0.gml b/objects/obj_surfaceDweller/Create_0.gml
+index a3818b5..d66effc 100644
+--- a/objects/obj_surfaceDweller/Create_0.gml
++++ b/objects/obj_surfaceDweller/Create_0.gml
+@@ -2,7 +2,7 @@ draw_set_color(c_white);
+ 
+ demoMode=0 // for DEMO mode
+ demoInfo="DEMO (no save options)"
+-versionHSD="1.90.0.0"
++versionHSD="1.91.0.0"
+ 
+ showHeart=0
+ uiExtras=1 // little dots for overrides.
+@@ -100,6 +100,17 @@ readyToCheckAutoloads=0
+ // The splash owns the "load a previous session?" decision now, so the old
+ // show_question() popup in doMainStep has gone.
+ splashAutosaveFound=-1
++
++// V1.91 - which set (if any) the pending preview rebuild is limited to.
++// -1 = rebuild every set, as before. A per-set slider edit sets this to the
++// selected set so mainCalc only clears and redraws that one preview surface.
++localUpdateSet=-1
++liveLocalEvery=3   // rebuild the selected set every N frames while dragging
++liveLocalTick=3
++
++// Set by the manual (L) loader only when a project file was really read, so a
++// cancelled file dialog cannot trigger a full preview rebuild.
++v191ManualLoadOk=0
+ yRanRange=20 // new is 1.53
+ 
+ editingPath[0]=StragglePath_A1
+@@ -382,6 +393,24 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
+ 	setThickMinAdj[s]=minScale
+ 	setThickMaxAdj[s]=maxScale
+ 
++	// New in 1.91 - every notched slider row can now be overridden per set.
++	// These arrays are always populated: a global slider writes through to
++	// every set that is not overridden, so the calc scripts just read [set].
++	setTipThickOverrode[s]=0
++	setRootThickOverrode[s]=0
++	setThickVaryOverrode[s]=0
++	setFadeInOverrode[s]=0
++	setFadeOutOverrode[s]=0
++	setNoiseAmtOverrode[s]=0
++	setNoiseFreqOverrode[s]=0
++
++	setFadeInAdj[s]=fadeIn
++	setFadeOutAdj[s]=fadeOut
++	setNoiseAmtAdj[s]=noiseAmt
++	setNoiseFreqAdj[s]=noiseFreq
++	// setTipThickAdj / setRootThickAdj / setThickVaryAdj are seeded just after
++	// tipThick / rootThick / thickVary are declared, further down this event.
++
+ 	
+ 	// new in 1.70.0 (implemented 21/5/23 RR)
+ 	
+@@ -464,6 +493,14 @@ sc=1
+ tipThick=10
+ rootThick=6
+ thickVary=3
++
++// V1.91 - seed the per-set thickness arrays now that their globals exist.
++for (s=0;s<maxSets;s++)
++	{
++	setTipThickAdj[s]=tipThick
++	setRootThickAdj[s]=rootThick
++	setThickVaryAdj[s]=thickVary
++	}
+ colorMode=1 // rgb=0 hsv=1 grey=2
+ a=1
+ 
+@@ -660,7 +697,7 @@ loading=false
+ 
+ theFile=""
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index 6fecf91..a863c7b 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -399,6 +399,12 @@ if sprite_exists(ghostSprite) and !mouse_check_button(mb_right)
+ 
+ mainCalc() // === MAIN STRAND CALCULATION ===
+ 
++// V1.91 - localUpdateSet describes the per-set edit made on the PREVIOUS frame.
++// mainCalc() has just consumed it, and the slider blocks further down this event
++// will set it again if the user is still editing one set. Clearing it here is
++// what keeps a global edit from being mistaken for a local one.
++localUpdateSet = -1
++
+ draw_set_color(c_white)
+ if pleaseGen draw_sprite(spr_genMessage, 0, 512, 32)
+ 
+@@ -558,6 +564,7 @@ if mouse_check_button(mb_left) && slider_interract_strands
+ 	{
+ 		strandCountOverride[setSelectedID] = clamp(slx-ex, 0, 100)
+ 		setCountOverrode[setSelectedID]    = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -693,6 +700,7 @@ if mouse_check_button(mb_left) && slider_interract_distancings
+ 	{
+ 		strandSetSpaceAdj[setSelectedID]   = clamp(slx-ex, 0, 100)
+ 		setSpacingOverrode[setSelectedID]  = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -915,6 +923,7 @@ if mouse_check_button(mb_left) && slider_interract_wavyness
+ 	{
+ 		strandSetWavynessAdj[setSelectedID]  = clamp(slx-ex, 0, 100)
+ 		setWaveynessOverrode[setSelectedID]  = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1042,6 +1051,7 @@ if mouse_check_button(mb_left) && slider_interract_minFreq
+ 	{
+ 		strandSetWaveFreqMinAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
+ 		setWaveFreqMinOverrode[setSelectedID]   = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1164,6 +1174,7 @@ if mouse_check_button(mb_left) && slider_interract_maxFreq
+ 	{
+ 		strandSetWaveFreqMaxAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
+ 		setWaveFreqMaxOverrode[setSelectedID]   = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1290,6 +1301,7 @@ if mouse_check_button(mb_left) && slider_interract_tapering
+ 	{
+ 		strandSetTaperAdj[setSelectedID]  = clamp(slx-ex, 0, 100)
+ 		setTaperOverrode[setSelectedID]   = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1415,6 +1427,7 @@ if mouse_check_button(mb_left) && slider_interract_lifeVariant
+ 	{
+ 		strandSetVariAdj[setSelectedID]  = clamp(slx-ex, 1, 100)
+ 		setVariOverrode[setSelectedID]   = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1540,6 +1553,7 @@ if mouse_check_button(mb_left) && slider_interract_yRanRange
+ 	{
+ 		strandYRanRange[setSelectedID]         = clamp(slx-ex, 1, 100)
+ 		strandYRanRangeOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1665,6 +1679,7 @@ if mouse_check_button(mb_left) && slider_interract_minScale
+ 	{
+ 		setThickMinAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
+ 		setThickMinOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1786,6 +1801,7 @@ if mouse_check_button(mb_left) && slider_interract_maxScale
+ 	{
+ 		setThickMaxAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
+ 		setThickMaxOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -1886,6 +1902,7 @@ if textBox_maxScale == 1
+ 
+ // ============================================================
+ // DUAL SLIDERS: TIP THICK + ROOT THICK (root/tip thickness range)
++// V1.91 - now per-set overridable (the row carries a notch in the panel art)
+ // ============================================================
+ 
+ // ---- Tip Thick (left) ----
+@@ -1896,6 +1913,7 @@ var ex   = 1198
+ var ey   = 436 + (28*10)
+ var sly  = ey
+ var slx  = ex + tipThick
++if setSelectedID != -1 slx = ex + setTipThickAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -1907,15 +1925,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_tipThick
+ {
+-	over     = 1
+-	slx      = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	tipThick = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setTipThickAdj[setSelectedID] = clamp(slx-ex, 0, 40)
++		setTipThickOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		tipThick = clamp(slx-ex, 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setTipThickOverrode[setChange] != 1 setTipThickAdj[setChange] = tipThick
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setTipThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318, ey+11, string(tipThick))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+tipThick), sly);                        draw_text(1318, ey+11, string(tipThick)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setTipThickAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+@@ -1923,9 +1956,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                    = string(tipThick)
+-		textBox_tipThick       = 1
+-		textBox_tipThick_value = string(tipThick)
++		textBox_tipThick = 1
++		if setSelectedID == -1 { str = string(tipThick);                        textBox_tipThick_value = string(tipThick) }
++		if setSelectedID != -1 { str = string(setTipThickAdj[setSelectedID]);   textBox_tipThick_value = string(setTipThickAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_tipThick = 0 }
+@@ -1934,9 +1967,10 @@ if textBox_tipThick == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318, ey+11, string(tipThick))
++	if setSelectedID == -1 draw_text(1318, ey+11, string(tipThick))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(tipThick)), ey-9, 1320+string_width(string(tipThick)), ey+7, 2)
++		draw_line_width(1318+2+string_width(string(tipThick)), ey-9, 1318+2+string_width(string(tipThick)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -1962,7 +1996,6 @@ if textBox_tipThick == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		tipThick = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -1973,7 +2006,20 @@ if textBox_tipThick == 1
+ 	textBox_tipThick_value = str
+ 
+ 	if real(textBox_tipThick_value) > 40 { textBox_tipThick_value="40"; str="40" }
+-	tipThick = clamp(real(textBox_tipThick_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setTipThickAdj[setSelectedID] = clamp(real(textBox_tipThick_value), 0, 40)
++		setTipThickOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		tipThick = clamp(real(textBox_tipThick_value), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setTipThickOverrode[setChange] != 1 setTipThickAdj[setChange] = tipThick
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -1989,6 +2035,7 @@ var ex   = 1198 + 60
+ var ey   = 436 + (28*10)
+ var sly  = ey
+ var slx  = ex + rootThick
++if setSelectedID != -1 slx = ex + setRootThickAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -2000,15 +2047,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_rootThick
+ {
+-	over      = 1
+-	slx       = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	rootThick = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setRootThickAdj[setSelectedID] = clamp(slx-ex, 0, 40)
++		setRootThickOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		rootThick = clamp(slx-ex, 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setRootThickOverrode[setChange] != 1 setRootThickAdj[setChange] = rootThick
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setRootThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318+34, ey+11, string(rootThick))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+rootThick), sly);                        draw_text(1318+34, ey+11, string(rootThick)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setRootThickAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+@@ -2016,9 +2078,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                     = string(rootThick)
+-		textBox_rootThick       = 1
+-		textBox_rootThick_value = string(rootThick)
++		textBox_rootThick = 1
++		if setSelectedID == -1 { str = string(rootThick);                        textBox_rootThick_value = string(rootThick) }
++		if setSelectedID != -1 { str = string(setRootThickAdj[setSelectedID]);   textBox_rootThick_value = string(setRootThickAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_rootThick = 0 }
+@@ -2027,9 +2089,10 @@ if textBox_rootThick == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318+34, ey+11, string(rootThick))
++	if setSelectedID == -1 draw_text(1318+34, ey+11, string(rootThick))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(rootThick)), ey-9, 1320+34+string_width(string(rootThick)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(string(rootThick)), ey-9, 1318+34+2+string_width(string(rootThick)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2055,7 +2118,6 @@ if textBox_rootThick == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		rootThick = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2066,7 +2128,20 @@ if textBox_rootThick == 1
+ 	textBox_rootThick_value = str
+ 
+ 	if real(textBox_rootThick_value) > 40 { textBox_rootThick_value="40"; str="40" }
+-	rootThick = clamp(real(textBox_rootThick_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setRootThickAdj[setSelectedID] = clamp(real(textBox_rootThick_value), 0, 40)
++		setRootThickOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		rootThick = clamp(real(textBox_rootThick_value), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setRootThickOverrode[setChange] != 1 setRootThickAdj[setChange] = rootThick
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2077,7 +2152,10 @@ if textBox_rootThick == 1
+ 
+ // ============================================================
+ // SLIDER: THICK VARY (thickness variance)
++// V1.91 - now per-set overridable
+ // ============================================================
++
++// ---- Thick Vary ----
+ #region
+ 
+ var over = 0
+@@ -2085,6 +2163,7 @@ var ex   = 1198
+ var ey   = 436 + (28*11)
+ var sly  = ey
+ var slx  = ex + thickVary
++if setSelectedID != -1 slx = ex + setThickVaryAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+100
+ {
+@@ -2096,15 +2175,30 @@ if mouse_x >= ex and mouse_x <= ex+100
+ 
+ if mouse_check_button(mb_left) && slider_interract_thickVary
+ {
+-	over      = 1
+-	slx       = clamp(mouse_x, ex, ex+100); pleaseGen = true
+-	thickVary = clamp(slx-ex, 0, 100)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+100); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setThickVaryAdj[setSelectedID] = clamp(slx-ex, 0, 100)
++		setThickVaryOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		thickVary = clamp(slx-ex, 0, 100)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setThickVaryOverrode[setChange] != 1 setThickVaryAdj[setChange] = thickVary
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setThickVaryOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318, ey+11, string(thickVary))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+thickVary), sly);                        draw_text(1318, ey+11, string(thickVary)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setThickVaryAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+@@ -2112,9 +2206,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                    = string(thickVary)
+-		textBox_thickVary      = 1
+-		textBox_thickVary_value = string(thickVary)
++		textBox_thickVary = 1
++		if setSelectedID == -1 { str = string(thickVary);                        textBox_thickVary_value = string(thickVary) }
++		if setSelectedID != -1 { str = string(setThickVaryAdj[setSelectedID]);   textBox_thickVary_value = string(setThickVaryAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_thickVary = 0 }
+@@ -2123,9 +2217,10 @@ if textBox_thickVary == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318, ey+11, string(thickVary))
++	if setSelectedID == -1 draw_text(1318, ey+11, string(thickVary))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(thickVary)), ey-9, 1320+string_width(string(thickVary)), ey+7, 2)
++		draw_line_width(1318+2+string_width(string(thickVary)), ey-9, 1318+2+string_width(string(thickVary)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2151,7 +2246,6 @@ if textBox_thickVary == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		thickVary = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2162,7 +2256,20 @@ if textBox_thickVary == 1
+ 	textBox_thickVary_value = str
+ 
+ 	if real(textBox_thickVary_value) > 100 { textBox_thickVary_value="100"; str="100" }
+-	thickVary = clamp(real(textBox_thickVary_value), 0, 100)
++
++	if setSelectedID != -1
++	{
++		setThickVaryAdj[setSelectedID] = clamp(real(textBox_thickVary_value), 0, 100)
++		setThickVaryOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		thickVary = clamp(real(textBox_thickVary_value), 0, 100)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setThickVaryOverrode[setChange] != 1 setThickVaryAdj[setChange] = thickVary
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2173,6 +2280,7 @@ if textBox_thickVary == 1
+ 
+ // ============================================================
+ // DUAL SLIDERS: FADE IN + FADE OUT
++// V1.91 - now per-set overridable
+ // ============================================================
+ 
+ // ---- Fade In (left) ----
+@@ -2183,6 +2291,7 @@ var ex   = 1198
+ var ey   = 436 + (28*12)
+ var sly  = ey
+ var slx  = ex + fadeIn
++if setSelectedID != -1 slx = ex + setFadeInAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -2194,15 +2303,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_fadeIn
+ {
+-	over   = 1
+-	slx    = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	fadeIn = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setFadeInAdj[setSelectedID] = clamp(slx-ex, 1, 40)
++		setFadeInOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		fadeIn = clamp(slx-ex, 1, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setFadeInOverrode[setChange] != 1 setFadeInAdj[setChange] = fadeIn
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setFadeInOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318, ey+11, string(fadeIn))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeIn), sly);                        draw_text(1318, ey+11, string(fadeIn)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeInAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+@@ -2210,9 +2334,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                  = string(fadeIn)
+-		textBox_fadeIn       = 1
+-		textBox_fadeIn_value = string(fadeIn)
++		textBox_fadeIn = 1
++		if setSelectedID == -1 { str = string(fadeIn);                        textBox_fadeIn_value = string(fadeIn) }
++		if setSelectedID != -1 { str = string(setFadeInAdj[setSelectedID]);   textBox_fadeIn_value = string(setFadeInAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_fadeIn = 0 }
+@@ -2221,9 +2345,10 @@ if textBox_fadeIn == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318, ey+11, string(fadeIn))
++	if setSelectedID == -1 draw_text(1318, ey+11, string(fadeIn))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(fadeIn)), ey-9, 1320+string_width(string(fadeIn)), ey+7, 2)
++		draw_line_width(1318+2+string_width(string(fadeIn)), ey-9, 1318+2+string_width(string(fadeIn)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2249,7 +2374,6 @@ if textBox_fadeIn == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		fadeIn = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2260,7 +2384,20 @@ if textBox_fadeIn == 1
+ 	textBox_fadeIn_value = str
+ 
+ 	if real(textBox_fadeIn_value) > 40 { textBox_fadeIn_value="40"; str="40" }
+-	fadeIn = clamp(real(textBox_fadeIn_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setFadeInAdj[setSelectedID] = clamp(real(textBox_fadeIn_value), 1, 40)
++		setFadeInOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		fadeIn = clamp(real(textBox_fadeIn_value), 1, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setFadeInOverrode[setChange] != 1 setFadeInAdj[setChange] = fadeIn
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2276,6 +2413,7 @@ var ex   = 1198 + 60
+ var ey   = 436 + (28*12)
+ var sly  = ey
+ var slx  = ex + fadeOut
++if setSelectedID != -1 slx = ex + setFadeOutAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -2287,15 +2425,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_fadeOut
+ {
+-	over    = 1
+-	slx     = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	fadeOut = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setFadeOutAdj[setSelectedID] = clamp(slx-ex, 1, 40)
++		setFadeOutOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		fadeOut = clamp(slx-ex, 1, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setFadeOutOverrode[setChange] != 1 setFadeOutAdj[setChange] = fadeOut
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setFadeOutOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318+34, ey+11, string(fadeOut))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeOut), sly);                        draw_text(1318+34, ey+11, string(fadeOut)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeOutAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+@@ -2303,9 +2456,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                   = string(fadeOut)
+-		textBox_fadeOut       = 1
+-		textBox_fadeOut_value = string(fadeOut)
++		textBox_fadeOut = 1
++		if setSelectedID == -1 { str = string(fadeOut);                        textBox_fadeOut_value = string(fadeOut) }
++		if setSelectedID != -1 { str = string(setFadeOutAdj[setSelectedID]);   textBox_fadeOut_value = string(setFadeOutAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_fadeOut = 0 }
+@@ -2314,9 +2467,10 @@ if textBox_fadeOut == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318+34, ey+11, string(fadeOut))
++	if setSelectedID == -1 draw_text(1318+34, ey+11, string(fadeOut))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(fadeOut)), ey-9, 1320+34+string_width(string(fadeOut)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(string(fadeOut)), ey-9, 1318+34+2+string_width(string(fadeOut)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2342,7 +2496,6 @@ if textBox_fadeOut == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		fadeOut = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2353,7 +2506,20 @@ if textBox_fadeOut == 1
+ 	textBox_fadeOut_value = str
+ 
+ 	if real(textBox_fadeOut_value) > 40 { textBox_fadeOut_value="40"; str="40" }
+-	fadeOut = clamp(real(textBox_fadeOut_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setFadeOutAdj[setSelectedID] = clamp(real(textBox_fadeOut_value), 1, 40)
++		setFadeOutOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		fadeOut = clamp(real(textBox_fadeOut_value), 1, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setFadeOutOverrode[setChange] != 1 setFadeOutAdj[setChange] = fadeOut
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2364,8 +2530,8 @@ if textBox_fadeOut == 1
+ 
+ // ============================================================
+ // DUAL SLIDERS: NOISE AMOUNT + NOISE FREQUENCY  (V1.90)
+-// Row 13, directly under Fading.
+-// Amount 0 = off. Above 0 enables the per-point three-octave deviation.
++// Row 13, directly under Fading. Amount 0 = off.
++// V1.91 - now per-set overridable
+ // ============================================================
+ 
+ // ---- Noise Amount (left) ----
+@@ -2376,6 +2542,7 @@ var ex   = 1198
+ var ey   = 436 + (28*13)
+ var sly  = ey
+ var slx  = ex + noiseAmt
++if setSelectedID != -1 slx = ex + setNoiseAmtAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -2387,15 +2554,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_noiseAmt
+ {
+-	over     = 1
+-	slx      = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	noiseAmt = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setNoiseAmtAdj[setSelectedID] = clamp(slx-ex, 0, 40)
++		setNoiseAmtOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		noiseAmt = clamp(slx-ex, 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setNoiseAmtOverrode[setChange] != 1 setNoiseAmtAdj[setChange] = noiseAmt
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setNoiseAmtOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318, ey+11, string(noiseAmt))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseAmt), sly);                        draw_text(1318, ey+11, string(noiseAmt)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseAmtAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+@@ -2403,9 +2585,9 @@ if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                    = string(noiseAmt)
+-		textBox_noiseAmt       = 1
+-		textBox_noiseAmt_value = string(noiseAmt)
++		textBox_noiseAmt = 1
++		if setSelectedID == -1 { str = string(noiseAmt);                        textBox_noiseAmt_value = string(noiseAmt) }
++		if setSelectedID != -1 { str = string(setNoiseAmtAdj[setSelectedID]);   textBox_noiseAmt_value = string(setNoiseAmtAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_noiseAmt = 0 }
+@@ -2414,9 +2596,10 @@ if textBox_noiseAmt == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318, ey+11, string(noiseAmt))
++	if setSelectedID == -1 draw_text(1318, ey+11, string(noiseAmt))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(noiseAmt)), ey-9, 1320+string_width(string(noiseAmt)), ey+7, 2)
++		draw_line_width(1318+2+string_width(string(noiseAmt)), ey-9, 1318+2+string_width(string(noiseAmt)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2442,7 +2625,6 @@ if textBox_noiseAmt == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		noiseAmt = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2453,7 +2635,20 @@ if textBox_noiseAmt == 1
+ 	textBox_noiseAmt_value = str
+ 
+ 	if real(textBox_noiseAmt_value) > 40 { textBox_noiseAmt_value="40"; str="40" }
+-	noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setNoiseAmtAdj[setSelectedID] = clamp(real(textBox_noiseAmt_value), 0, 40)
++		setNoiseAmtOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setNoiseAmtOverrode[setChange] != 1 setNoiseAmtAdj[setChange] = noiseAmt
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2469,6 +2664,7 @@ var ex   = 1198 + 60
+ var ey   = 436 + (28*13)
+ var sly  = ey
+ var slx  = ex + noiseFreq
++if setSelectedID != -1 slx = ex + setNoiseFreqAdj[setSelectedID]
+ 
+ if mouse_x >= ex and mouse_x <= ex+40
+ {
+@@ -2480,15 +2676,30 @@ if mouse_x >= ex and mouse_x <= ex+40
+ 
+ if mouse_check_button(mb_left) && slider_interract_noiseFreq
+ {
+-	over      = 1
+-	slx       = clamp(mouse_x, ex, ex+40); pleaseGen = true
+-	noiseFreq = clamp(slx-ex, 0, 40)
++	over = 1
++	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++
++	if setSelectedID != -1
++	{
++		setNoiseFreqAdj[setSelectedID] = clamp(slx-ex, 0, 40)
++		setNoiseFreqOverrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
++	}
++	else
++	{
++		noiseFreq = clamp(slx-ex, 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setNoiseFreqOverrode[setChange] != 1 setNoiseFreqAdj[setChange] = noiseFreq
++		}
++	}
+ }
+ 
+-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+ draw_set_color(c_gray)
++if (setSelectedID != -1 && setNoiseFreqOverrode[setSelectedID] != 0) draw_set_color(or_color)
+ draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-draw_text(1318+34, ey+11, string(noiseFreq))
++if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseFreq), sly);                        draw_text(1318+34, ey+11, string(noiseFreq)) }
++if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseFreqAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
+ draw_set_color(c_white)
+ 
+ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+@@ -2496,9 +2707,9 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+ 	if mouse_check_button_pressed(mb_left)
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+-		str                     = string(noiseFreq)
+-		textBox_noiseFreq       = 1
+-		textBox_noiseFreq_value = string(noiseFreq)
++		textBox_noiseFreq = 1
++		if setSelectedID == -1 { str = string(noiseFreq);                        textBox_noiseFreq_value = string(noiseFreq) }
++		if setSelectedID != -1 { str = string(setNoiseFreqAdj[setSelectedID]);   textBox_noiseFreq_value = string(setNoiseFreqAdj[setSelectedID]) }
+ 	}
+ }
+ else { if mouse_check_button_pressed(mb_left) textBox_noiseFreq = 0 }
+@@ -2507,9 +2718,10 @@ if textBox_noiseFreq == 1
+ {
+ 	draw_set_color(c_black)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318+34, ey+11, string(noiseFreq))
++	if setSelectedID == -1 draw_text(1318+34, ey+11, string(noiseFreq))
++	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(noiseFreq)), ey-9, 1320+34+string_width(string(noiseFreq)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(string(noiseFreq)), ey-9, 1318+34+2+string_width(string(noiseFreq)), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+@@ -2535,7 +2747,6 @@ if textBox_noiseFreq == 1
+ 	{
+ 		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 			str += keyboard_lastchar
+-		noiseFreq = real(str)
+ 		if keyboard_lastkey == 8
+ 		{
+ 			str = string_copy(str, 1, string_length(str)-1)
+@@ -2546,7 +2757,20 @@ if textBox_noiseFreq == 1
+ 	textBox_noiseFreq_value = str
+ 
+ 	if real(textBox_noiseFreq_value) > 40 { textBox_noiseFreq_value="40"; str="40" }
+-	noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
++
++	if setSelectedID != -1
++	{
++		setNoiseFreqAdj[setSelectedID] = clamp(real(textBox_noiseFreq_value), 0, 40)
++		setNoiseFreqOverrode[setSelectedID] = 1
++	}
++	else
++	{
++		noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setNoiseFreqOverrode[setChange] != 1 setNoiseFreqAdj[setChange] = noiseFreq
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -2585,6 +2809,7 @@ if mouse_check_button(mb_left) && slider_interract_length
+ 	{
+ 		strandLengthOverride[setSelectedID] = clamp(slx-ex, 0, 100) * 38
+ 		setLengthOverrode[setSelectedID]    = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -2713,6 +2938,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer1
+ 	{
+ 		strandSetMixerAdj1[setSelectedID]    = clamp(slx-ex, 0, 40)
+ 		setMixerAmt1Overrode[setSelectedID]  = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -2835,6 +3061,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer1_offset
+ 	{
+ 		strandSetMixerOffsetAdj1[setSelectedID] = clamp(slx-ex, 0, 40)
+ 		setMixerOfs1Overrode[setSelectedID]     = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -2952,6 +3179,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer2
+ 	{
+ 		strandSetMixerAdj2[setSelectedID]   = clamp(slx-ex, 0, 40)
+ 		setMixerAmt2Overrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -3067,6 +3295,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer2_offset
+ 	{
+ 		strandSetMixerOffsetAdj2[setSelectedID] = clamp(slx-ex, 0, 40)
+ 		setMixerOfs2Overrode[setSelectedID]     = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -3184,6 +3413,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer3
+ 	{
+ 		strandSetMixerAdj3[setSelectedID]   = clamp(slx-ex, 0, 40)
+ 		setMixerAmt3Overrode[setSelectedID] = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -3299,6 +3529,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer3_offset
+ 	{
+ 		strandSetMixerOffsetAdj3[setSelectedID] = clamp(slx-ex, 0, 40)
+ 		setMixerOfs3Overrode[setSelectedID]     = 1
++		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+@@ -4241,6 +4472,29 @@ if uiExtras == 1
+ 			draw_circle(1112+(scan*80), 1051, 3, 0)
+ 			draw_circle(1120+(scan*7),  659,  2, 0)
+ 		}
++
++		// V1.91 - the remaining notched rows. Row y = 436 + (28*row).
++		// Thick Rng row 9, Thick Adj row 10, Thick Var row 11,
++		// Fading row 12, Noise row 13.
++		draw_set_color(blu_color)
++		if setThickMinOverrode[scan] != 0 or setThickMaxOverrode[scan] != 0
++			draw_circle(1120+(scan*7), 688, 2, 0)
++
++		draw_set_color(grn_color)
++		if setRootThickOverrode[scan] != 0 or setTipThickOverrode[scan] != 0
++			draw_circle(1120+(scan*7), 716, 2, 0)
++
++		draw_set_color(pur_color)
++		if setThickVaryOverrode[scan] != 0
++			draw_circle(1120+(scan*7), 744, 2, 0)
++
++		draw_set_color(yel_color)
++		if setFadeInOverrode[scan] != 0 or setFadeOutOverrode[scan] != 0
++			draw_circle(1120+(scan*7), 772, 2, 0)
++
++		draw_set_color(red_color)
++		if setNoiseAmtOverrode[scan] != 0 or setNoiseFreqOverrode[scan] != 0
++			draw_circle(1120+(scan*7), 800, 2, 0)
+ 	}
+ }
+ 
+@@ -4379,7 +4633,7 @@ if firstTime and skipIntro == 0
+ 
+ 	// ---- what is new ----
+ 	draw_set_color(_accent)
+-	draw_text(_cx, _ct + 158, "New in 1.90  -  Noise: Amount + Frequency")
++	draw_text(_cx, _ct + 158, "New in 1.91  -  Per-set overrides on every notched slider")
+ 
+ 	if demoMode == 1
+ 	{
+diff --git a/objects/obj_surfaceDweller/KeyPress_76.gml b/objects/obj_surfaceDweller/KeyPress_76.gml
+index 9cd5a87..8aacaca 100644
+--- a/objects/obj_surfaceDweller/KeyPress_76.gml
++++ b/objects/obj_surfaceDweller/KeyPress_76.gml
+@@ -586,6 +586,8 @@ var tString="" ;// temp string for reading and analizing
+ 			
+ #endregion
+ 
++			v191ManualLoadOk=1
++
+ 			}
+ 			else
+ 			{
+@@ -620,6 +622,33 @@ canLoad=true
+ 				path_change_point(editingPath[2],a,pathLoadCx[a],pathLoadCy[a],100)
+ 				}
+ 			}
++
++// V1.91 - clearOverrides() ran BEFORE this event parsed the file, so the per-set
++// arrays were seeded from the OUTGOING globals. Re-seed them from the globals the
++// file just supplied, otherwise every render path keeps using the old project's
++// thickness / fade / noise while the UI shows the new values.
++// (doAutoLoad does this correctly already; only the manual L path needed it.)
++// Gated on an actual load: pressing L and then cancelling the file dialog must
++// not force a full rebuild, which would flash the whole preview blank.
++if v191ManualLoadOk==1
++	{
++	for (var _reseedSet=0;_reseedSet<maxSets;_reseedSet++)
++		{
++		if setThickMinOverrode[_reseedSet]==0  setThickMinAdj[_reseedSet]=minScale
++		if setThickMaxOverrode[_reseedSet]==0  setThickMaxAdj[_reseedSet]=maxScale
++		if setTipThickOverrode[_reseedSet]==0  setTipThickAdj[_reseedSet]=tipThick
++		if setRootThickOverrode[_reseedSet]==0 setRootThickAdj[_reseedSet]=rootThick
++		if setThickVaryOverrode[_reseedSet]==0 setThickVaryAdj[_reseedSet]=thickVary
++		if setFadeInOverrode[_reseedSet]==0    setFadeInAdj[_reseedSet]=fadeIn
++		if setFadeOutOverrode[_reseedSet]==0   setFadeOutAdj[_reseedSet]=fadeOut
++		if setNoiseAmtOverrode[_reseedSet]==0  setNoiseAmtAdj[_reseedSet]=noiseAmt
++		if setNoiseFreqOverrode[_reseedSet]==0 setNoiseFreqAdj[_reseedSet]=noiseFreq
++		}
++	localUpdateSet=-1
++	forceUpdate=1
++	previewCanvasComplete=0
++	v191ManualLoadOk=0
++	}
+ 			
+ 				
+ 			
+\ No newline at end of file
+diff --git a/objects/obj_surfaceDweller/Step_0.gml b/objects/obj_surfaceDweller/Step_0.gml
+index 233edaa..8ac09ea 100644
+--- a/objects/obj_surfaceDweller/Step_0.gml
++++ b/objects/obj_surfaceDweller/Step_0.gml
+@@ -38,7 +38,7 @@ if !variable_instance_exists(id,"setColourOverridesReady")
+ // Per-set colour data did not exist before project format 1.85.
+ // If an older project/autosave is loaded, deliberately ignore any accidental
+ // trailing colour block and treat its four legacy colours as global-only.
+-// Once converted in memory, future saves use the current 1.90 project header.
++// Once converted in memory, future saves use the current 1.91 project header.
+ var _colourProjectVersion=real(string_copy(mainS,46,4))
+ if _colourProjectVersion<1.85 and !loading
+ 	{
+@@ -59,7 +59,7 @@ if _colourProjectVersion<1.85 and !loading
+ 		setTipColOverrode[_legacyColourSet]=0
+ 		}
+ 	
+-	mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+ 	colourUiLastA=customColVarA
+ 	colourUiLastB=customColVarB
+ 	colourUiLastRoot=customRootCol
+diff --git a/objects/obj_surfaceDweller/Step_1.gml b/objects/obj_surfaceDweller/Step_1.gml
+index 68c5790..e6faf27 100644
+--- a/objects/obj_surfaceDweller/Step_1.gml
++++ b/objects/obj_surfaceDweller/Step_1.gml
+@@ -223,6 +223,28 @@ if mouse_check_button_pressed(mb_left)  // edit mixers clicking mixer edit mixer
+ 				strandSetSpaceAdj[setSelectedID]=distancings // distancings=21
+ 				strandYRanRange[setSelectedID]=yRanRange // jitterY
+ 
++				// V1.91 - the rest of the notched rows. setThickMin/Max were
++				// already overridable but were never cleared here.
++				setThickMinOverrode[setSelectedID]=0
++				setThickMaxOverrode[setSelectedID]=0
++				setTipThickOverrode[setSelectedID]=0
++				setRootThickOverrode[setSelectedID]=0
++				setThickVaryOverrode[setSelectedID]=0
++				setFadeInOverrode[setSelectedID]=0
++				setFadeOutOverrode[setSelectedID]=0
++				setNoiseAmtOverrode[setSelectedID]=0
++				setNoiseFreqOverrode[setSelectedID]=0
++
++				setThickMinAdj[setSelectedID]=minScale
++				setThickMaxAdj[setSelectedID]=maxScale
++				setTipThickAdj[setSelectedID]=tipThick
++				setRootThickAdj[setSelectedID]=rootThick
++				setThickVaryAdj[setSelectedID]=thickVary
++				setFadeInAdj[setSelectedID]=fadeIn
++				setFadeOutAdj[setSelectedID]=fadeOut
++				setNoiseAmtAdj[setSelectedID]=noiseAmt
++				setNoiseFreqAdj[setSelectedID]=noiseFreq
++
+ 				}
+ 
+ 		}
+@@ -267,6 +289,27 @@ if keyboard_check_pressed(vk_f5)
+ 				strandSetVariAdj[setToReset]=lifeVariant // default 6
+ 				strandSetSpaceAdj[setToReset]=distancings // distancings=21
+ 				strandYRanRange[setToReset]=yRanRange // jitterY
++
++				// V1.91 - the rest of the notched rows
++				setThickMinOverrode[setToReset]=0
++				setThickMaxOverrode[setToReset]=0
++				setTipThickOverrode[setToReset]=0
++				setRootThickOverrode[setToReset]=0
++				setThickVaryOverrode[setToReset]=0
++				setFadeInOverrode[setToReset]=0
++				setFadeOutOverrode[setToReset]=0
++				setNoiseAmtOverrode[setToReset]=0
++				setNoiseFreqOverrode[setToReset]=0
++
++				setThickMinAdj[setToReset]=minScale
++				setThickMaxAdj[setToReset]=maxScale
++				setTipThickAdj[setToReset]=tipThick
++				setRootThickAdj[setToReset]=rootThick
++				setThickVaryAdj[setToReset]=thickVary
++				setFadeInAdj[setToReset]=fadeIn
++				setFadeOutAdj[setToReset]=fadeOut
++				setNoiseAmtAdj[setToReset]=noiseAmt
++				setNoiseFreqAdj[setToReset]=noiseFreq
+ 			}
+ 		
+ 		}
+diff --git a/objects/obj_surfaceDweller/Step_2.gml b/objects/obj_surfaceDweller/Step_2.gml
+index 9df1989..af6b695 100644
+--- a/objects/obj_surfaceDweller/Step_2.gml
++++ b/objects/obj_surfaceDweller/Step_2.gml
+@@ -159,8 +159,8 @@ if keyboard_check_pressed(ord("L")) and fileCustom!="" and file_exists(fileCusto
+ 	forceUpdate=1
+ 	
+ 	// The loaded header was needed for compatibility checks above. From this
+-	// point onward this running 1.90 build saves projects as the current format.
+-	mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
++	// point onward this running 1.91 build saves projects as the current format.
++	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+ 	}
+ 
+ if bkCol_active==1 
+diff --git a/options/windows/options_windows.yy b/options/windows/options_windows.yy
+index 6f9b40a..88bc279 100644
+--- a/options/windows/options_windows.yy
++++ b/options/windows/options_windows.yy
+@@ -11,9 +11,9 @@
+   "option_windows_description_info":"",
+   "option_windows_disable_sandbox":true,
+   "option_windows_display_cursor":true,
+-  "option_windows_display_name":"HairStrand Desginer 1.90",
++  "option_windows_display_name":"HairStrand Desginer 1.91",
+   "option_windows_enable_steam":false,
+-  "option_windows_executable_name":"HairStrand_Designer_V1_90.exe",
++  "option_windows_executable_name":"HairStrand_Designer_V1_91.exe",
+   "option_windows_icon":"${options_dir}/windows/icons/icon.ico",
+   "option_windows_installer_finished":"${base_options_dir}/windows/installer/finished.bmp",
+   "option_windows_installer_header":"${base_options_dir}/windows/installer/header.bmp",
+@@ -31,7 +31,7 @@
+   "option_windows_texture_page":"4096x4096",
+   "option_windows_use_raw_mouse":false,
+   "option_windows_use_splash":true,
+-  "option_windows_version":"1.9.0.0",
++  "option_windows_version":"1.9.1.0",
+   "option_windows_vsync":true,
+   "resourceType":"GMWindowsOptions",
+   "resourceVersion":"2.0",
+diff --git a/scripts/clearOverrides/clearOverrides.gml b/scripts/clearOverrides/clearOverrides.gml
+index e46b029..7727e29 100644
+--- a/scripts/clearOverrides/clearOverrides.gml
++++ b/scripts/clearOverrides/clearOverrides.gml
+@@ -35,6 +35,17 @@ for (a=0;a<20;a++)
+ 	setRootColOverrode[a]=0
+ 	setTipColOverrode[a]=0
+ 
++	// V1.91 - thickness / fade / noise per-set override flags
++	setThickMinOverrode[a]=0
++	setThickMaxOverrode[a]=0
++	setTipThickOverrode[a]=0
++	setRootThickOverrode[a]=0
++	setThickVaryOverrode[a]=0
++	setFadeInOverrode[a]=0
++	setFadeOutOverrode[a]=0
++	setNoiseAmtOverrode[a]=0
++	setNoiseFreqOverrode[a]=0
++
+ 	}
+ 	
+ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
+@@ -66,7 +77,18 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
+ 	strandSetWaveFreqMaxAdj[s]=10 // default 10
+ 	strandSetVariAdj[s]=6 // default 6
+ 	strandSetSpaceAdj[s]=21 // distancings=21
+-	
+-	
++
++	// V1.91 - seed the new per-set arrays from the current globals so a project
++	// saved before 1.91 still renders exactly as it did.
++	setThickMinAdj[s]=minScale
++	setThickMaxAdj[s]=maxScale
++	setTipThickAdj[s]=tipThick
++	setRootThickAdj[s]=rootThick
++	setThickVaryAdj[s]=thickVary
++	setFadeInAdj[s]=fadeIn
++	setFadeOutAdj[s]=fadeOut
++	setNoiseAmtAdj[s]=noiseAmt
++	setNoiseFreqAdj[s]=noiseFreq
++
+ 	}
+ }
+\ No newline at end of file
+diff --git a/scripts/doAutoLoad/doAutoLoad.gml b/scripts/doAutoLoad/doAutoLoad.gml
+index 948e4bf..f441538 100644
+--- a/scripts/doAutoLoad/doAutoLoad.gml
++++ b/scripts/doAutoLoad/doAutoLoad.gml
+@@ -308,6 +308,65 @@ if canLoad
+             noiseFreq=clamp(noiseFreq,0,40)
+             textBox_noiseAmt_value=string(noiseAmt)
+             textBox_noiseFreq_value=string(noiseFreq)
++
++            // V1.91 - per-set thickness / fade / noise overrides.
++            // Seed every set from the globals first, so a pre-1.91 project keeps
++            // rendering exactly as it did, then overwrite from the file if the
++            // block is present.
++            for (var _seedSet=0;_seedSet<maxSets;_seedSet++)
++                {
++                setTipThickOverrode[_seedSet]=0
++                setRootThickOverrode[_seedSet]=0
++                setThickVaryOverrode[_seedSet]=0
++                setFadeInOverrode[_seedSet]=0
++                setFadeOutOverrode[_seedSet]=0
++                setNoiseAmtOverrode[_seedSet]=0
++                setNoiseFreqOverrode[_seedSet]=0
++                setTipThickAdj[_seedSet]=tipThick
++                setRootThickAdj[_seedSet]=rootThick
++                setThickVaryAdj[_seedSet]=thickVary
++                setFadeInAdj[_seedSet]=fadeIn
++                setFadeOutAdj[_seedSet]=fadeOut
++                setNoiseAmtAdj[_seedSet]=noiseAmt
++                setNoiseFreqAdj[_seedSet]=noiseFreq
++                }
++
++            // A pre-1.71 project carries no per-set thickness range, so those two
++            // arrays would otherwise keep the Create-event defaults while the
++            // globals show the loaded values.
++            if real(string_copy(mainS,46,4)) < 1.71
++                {
++                for (var _oldThickSet=0;_oldThickSet<maxSets;_oldThickSet++)
++                    {
++                    setThickMinAdj[_oldThickSet]=minScale
++                    setThickMaxAdj[_oldThickSet]=maxScale
++                    }
++                }
++
++            if real(string_copy(mainS,46,4)) >= 1.91 and !file_text_eof(theFile)
++                {
++                tString=file_text_read_string(theFile); file_text_readln(theFile);
++                if tString=="V1.91 - Per Set Thickness Fade Noise"
++                    {
++                    for (set=0;set<11;set++)
++                        {
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setTipThickOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setTipThickAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setRootThickOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setRootThickAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setThickVaryOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setThickVaryAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeInOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeInAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeOutOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeOutAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseAmtOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseAmtAdj[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseFreqOverrode[set]=real(analiseString(tString));
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseFreqAdj[set]=real(analiseString(tString));
++                        }
++                    }
++                }
+             }
+ 
+         // Loading always returns to global editing, so expose the loaded globals
+diff --git a/scripts/doAutoSave/doAutoSave.gml b/scripts/doAutoSave/doAutoSave.gml
+index 430a69e..5f6d379 100644
+--- a/scripts/doAutoSave/doAutoSave.gml
++++ b/scripts/doAutoSave/doAutoSave.gml
+@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
+ 			theFile = file_text_open_write(fileCustom);
+ 			
+ // Autosaves are always written as the current project format.
+-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay");
++file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay");
+ 			file_text_writeln(theFile);
+ 			
+ // instruction line			
+@@ -478,6 +478,43 @@ var o=obj_surfaceDweller
+ 							file_text_write_string(theFile,"noiseFreq:"+string(o.noiseFreq)+";");
+ 							file_text_writeln(theFile);
+ 
++							// V1.91 - per-set thickness / fade / noise overrides.
++							// Appended after the V1.90 block, so a 1.90 project
++							// simply hits EOF here and keeps its globals.
++							file_text_write_string(theFile,"V1.91 - Per Set Thickness Fade Noise");
++							file_text_writeln(theFile);
++							for (set=0;set<11;set++)
++								{
++							file_text_write_string(theFile,"setTipThickOverrode["+string(set)+"]:"+string(o.setTipThickOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setTipThickAdj["+string(set)+"]:"+string(o.setTipThickAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setRootThickOverrode["+string(set)+"]:"+string(o.setRootThickOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setRootThickAdj["+string(set)+"]:"+string(o.setRootThickAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setThickVaryOverrode["+string(set)+"]:"+string(o.setThickVaryOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setThickVaryAdj["+string(set)+"]:"+string(o.setThickVaryAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setFadeInOverrode["+string(set)+"]:"+string(o.setFadeInOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setFadeInAdj["+string(set)+"]:"+string(o.setFadeInAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setFadeOutOverrode["+string(set)+"]:"+string(o.setFadeOutOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setFadeOutAdj["+string(set)+"]:"+string(o.setFadeOutAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setNoiseAmtOverrode["+string(set)+"]:"+string(o.setNoiseAmtOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setNoiseAmtAdj["+string(set)+"]:"+string(o.setNoiseAmtAdj[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setNoiseFreqOverrode["+string(set)+"]:"+string(o.setNoiseFreqOverrode[set])+";");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"setNoiseFreqAdj["+string(set)+"]:"+string(o.setNoiseFreqAdj[set])+";");
++							file_text_writeln(theFile);
++								}
++
+ 
+ 				}
+ 			
+diff --git a/scripts/doCalc/doCalc.gml b/scripts/doCalc/doCalc.gml
+index 93ccd36..09aec1a 100644
+--- a/scripts/doCalc/doCalc.gml
++++ b/scripts/doCalc/doCalc.gml
+@@ -6,7 +6,8 @@ function doCalc(){
+ 						    
+ 							
+ 						
+-							thicknessBase = clamp(random_range(thickVary/100,thickVary/20),0.8,maxScale)
++							var _thickVaryS = setThickVaryAdj[b] // V1.91 per-set
++							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),0.8,maxScale)
+ 							strandThickBase[b,v]=thicknessBase // store
+ 							// DEPTH TONE
+ 							//var d=clamp(24+((231/(floor((strands)-(b*diminish))))*v),24,255) // new limited base at 24
+@@ -114,7 +115,10 @@ function doCalc(){
+ 							noiseS1=0; noiseS2=0; noiseS3=0
+ 							noiseAmpS=0
+ 
+-							if noiseAmt>0
++							var _noiseAmtS  = setNoiseAmtAdj[b]  // V1.91 per-set
++							var _noiseFreqS = setNoiseFreqAdj[b] // V1.91 per-set
++
++							if _noiseAmtS>0
+ 								{
+ 								noiseOn=1
+ 								var _nA=(v*12.9898)+(b*78.233)+(randomSeedVal[b]*37.719)
+@@ -123,12 +127,12 @@ function doCalc(){
+ 								noiseP3=frac(abs(sin(_nA+53.77)  *43758.5453))*1440
+ 								// Frequency slider scales all three octaves together.
+ 								// noiseFreq 10 = neutral (1.0), 0 = 0.2, 40 = 3.4.
+-								var _nFMul=0.2+(noiseFreq*0.08)
++								var _nFMul=0.2+(_noiseFreqS*0.08)
+ 								var _nCyc=1440/max(life,1)
+ 								noiseS1=_nCyc*1.0*_nFMul   // slow sweep down the fibre
+ 								noiseS2=_nCyc*2.7*_nFMul
+ 								noiseS3=_nCyc*6.3*_nFMul
+-								noiseAmpS=(noiseAmt*0.025)*(life*noiseScale)
++								noiseAmpS=(_noiseAmtS*0.025)*(life*noiseScale)
+ 								}
+ 
+ }
+diff --git a/scripts/doHighlighting/doHighlighting.gml b/scripts/doHighlighting/doHighlighting.gml
+index 1fa95f6..707245d 100644
+--- a/scripts/doHighlighting/doHighlighting.gml
++++ b/scripts/doHighlighting/doHighlighting.gml
+@@ -78,10 +78,11 @@ if img==9
+ 								//Color           
+ 
+ 								// FADE OUT alpha
+-								if (n >    life-((fadeOut/40)*(life/2))    ) { a=     clamp (     ( (life-n)     /    ((fadeOut/40)* (life/2))   )    ,0,1) } // fadeOut
+-								if (n<  ((fadeIn/40)*(life/2))      +1)    { a=clamp(n    /   ((fadeIn/40)*(life/2))      ,0,1)     } // here we use fadeIn...
+-								fadeIn=clamp(fadeIn,1,40)
+-								fadeOut=clamp(fadeOut,1,40)
++								// V1.91 per-set fade (globals are no longer clamped in-loop)
++								var _fadeInS=clamp(setFadeInAdj[b],1,40)
++								var _fadeOutS=clamp(setFadeOutAdj[b],1,40)
++								if (n >    life-((_fadeOutS/40)*(life/2))    ) { a=     clamp (     ( (life-n)     /    ((_fadeOutS/40)* (life/2))   )    ,0,1) } // fadeOut
++								if (n<  ((_fadeInS/40)*(life/2))      +1)    { a=clamp(n    /   ((_fadeInS/40)*(life/2))      ,0,1)     } // here we use fadeIn...
+ 								//if (n >    life-fadeOut    ) { a=     clamp (     ( (life-n)     /fadeOut   )    ,0,1) } // fadeOut
+ 								
+ 								
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index 4b2bac4..dce012b 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -386,13 +386,14 @@ renderF=0 // incremental render - current set being rendered
+ 					yyy = 400
+                     subSpriteChoice = preRandSubSprite[f, h];
+                     angChoice = preRandAngChoice[f, h];
+-                    thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), 0.8, maxScale);
++                    var _thickVaryS = setThickVaryAdj[f];   // V1.91 per-set
++                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, maxScale);
+ 
+                     // Apply thickness overrides
+                     if (h < maxPreviewStrandsPerSet) thicknessBase = strandThickBase[f, h];
+-                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), setThickMinAdj[f], maxScale);
+-                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), 0.8, setThickMaxAdj[f]);
+-                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), setThickMinAdj[f], setThickMaxAdj[f]);
++                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], maxScale);
++                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, setThickMaxAdj[f]);
++                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], setThickMaxAdj[f]);
+ 
+                     if (idMode == 0) {
+                         idChoice = colorIDarray[idList];
+@@ -453,8 +454,10 @@ renderF=0 // incremental render - current set being rendered
+                     // Setup thickness and color parameters for the point-loop
+                     var t_minScale = setThickMinAdj[f];
+                     var t_maxScale = setThickMaxAdj[f];
+-                    var cmx = rootThick / 30;
+-                    var cmy = tipThick / 30;
++                    var cmx = setRootThickAdj[f] / 30;              // V1.91 per-set
++                    var cmy = setTipThickAdj[f] / 30;               // V1.91 per-set
++                    var _fadeInS  = clamp(setFadeInAdj[f],  1, 40); // V1.91 per-set
++                    var _fadeOutS = clamp(setFadeOutAdj[f], 1, 40); // V1.91 per-set
+                     var padFactor = 0.05 + (padding / 1000);
+                     var tMin = t_minScale * padFactor;
+                     var tMax = t_maxScale * padFactor;
+@@ -471,7 +474,10 @@ renderF=0 // incremental render - current set being rendered
+                     noiseS1 = 0; noiseS2 = 0; noiseS3 = 0;
+                     noiseAmpS = 0;
+ 
+-                    if (noiseAmt > 0) {
++                    var _noiseAmtS  = setNoiseAmtAdj[f];    // V1.91 per-set
++                    var _noiseFreqS = setNoiseFreqAdj[f];   // V1.91 per-set
++
++                    if (_noiseAmtS > 0) {
+                         noiseOn = 1;
+                         var _nA = (h * 12.9898) + (f * 78.233) + (randomSeedVal[f] * 37.719);
+                         noiseP1 = frac(abs(sin(_nA)         * 43758.5453)) * 1440;
+@@ -479,12 +485,12 @@ renderF=0 // incremental render - current set being rendered
+                         noiseP3 = frac(abs(sin(_nA + 53.77) * 43758.5453)) * 1440;
+                         // Frequency slider scales all three octaves together.
+                         // noiseFreq 10 = neutral (1.0), 0 = 0.2, 40 = 3.4.
+-                        var _nFMul = 0.2 + (noiseFreq * 0.08);
++                        var _nFMul = 0.2 + (_noiseFreqS * 0.08);
+                         var _nCyc = 1440 / max(life, 1);
+                         noiseS1 = _nCyc * 1.0 * _nFMul;   // slow sweep down the fibre
+                         noiseS2 = _nCyc * 2.7 * _nFMul;
+                         noiseS3 = _nCyc * 6.3 * _nFMul;
+-                        noiseAmpS = (noiseAmt * 0.025) * (life * noiseScale);
++                        noiseAmpS = (_noiseAmtS * 0.025) * (life * noiseScale);
+                     }
+ 
+                     // Color channel extraction for optimized blending
+@@ -528,10 +534,11 @@ renderF=0 // incremental render - current set being rendered
+ 
+                         // Alpha fade
+                         a = 1;
+-                        if (n > life - ((fadeOut / 40) * (life / 2))) { a = clamp((life - n) / ((fadeOut / 40) * (life / 2)), 0, 1); }
+-                        if (n < ((fadeIn / 40) * (life / 2)) + 1)     { a = clamp(n / ((fadeIn / 40) * (life / 2)), 0, 1); }
+-                        fadeIn  = clamp(fadeIn,  1, 40);
+-                        fadeOut = clamp(fadeOut, 1, 40);
++                        // V1.91 per-set. The old code clamped the GLOBAL fadeIn /
++                        // fadeOut from inside the point loop; the per-set values are
++                        // clamped once, above, instead.
++                        if (n > life - ((_fadeOutS / 40) * (life / 2))) { a = clamp((life - n) / ((_fadeOutS / 40) * (life / 2)), 0, 1); }
++                        if (n < ((_fadeInS / 40) * (life / 2)) + 1)     { a = clamp(n / ((_fadeInS / 40) * (life / 2)), 0, 1); }
+ 
+                         // Wave — LUT with amp inside angle (matches original sin(degtorad(n*freq)*amp))
+                         var _liDev  = round(n * freq * 4)       mod 1440; // sin(degtorad(n*freq))
+diff --git a/scripts/mainCalc/mainCalc.gml b/scripts/mainCalc/mainCalc.gml
+index 93cfaa6..19a8560 100644
+--- a/scripts/mainCalc/mainCalc.gml
++++ b/scripts/mainCalc/mainCalc.gml
+@@ -28,13 +28,55 @@ if variable_instance_exists(id,"colourSelectedSlot")
+ 
+ draw_set_color(c_white)
+ 
++// -----------------------------------------------------------------------
++// V1.91 LOCAL PREVIEW REBUILD
++// Every preview surface is per-set (previewSurf[0..10]). When the only thing
++// that changed is one set's own override, there is no reason to clear and
++// redraw the other ten - so the rebuild is limited to that single set.
++// Draw_0 clears localUpdateSet immediately after calling mainCalc(), so it
++// only ever describes the edit made on the previous frame.
++// Because that rebuild is roughly a tenth of the work, it is also cheap
++// enough to run WHILE the slider is being dragged, every liveLocalEvery
++// frames, instead of waiting for the mouse release.
++// -----------------------------------------------------------------------
++var _localOnly = 0
++var _localSet  = -1
++var _localLive = 0
++
++if localUpdateSet >= 0 and localUpdateSet <= sets
++and colorOnlyUpdate == 0 and forceUpdate == 0 and seedUpdate == 0
++    {
++    _localOnly = 1
++    _localSet  = localUpdateSet
++    }
++
++if _localOnly == 1 and img == 9 and !firstTime
++    {
++    liveLocalTick++
++    if liveLocalTick >= liveLocalEvery or mouse_check_button_released(mb_left)
++        {
++        liveLocalTick = 0
++        _localLive    = 1
++        }
++    }
++else
++    {
++    liveLocalTick = liveLocalEvery
++    }
++
++// Surfaces are composited to the screen BEFORE the rebuild further down, so a
++// surface cleared up here would be shown empty for one frame. At 20 rebuilds a
++// second that reads as a strobe, so the local path never clears here - it
++// clears inside the rebuild instead, after the composite.
++if _localLive == 1 previewCanvasComplete = 0
++
+ // MAIN CALCULATION
+ var clearOfBits=-1
+ if !point_in_rectangle(mouse_x,mouse_y,0,0,1920,11) and !point_in_rectangle(mouse_x,mouse_y,1567,540,1632,674)
+     clearOfBits=1
+ 
+ // Skip surface clear for colour-only updates
+-if colorOnlyUpdate==0 and
++if _localOnly==0 and colorOnlyUpdate==0 and
+ (((( img==9 and (mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and (img==9
+ and (mouse_check_button_released(mb_left)) or mouse_check_button_released(mb_right)) or firstPass)
+ and !firstTime and clearOfBits) or (img==9 and seedUpdate==1) or (img==9 and forceUpdate==1))
+@@ -58,8 +100,9 @@ if img==9 and mouse_x<1024 and mouse_check_button(mb_left) and !firstPass  alp=0
+ for(n=0;n<11;n++)
+     draw_surface_ext(previewSurf[n],0,0,1,1,0,c_white,alp)
+ 
+-if (img==9 and ((mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and mouse_check_button(mb_left)
+-and clearOfBits) or (img==9 and seedUpdate==1)
++// V1.91 - a local edit repaints live, so it is not "busy" in the old sense.
++if ((img==9 and ((mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and mouse_check_button(mb_left)
++and clearOfBits) or (img==9 and seedUpdate==1)) and _localOnly==0
+     draw_text(512,512,"BUSY")
+ 
+ // ---- UPDATE MODE ----
+@@ -68,6 +111,7 @@ and ((colorOnlyUpdate==1 and previewCanvasComplete==0)
+ or (((img==9 and !mouse_check_button(mb_left)) and previewCanvasComplete==0 or firstPass)
+     and !firstTime and clearOfBits)
+ or (img==9 and seedUpdate==1))
++or (_localLive==1 and previewCanvasComplete==0)
+ #region
+     {
+     if colorOnlyUpdate==1 {
+@@ -83,11 +127,29 @@ or (img==9 and seedUpdate==1))
+     seedUpdate=0
+     forceUpdate=0
+     optimalStep=(colorOnlyUpdate==1) ? 30 : 10
++    // A live drag redraws many times a second, so trade a little fidelity for
++    // responsiveness; the release-frame rebuild goes back to the full step.
++    if _localLive==1 and mouse_check_button(mb_left) optimalStep=20
+     if dance==0 random_set_seed(seedVal)
+     if setSelectedID=-1 seedVal=random_get_seed()
+     numSel=0
+ 
+-    for (b=0;b<sets+1;b++)
++    var _bFrom = 0
++    var _bTo   = sets
++    if _localOnly==1
++        {
++        _bFrom = _localSet
++        _bTo   = _localSet
++
++        // Cleared here, after the composite above, so the set is never shown blank.
++        surface_set_target(previewSurf[_localSet])
++        gpu_set_colorwriteenable(1,1,1,0)
++        draw_clear_alpha(0,0)
++        gpu_set_colorwriteenable(1,1,1,1)
++        surface_reset_target()
++        }
++
++    for (b=_bFrom;b<_bTo+1;b++)
+         {
+         random_set_seed(randomSeedVal[b])
+         leftmost=0;rightmost=0;topmost=0;bottommost=0
+@@ -106,8 +168,10 @@ or (img==9 and seedUpdate==1))
+ 
+                 var t_minScale=setThickMinAdj[b]
+                 var t_maxScale=setThickMaxAdj[b]
+-                var cmx=rootThick/30
+-                var cmy=tipThick/30
++                var cmx=setRootThickAdj[b]/30 // V1.91 per-set
++                var cmy=setTipThickAdj[b]/30 // V1.91 per-set
++                var _fadeInS=clamp(setFadeInAdj[b],1,40)   // V1.91 per-set
++                var _fadeOutS=clamp(setFadeOutAdj[b],1,40) // V1.91 per-set
+                 var _padFactor=0.05+(padding/1000)
+                 var _tMin=t_minScale*_padFactor
+                 var _tMax=t_maxScale*_padFactor
+@@ -144,11 +208,11 @@ or (img==9 and seedUpdate==1))
+                     var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
+                     dpthAdd=preRandDepthAdd[b,v]
+ 
+-                    // Alpha fade
+-                    if (n>life-((fadeOut/40)*(life/2))) {a=clamp((life-n)/((fadeOut/40)*(life/2)),0,1)}
+-                    if (n<((fadeIn/40)*(life/2))+1)     {a=clamp(n/((fadeIn/40)*(life/2)),0,1)}
+-                    fadeIn=clamp(fadeIn,1,40)
+-                    fadeOut=clamp(fadeOut,1,40)
++                    // Alpha fade - V1.91 per-set. The old code clamped the
++                    // GLOBAL fadeIn/fadeOut from inside the point loop; the
++                    // per-set values are clamped once, before the loop.
++                    if (n>life-((_fadeOutS/40)*(life/2))) {a=clamp((life-n)/((_fadeOutS/40)*(life/2)),0,1)}
++                    if (n<((_fadeInS/40)*(life/2))+1)     {a=clamp(n/((_fadeInS/40)*(life/2)),0,1)}
+ 
+                     // Wave — LUT with amp inside angle (matches original sin(degtorad(n*freq)*amp))
+                     var _liDev  = round(n*freq*4)       mod 1440  // deviation: sin(degtorad(n*freq))
+@@ -245,8 +309,10 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+ 
+                     var t_minScale=setThickMinAdj[b]
+                     var t_maxScale=setThickMaxAdj[b]
+-                    var cmx=rootThick/30
+-                    var cmy=tipThick/30
++                    var cmx=setRootThickAdj[b]/30 // V1.91 per-set
++                    var cmy=setTipThickAdj[b]/30 // V1.91 per-set
++                    var _fadeInS2=clamp(setFadeInAdj[b],1,40)   // V1.91 per-set
++                    var _fadeOutS2=clamp(setFadeOutAdj[b],1,40) // V1.91 per-set
+                     var _padFactor=0.05+(padding/1000)
+                     var _tMin=t_minScale*_padFactor
+                     var _tMax=t_maxScale*_padFactor
+@@ -272,11 +338,9 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+ 
+                         dpthAdd=preRandDepthAdd[b,v]
+ 
+-                        // Alpha fade
+-                        if (n>life-((fadeOut/40)*(life/2))) {a=clamp((life-n)/((fadeOut/40)*(life/2)),0,1)}
+-                        if (n<((fadeIn/40)*(life/2))+1)     {a=clamp(n/((fadeIn/40)*(life/2)),0,1)}
+-                        fadeIn=clamp(fadeIn,1,40)
+-                        fadeOut=clamp(fadeOut,1,40)
++                        // Alpha fade - V1.91 per-set (clamped before the loop)
++                        if (n>life-((_fadeOutS2/40)*(life/2))) {a=clamp((life-n)/((_fadeOutS2/40)*(life/2)),0,1)}
++                        if (n<((_fadeInS2/40)*(life/2))+1)     {a=clamp(n/((_fadeInS2/40)*(life/2)),0,1)}
+ 
+                         // Wave — LUT with amp inside angle
+                         var _liDev  = round(n*freq*4)     mod 1440

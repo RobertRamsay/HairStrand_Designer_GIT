@@ -6,7 +6,8 @@ function doCalc(){
 						    
 							
 						
-							thicknessBase = clamp(random_range(thickVary/100,thickVary/20),0.8,maxScale)
+							var _thickVaryS = setThickVaryAdj[b] // V1.91 per-set
+							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),0.8,maxScale)
 							strandThickBase[b,v]=thicknessBase // store
 							// DEPTH TONE
 							//var d=clamp(24+((231/(floor((strands)-(b*diminish))))*v),24,255) // new limited base at 24
@@ -114,7 +115,10 @@ function doCalc(){
 							noiseS1=0; noiseS2=0; noiseS3=0
 							noiseAmpS=0
 
-							if noiseAmt>0
+							var _noiseAmtS  = setNoiseAmtAdj[b]  // V1.91 per-set
+							var _noiseFreqS = setNoiseFreqAdj[b] // V1.91 per-set
+
+							if _noiseAmtS>0
 								{
 								noiseOn=1
 								var _nA=(v*12.9898)+(b*78.233)+(randomSeedVal[b]*37.719)
@@ -123,12 +127,12 @@ function doCalc(){
 								noiseP3=frac(abs(sin(_nA+53.77)  *43758.5453))*1440
 								// Frequency slider scales all three octaves together.
 								// noiseFreq 10 = neutral (1.0), 0 = 0.2, 40 = 3.4.
-								var _nFMul=0.2+(noiseFreq*0.08)
+								var _nFMul=0.2+(_noiseFreqS*0.08)
 								var _nCyc=1440/max(life,1)
 								noiseS1=_nCyc*1.0*_nFMul   // slow sweep down the fibre
 								noiseS2=_nCyc*2.7*_nFMul
 								noiseS3=_nCyc*6.3*_nFMul
-								noiseAmpS=(noiseAmt*0.025)*(life*noiseScale)
+								noiseAmpS=(_noiseAmtS*0.025)*(life*noiseScale)
 								}
 
 }

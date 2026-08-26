@@ -28,13 +28,55 @@ if variable_instance_exists(id,"colourSelectedSlot")
 
 draw_set_color(c_white)
 
+// -----------------------------------------------------------------------
+// V1.91 LOCAL PREVIEW REBUILD
+// Every preview surface is per-set (previewSurf[0..10]). When the only thing
+// that changed is one set's own override, there is no reason to clear and
+// redraw the other ten - so the rebuild is limited to that single set.
+// Draw_0 clears localUpdateSet immediately after calling mainCalc(), so it
+// only ever describes the edit made on the previous frame.
+// Because that rebuild is roughly a tenth of the work, it is also cheap
+// enough to run WHILE the slider is being dragged, every liveLocalEvery
+// frames, instead of waiting for the mouse release.
+// -----------------------------------------------------------------------
+var _localOnly = 0
+var _localSet  = -1
+var _localLive = 0
+
+if localUpdateSet >= 0 and localUpdateSet <= sets
+and colorOnlyUpdate == 0 and forceUpdate == 0 and seedUpdate == 0
+    {
+    _localOnly = 1
+    _localSet  = localUpdateSet
+    }
+
+if _localOnly == 1 and img == 9 and !firstTime
+    {
+    liveLocalTick++
+    if liveLocalTick >= liveLocalEvery or mouse_check_button_released(mb_left)
+        {
+        liveLocalTick = 0
+        _localLive    = 1
+        }
+    }
+else
+    {
+    liveLocalTick = liveLocalEvery
+    }
+
+// Surfaces are composited to the screen BEFORE the rebuild further down, so a
+// surface cleared up here would be shown empty for one frame. At 20 rebuilds a
+// second that reads as a strobe, so the local path never clears here - it
+// clears inside the rebuild instead, after the composite.
+if _localLive == 1 previewCanvasComplete = 0
+
 // MAIN CALCULATION
 var clearOfBits=-1
 if !point_in_rectangle(mouse_x,mouse_y,0,0,1920,11) and !point_in_rectangle(mouse_x,mouse_y,1567,540,1632,674)
     clearOfBits=1
 
 // Skip surface clear for colour-only updates
-if colorOnlyUpdate==0 and
+if _localOnly==0 and colorOnlyUpdate==0 and
 (((( img==9 and (mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and (img==9
 and (mouse_check_button_released(mb_left)) or mouse_check_button_released(mb_right)) or firstPass)
 and !firstTime and clearOfBits) or (img==9 and seedUpdate==1) or (img==9 and forceUpdate==1))
@@ -58,8 +100,9 @@ if img==9 and mouse_x<1024 and mouse_check_button(mb_left) and !firstPass  alp=0
 for(n=0;n<11;n++)
     draw_surface_ext(previewSurf[n],0,0,1,1,0,c_white,alp)
 
-if (img==9 and ((mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and mouse_check_button(mb_left)
-and clearOfBits) or (img==9 and seedUpdate==1)
+// V1.91 - a local edit repaints live, so it is not "busy" in the old sense.
+if ((img==9 and ((mouse_x>1024 and mouse_y>412) or (mouse_x<1024)) and mouse_check_button(mb_left)
+and clearOfBits) or (img==9 and seedUpdate==1)) and _localOnly==0
     draw_text(512,512,"BUSY")
 
 // ---- UPDATE MODE ----
@@ -68,6 +111,7 @@ and ((colorOnlyUpdate==1 and previewCanvasComplete==0)
 or (((img==9 and !mouse_check_button(mb_left)) and previewCanvasComplete==0 or firstPass)
     and !firstTime and clearOfBits)
 or (img==9 and seedUpdate==1))
+or (_localLive==1 and previewCanvasComplete==0)
 #region
     {
     if colorOnlyUpdate==1 {
@@ -83,11 +127,29 @@ or (img==9 and seedUpdate==1))
     seedUpdate=0
     forceUpdate=0
     optimalStep=(colorOnlyUpdate==1) ? 30 : 10
+    // A live drag redraws many times a second, so trade a little fidelity for
+    // responsiveness; the release-frame rebuild goes back to the full step.
+    if _localLive==1 and mouse_check_button(mb_left) optimalStep=20
     if dance==0 random_set_seed(seedVal)
     if setSelectedID=-1 seedVal=random_get_seed()
     numSel=0
 
-    for (b=0;b<sets+1;b++)
+    var _bFrom = 0
+    var _bTo   = sets
+    if _localOnly==1
+        {
+        _bFrom = _localSet
+        _bTo   = _localSet
+
+        // Cleared here, after the composite above, so the set is never shown blank.
+        surface_set_target(previewSurf[_localSet])
+        gpu_set_colorwriteenable(1,1,1,0)
+        draw_clear_alpha(0,0)
+        gpu_set_colorwriteenable(1,1,1,1)
+        surface_reset_target()
+        }
+
+    for (b=_bFrom;b<_bTo+1;b++)
         {
         random_set_seed(randomSeedVal[b])
         leftmost=0;rightmost=0;topmost=0;bottommost=0
@@ -106,8 +168,10 @@ or (img==9 and seedUpdate==1))
 
                 var t_minScale=setThickMinAdj[b]
                 var t_maxScale=setThickMaxAdj[b]
-                var cmx=rootThick/30
-                var cmy=tipThick/30
+                var cmx=setRootThickAdj[b]/30 // V1.91 per-set
+                var cmy=setTipThickAdj[b]/30 // V1.91 per-set
+                var _fadeInS=clamp(setFadeInAdj[b],1,40)   // V1.91 per-set
+                var _fadeOutS=clamp(setFadeOutAdj[b],1,40) // V1.91 per-set
                 var _padFactor=0.05+(padding/1000)
                 var _tMin=t_minScale*_padFactor
                 var _tMax=t_maxScale*_padFactor
@@ -144,11 +208,11 @@ or (img==9 and seedUpdate==1))
                     var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
                     dpthAdd=preRandDepthAdd[b,v]
 
-                    // Alpha fade
-                    if (n>life-((fadeOut/40)*(life/2))) {a=clamp((life-n)/((fadeOut/40)*(life/2)),0,1)}
-                    if (n<((fadeIn/40)*(life/2))+1)     {a=clamp(n/((fadeIn/40)*(life/2)),0,1)}
-                    fadeIn=clamp(fadeIn,1,40)
-                    fadeOut=clamp(fadeOut,1,40)
+                    // Alpha fade - V1.91 per-set. The old code clamped the
+                    // GLOBAL fadeIn/fadeOut from inside the point loop; the
+                    // per-set values are clamped once, before the loop.
+                    if (n>life-((_fadeOutS/40)*(life/2))) {a=clamp((life-n)/((_fadeOutS/40)*(life/2)),0,1)}
+                    if (n<((_fadeInS/40)*(life/2))+1)     {a=clamp(n/((_fadeInS/40)*(life/2)),0,1)}
 
                     // Wave — LUT with amp inside angle (matches original sin(degtorad(n*freq)*amp))
                     var _liDev  = round(n*freq*4)       mod 1440  // deviation: sin(degtorad(n*freq))
@@ -245,8 +309,10 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
 
                     var t_minScale=setThickMinAdj[b]
                     var t_maxScale=setThickMaxAdj[b]
-                    var cmx=rootThick/30
-                    var cmy=tipThick/30
+                    var cmx=setRootThickAdj[b]/30 // V1.91 per-set
+                    var cmy=setTipThickAdj[b]/30 // V1.91 per-set
+                    var _fadeInS2=clamp(setFadeInAdj[b],1,40)   // V1.91 per-set
+                    var _fadeOutS2=clamp(setFadeOutAdj[b],1,40) // V1.91 per-set
                     var _padFactor=0.05+(padding/1000)
                     var _tMin=t_minScale*_padFactor
                     var _tMax=t_maxScale*_padFactor
@@ -272,11 +338,9 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
 
                         dpthAdd=preRandDepthAdd[b,v]
 
-                        // Alpha fade
-                        if (n>life-((fadeOut/40)*(life/2))) {a=clamp((life-n)/((fadeOut/40)*(life/2)),0,1)}
-                        if (n<((fadeIn/40)*(life/2))+1)     {a=clamp(n/((fadeIn/40)*(life/2)),0,1)}
-                        fadeIn=clamp(fadeIn,1,40)
-                        fadeOut=clamp(fadeOut,1,40)
+                        // Alpha fade - V1.91 per-set (clamped before the loop)
+                        if (n>life-((_fadeOutS2/40)*(life/2))) {a=clamp((life-n)/((_fadeOutS2/40)*(life/2)),0,1)}
+                        if (n<((_fadeInS2/40)*(life/2))+1)     {a=clamp(n/((_fadeInS2/40)*(life/2)),0,1)}
 
                         // Wave — LUT with amp inside angle
                         var _liDev  = round(n*freq*4)     mod 1440

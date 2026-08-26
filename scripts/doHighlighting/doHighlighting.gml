@@ -78,10 +78,11 @@ if img==9
 								//Color           
 
 								// FADE OUT alpha
-								if (n >    life-((fadeOut/40)*(life/2))    ) { a=     clamp (     ( (life-n)     /    ((fadeOut/40)* (life/2))   )    ,0,1) } // fadeOut
-								if (n<  ((fadeIn/40)*(life/2))      +1)    { a=clamp(n    /   ((fadeIn/40)*(life/2))      ,0,1)     } // here we use fadeIn...
-								fadeIn=clamp(fadeIn,1,40)
-								fadeOut=clamp(fadeOut,1,40)
+								// V1.91 per-set fade (globals are no longer clamped in-loop)
+								var _fadeInS=clamp(setFadeInAdj[b],1,40)
+								var _fadeOutS=clamp(setFadeOutAdj[b],1,40)
+								if (n >    life-((_fadeOutS/40)*(life/2))    ) { a=     clamp (     ( (life-n)     /    ((_fadeOutS/40)* (life/2))   )    ,0,1) } // fadeOut
+								if (n<  ((_fadeInS/40)*(life/2))      +1)    { a=clamp(n    /   ((_fadeInS/40)*(life/2))      ,0,1)     } // here we use fadeIn...
 								//if (n >    life-fadeOut    ) { a=     clamp (     ( (life-n)     /fadeOut   )    ,0,1) } // fadeOut
 								
 								

@@ -386,13 +386,14 @@ renderF=0 // incremental render - current set being rendered
 					yyy = 400
                     subSpriteChoice = preRandSubSprite[f, h];
                     angChoice = preRandAngChoice[f, h];
-                    thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), 0.8, maxScale);
+                    var _thickVaryS = setThickVaryAdj[f];   // V1.91 per-set
+                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, maxScale);
 
                     // Apply thickness overrides
                     if (h < maxPreviewStrandsPerSet) thicknessBase = strandThickBase[f, h];
-                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), setThickMinAdj[f], maxScale);
-                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), 0.8, setThickMaxAdj[f]);
-                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(thickVary / 100, thickVary / 20), setThickMinAdj[f], setThickMaxAdj[f]);
+                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], maxScale);
+                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, setThickMaxAdj[f]);
+                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], setThickMaxAdj[f]);
 
                     if (idMode == 0) {
                         idChoice = colorIDarray[idList];
@@ -453,8 +454,10 @@ renderF=0 // incremental render - current set being rendered
                     // Setup thickness and color parameters for the point-loop
                     var t_minScale = setThickMinAdj[f];
                     var t_maxScale = setThickMaxAdj[f];
-                    var cmx = rootThick / 30;
-                    var cmy = tipThick / 30;
+                    var cmx = setRootThickAdj[f] / 30;              // V1.91 per-set
+                    var cmy = setTipThickAdj[f] / 30;               // V1.91 per-set
+                    var _fadeInS  = clamp(setFadeInAdj[f],  1, 40); // V1.91 per-set
+                    var _fadeOutS = clamp(setFadeOutAdj[f], 1, 40); // V1.91 per-set
                     var padFactor = 0.05 + (padding / 1000);
                     var tMin = t_minScale * padFactor;
                     var tMax = t_maxScale * padFactor;
@@ -471,7 +474,10 @@ renderF=0 // incremental render - current set being rendered
                     noiseS1 = 0; noiseS2 = 0; noiseS3 = 0;
                     noiseAmpS = 0;
 
-                    if (noiseAmt > 0) {
+                    var _noiseAmtS  = setNoiseAmtAdj[f];    // V1.91 per-set
+                    var _noiseFreqS = setNoiseFreqAdj[f];   // V1.91 per-set
+
+                    if (_noiseAmtS > 0) {
                         noiseOn = 1;
                         var _nA = (h * 12.9898) + (f * 78.233) + (randomSeedVal[f] * 37.719);
                         noiseP1 = frac(abs(sin(_nA)         * 43758.5453)) * 1440;
@@ -479,12 +485,12 @@ renderF=0 // incremental render - current set being rendered
                         noiseP3 = frac(abs(sin(_nA + 53.77) * 43758.5453)) * 1440;
                         // Frequency slider scales all three octaves together.
                         // noiseFreq 10 = neutral (1.0), 0 = 0.2, 40 = 3.4.
-                        var _nFMul = 0.2 + (noiseFreq * 0.08);
+                        var _nFMul = 0.2 + (_noiseFreqS * 0.08);
                         var _nCyc = 1440 / max(life, 1);
                         noiseS1 = _nCyc * 1.0 * _nFMul;   // slow sweep down the fibre
                         noiseS2 = _nCyc * 2.7 * _nFMul;
                         noiseS3 = _nCyc * 6.3 * _nFMul;
-                        noiseAmpS = (noiseAmt * 0.025) * (life * noiseScale);
+                        noiseAmpS = (_noiseAmtS * 0.025) * (life * noiseScale);
                     }
 
                     // Color channel extraction for optimized blending
@@ -528,10 +534,11 @@ renderF=0 // incremental render - current set being rendered
 
                         // Alpha fade
                         a = 1;
-                        if (n > life - ((fadeOut / 40) * (life / 2))) { a = clamp((life - n) / ((fadeOut / 40) * (life / 2)), 0, 1); }
-                        if (n < ((fadeIn / 40) * (life / 2)) + 1)     { a = clamp(n / ((fadeIn / 40) * (life / 2)), 0, 1); }
-                        fadeIn  = clamp(fadeIn,  1, 40);
-                        fadeOut = clamp(fadeOut, 1, 40);
+                        // V1.91 per-set. The old code clamped the GLOBAL fadeIn /
+                        // fadeOut from inside the point loop; the per-set values are
+                        // clamped once, above, instead.
+                        if (n > life - ((_fadeOutS / 40) * (life / 2))) { a = clamp((life - n) / ((_fadeOutS / 40) * (life / 2)), 0, 1); }
+                        if (n < ((_fadeInS / 40) * (life / 2)) + 1)     { a = clamp(n / ((_fadeInS / 40) * (life / 2)), 0, 1); }
 
                         // Wave — LUT with amp inside angle (matches original sin(degtorad(n*freq)*amp))
                         var _liDev  = round(n * freq * 4)       mod 1440; // sin(degtorad(n*freq))

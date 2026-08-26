@@ -308,6 +308,65 @@ if canLoad
             noiseFreq=clamp(noiseFreq,0,40)
             textBox_noiseAmt_value=string(noiseAmt)
             textBox_noiseFreq_value=string(noiseFreq)
+
+            // V1.91 - per-set thickness / fade / noise overrides.
+            // Seed every set from the globals first, so a pre-1.91 project keeps
+            // rendering exactly as it did, then overwrite from the file if the
+            // block is present.
+            for (var _seedSet=0;_seedSet<maxSets;_seedSet++)
+                {
+                setTipThickOverrode[_seedSet]=0
+                setRootThickOverrode[_seedSet]=0
+                setThickVaryOverrode[_seedSet]=0
+                setFadeInOverrode[_seedSet]=0
+                setFadeOutOverrode[_seedSet]=0
+                setNoiseAmtOverrode[_seedSet]=0
+                setNoiseFreqOverrode[_seedSet]=0
+                setTipThickAdj[_seedSet]=tipThick
+                setRootThickAdj[_seedSet]=rootThick
+                setThickVaryAdj[_seedSet]=thickVary
+                setFadeInAdj[_seedSet]=fadeIn
+                setFadeOutAdj[_seedSet]=fadeOut
+                setNoiseAmtAdj[_seedSet]=noiseAmt
+                setNoiseFreqAdj[_seedSet]=noiseFreq
+                }
+
+            // A pre-1.71 project carries no per-set thickness range, so those two
+            // arrays would otherwise keep the Create-event defaults while the
+            // globals show the loaded values.
+            if real(string_copy(mainS,46,4)) < 1.71
+                {
+                for (var _oldThickSet=0;_oldThickSet<maxSets;_oldThickSet++)
+                    {
+                    setThickMinAdj[_oldThickSet]=minScale
+                    setThickMaxAdj[_oldThickSet]=maxScale
+                    }
+                }
+
+            if real(string_copy(mainS,46,4)) >= 1.91 and !file_text_eof(theFile)
+                {
+                tString=file_text_read_string(theFile); file_text_readln(theFile);
+                if tString=="V1.91 - Per Set Thickness Fade Noise"
+                    {
+                    for (set=0;set<11;set++)
+                        {
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setTipThickOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setTipThickAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setRootThickOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setRootThickAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setThickVaryOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setThickVaryAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeInOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeInAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeOutOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setFadeOutAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseAmtOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseAmtAdj[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseFreqOverrode[set]=real(analiseString(tString));
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); setNoiseFreqAdj[set]=real(analiseString(tString));
+                        }
+                    }
+                }
             }
 
         // Loading always returns to global editing, so expose the loaded globals

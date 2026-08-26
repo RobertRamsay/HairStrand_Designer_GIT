@@ -38,7 +38,7 @@ if !variable_instance_exists(id,"setColourOverridesReady")
 // Per-set colour data did not exist before project format 1.85.
 // If an older project/autosave is loaded, deliberately ignore any accidental
 // trailing colour block and treat its four legacy colours as global-only.
-// Once converted in memory, future saves use the current 1.90 project header.
+// Once converted in memory, future saves use the current 1.91 project header.
 var _colourProjectVersion=real(string_copy(mainS,46,4))
 if _colourProjectVersion<1.85 and !loading
 	{
@@ -59,7 +59,7 @@ if _colourProjectVersion<1.85 and !loading
 		setTipColOverrode[_legacyColourSet]=0
 		}
 	
-	mainS="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
+	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
 	colourUiLastA=customColVarA
 	colourUiLastB=customColVarB
 	colourUiLastRoot=customRootCol
