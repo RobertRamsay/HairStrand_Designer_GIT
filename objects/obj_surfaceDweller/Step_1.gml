@@ -84,7 +84,7 @@ if gameTick360>360 gameTick360=0
 
 debugMsg="Begin Step"
 smallTip="" // clear the tooltip
-tickytime+=0.1
+tickytime+=0.025 // text box caret blink - quarter of the old speed
 if tickytime>=1 tickytime=0
 /*
 if !surface_exists(canvas) or !surface_exists(nm_canvas) or !surface_exists(mask_canvas) or !surface_exists(depth_canvas) or

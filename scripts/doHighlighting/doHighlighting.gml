@@ -22,7 +22,11 @@ if img==9
 				// choose a start point within a set area
 					setID=b				
 					sx=xx 
-				lifeVariant=strandSetVariAdj[b]
+				// lifeVariant is ALSO the global 'Variation' setting that the slider and
+				// text box write. Assigning the per-set value to it here overwrote the
+				// typed value every frame, which is why the Variation box would not take
+				// an edit. Use a local for the per-set working value instead.
+				var _lvS=strandSetVariAdj[b]
 				// V1.95 - unconditional, matching mainCalc / doMainStep
 				var _hlH = strandLengthOverride[b]
 				if _hlH<=0 _hlH = length
@@ -96,15 +100,15 @@ if img==9
 
 								
 								// now in 1.43
-								var xA= lerp ( 0, path_get_x( editingPath[0],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj1[b])*100))) , strandSetMixerAdj1[b] ) // influence of mixer 1
-								var xB= lerp ( 0, path_get_x( editingPath[1],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj2[b])*100))) , strandSetMixerAdj2[b] ) // influence of mixer 2
-								var xC= lerp ( 0, path_get_x( editingPath[2],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj3[b])*100))) , strandSetMixerAdj3[b] ) // influence of mixer 3
+								var xA= lerp ( 0, path_get_x( editingPath[0],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj1[b])*100))) , strandSetMixerAdj1[b] ) // influence of mixer 1
+								var xB= lerp ( 0, path_get_x( editingPath[1],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj2[b])*100))) , strandSetMixerAdj2[b] ) // influence of mixer 2
+								var xC= lerp ( 0, path_get_x( editingPath[2],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj3[b])*100))) , strandSetMixerAdj3[b] ) // influence of mixer 3
 								
 								// New mixer overrides.
 								// in version 1.43 - Aug 30th 2020
 								
 								
-								var tempX=  (lerp (   lerp( xA , xB , 0.5 )   ,  xC , 0.5 ) / lifeVariant)*8 // mix all 3
+								var tempX=  (lerp (   lerp( xA , xB , 0.5 )   ,  xC , 0.5 ) / _lvS)*8 // mix all 3
 								
 								straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01)) // be sure to tapre the Stragglers
 								
@@ -121,7 +125,7 @@ if img==9
 												//,setXpos // (B) location (so that we can taper to the middle of the set
 												//,(n/3000)*(tapering*0.01)) // (CONTROL)
 											,straggleXX,
-											0.5+((lifeVariant-50)/100))//strandDecision) //  shifts them around
+											0.5+((_lvS-50)/100))//strandDecision) //  shifts them around
 												
 												
 									var algTaper = algFinalX//lerp (algFinalX,setXpos	,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))		

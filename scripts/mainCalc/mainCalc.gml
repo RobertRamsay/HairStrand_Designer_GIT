@@ -158,7 +158,11 @@ or (_localLive==1 and previewCanvasComplete==0)
             {
             setID=b
             sx=xx
-            lifeVariant=strandSetVariAdj[b]
+            // lifeVariant is ALSO the global 'Variation' setting that the slider and
+            // text box write. Assigning the per-set value to it here overwrote the
+            // typed value every frame, which is why the Variation box would not take
+            // an edit. Use a local for the per-set working value instead.
+            var _lvS=strandSetVariAdj[b]
             // V1.95 - was conditional, so a set whose Length override is 0 (the slider
             // reaches 0) silently inherited the PREVIOUS set's hairLength. Set 0 inherits
             // from set 10 of the PREVIOUS FRAME, which is why the first set is the one seen
@@ -228,12 +232,12 @@ or (_localLive==1 and previewCanvasComplete==0)
                     deviationFromX = lut_sin[_liDev]
                     nx = xx + (lut_sin[_liWave] * (yy/100))
 
-                    var xA=lerp(0,path_get_x(editingPath[0],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
-                    var xB=lerp(0,path_get_x(editingPath[1],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
-                    var xC=lerp(0,path_get_x(editingPath[2],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
-                    var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/lifeVariant)*8
+                    var xA=lerp(0,path_get_x(editingPath[0],(n-_lvS)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
+                    var xB=lerp(0,path_get_x(editingPath[1],(n-_lvS)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
+                    var xC=lerp(0,path_get_x(editingPath[2],(n-_lvS)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
+                    var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/_lvS)*8
                     straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
-                    var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
+                    var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((_lvS-50)/100))
                     var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
 
                     // V1.90 NOISE - gradual left/right deviation, root anchored.
@@ -307,7 +311,11 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                 {
                 setID=b
                 sx=xx
-                lifeVariant=strandSetVariAdj[b]
+                // lifeVariant is ALSO the global 'Variation' setting that the slider and
+                // text box write. Assigning the per-set value to it here overwrote the
+                // typed value every frame, which is why the Variation box would not take
+                // an edit. Use a local for the per-set working value instead.
+                var _lvS2=strandSetVariAdj[b]
                 var _hlB2 = strandLengthOverride[b]   // V1.95 - see the first loop
                 if _hlB2<=0 _hlB2 = length
                 hairLength = _hlB2 + preRandLifeVariant[b]
@@ -359,12 +367,12 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                         deviationFromX = lut_sin[_liDev]
                         nx = xx + (lut_sin[_liWave] * (yy/100))
 
-                        var xA=lerp(0,path_get_x(editingPath[0],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
-                        var xB=lerp(0,path_get_x(editingPath[1],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
-                        var xC=lerp(0,path_get_x(editingPath[2],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
-                        var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/lifeVariant)*8
+                        var xA=lerp(0,path_get_x(editingPath[0],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
+                        var xB=lerp(0,path_get_x(editingPath[1],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
+                        var xC=lerp(0,path_get_x(editingPath[2],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
+                        var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/_lvS2)*8
                         straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
-                        var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
+                        var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((_lvS2-50)/100))
                         var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
 
                         // V1.90 NOISE - gradual left/right deviation, root anchored.

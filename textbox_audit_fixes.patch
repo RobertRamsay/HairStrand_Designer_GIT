@@ -1,0 +1,2256 @@
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index 6675fb0..73f527e 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -605,17 +605,18 @@ else
+ if textBox_strands == 1
+ {
+ 	draw_set_color(tbCol)
+-	draw_set_valign(fa_bottom)
+-	draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(strands))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandCountOverride[setSelectedID])) }
++	if setSelectedID != -1 and setCountOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
++	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(textBox_strands_value)), ey-9, 1320+string_width(string(strands)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+-	// Numpad input
+-	#region
+-	if string_length(str) < 4
++	#region // Numpad input
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -633,30 +634,37 @@ if textBox_strands == 1
+ 	}
+ 	#endregion
+ 
+-	// Regular keyboard input
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
++		str = string_copy(str, 1, string_length(str)-1)
+ 		if str == "" str = "0"
+-		if keyboard_lastkey == 8 // backspace
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_strands_value = str
+ 
+-	// Clamp and apply
+-	if real(textBox_strands_value) > 100 { textBox_strands_value="100"; str="100" }
+ 	if setSelectedID != -1
+ 	{
+-		strandCountOverride[setSelectedID] = clamp(real(textBox_strands_value), 0, 100)
+-		setCountOverrode[setSelectedID]    = 1
++		strandCountOverride[setSelectedID] = clamp(real(str), 0, 100)
++		setCountOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		strands = clamp(real(str), 0, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setCountOverrode[setChange] != 1 strandCountOverride[setChange] = strands
+@@ -735,15 +743,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_distancings = 0 }
+ if textBox_distancings == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setSpacingOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(distancings))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetSpaceAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(distancings)), ey-9, 1320+string_width(string(distancings)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -761,29 +772,37 @@ if textBox_distancings == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		distancings = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_distancings_value = str
+ 
+-	if real(textBox_distancings_value) > 100 { textBox_distancings_value="100"; str="100" }
+-	distancings = clamp(real(textBox_distancings_value), 0, 100)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetSpaceAdj[setSelectedID]  = distancings
++		strandSetSpaceAdj[setSelectedID] = clamp(real(str), 0, 100)
+ 		setSpacingOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		distancings = clamp(real(str), 0, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setSpacingOverrode[setChange] != 1 strandSetSpaceAdj[setChange] = distancings
+@@ -820,6 +839,7 @@ if mouse_check_button(mb_left) && slider_interract_setDistancings
+ {
+ 	over       = 1
+ 	slx        = clamp(mouse_x, ex, ex+100); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 	setDistance = clamp(slx-ex, 0, 100)
+ }
+ 
+@@ -845,13 +865,16 @@ if textBox_setDistance == 1
+ {
+ 	draw_set_color(tbCol)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	draw_text(1318, ey+11, string(setDistance))
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(setDistance)), ey-9, 1320+string_width(string(setDistance)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -869,22 +892,27 @@ if textBox_setDistance == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		setDistance = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_setDistance_value = str
+ 
+-	if real(textBox_setDistance_value) > 100 { textBox_setDistance_value="100"; str="100" }
+-	setDistance = clamp(real(textBox_setDistance_value), 0, 100)
++	setDistance = clamp(real(str), 0, 100)
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -957,15 +985,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_wavyness = 0 }
+ if textBox_wavyness == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setWaveynessOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(wavyness))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetWavynessAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(wavyness)), ey-9, 1320+string_width(string(wavyness)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -983,29 +1014,37 @@ if textBox_wavyness == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		wavyness = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_wavyness_value = str
+ 
+-	if real(textBox_wavyness_value) > 100 { textBox_wavyness_value="100"; str="100" }
+-	wavyness = clamp(real(textBox_wavyness_value), 0, 100)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetWavynessAdj[setSelectedID]  = wavyness
+-		setWaveynessOverrode[setSelectedID]  = 1
++		strandSetWavynessAdj[setSelectedID] = clamp(real(str), 0, 100)
++		setWaveynessOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		wavyness = clamp(real(str), 0, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setWaveynessOverrode[setChange] != 1 strandSetWavynessAdj[setChange] = wavyness
+@@ -1049,16 +1088,16 @@ if mouse_check_button(mb_left) && slider_interract_minFreq
+ 
+ 	if setSelectedID != -1
+ 	{
+-		strandSetWaveFreqMinAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
++		strandSetWaveFreqMinAdj[setSelectedID]  = min(clamp(slx-ex, 0, 40), strandSetWaveFreqMaxAdj[setSelectedID])
+ 		setWaveFreqMinOverrode[setSelectedID]   = 1
+ 		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+-		minFreq = clamp(slx-ex, 0, 40)
++		minFreq = min(clamp(slx-ex, 0, 40), maxFreq)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setWaveFreqMinOverrode[setChange] != 1 strandSetWaveFreqMinAdj[setChange] = minFreq
++			if setWaveFreqMinOverrode[setChange] != 1 strandSetWaveFreqMinAdj[setChange] = min(minFreq, strandSetWaveFreqMaxAdj[setChange])
+ 		}
+ 	}
+ }
+@@ -1085,15 +1124,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_minFreq = 0 }
+ if textBox_minFreq == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setWaveFreqMinOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(minFreq))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetWaveFreqMinAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(minFreq)), ey-9, 1320+string_width(string(minFreq)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1111,32 +1153,40 @@ if textBox_minFreq == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		minFreq = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_minFreq_value = str
+ 
+-	if real(textBox_minFreq_value) > 40 { textBox_minFreq_value="40"; str="40" }
+-	minFreq = clamp(real(textBox_minFreq_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetWaveFreqMinAdj[setSelectedID]  = minFreq
+-		setWaveFreqMinOverrode[setSelectedID]   = 1
++		strandSetWaveFreqMinAdj[setSelectedID] = min(clamp(real(str), 0, 40), strandSetWaveFreqMaxAdj[setSelectedID])
++		setWaveFreqMinOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		minFreq = min(clamp(real(str), 0, 40), maxFreq)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setWaveFreqMinOverrode[setChange] != 1 strandSetWaveFreqMinAdj[setChange] = minFreq
++			if setWaveFreqMinOverrode[setChange] != 1 strandSetWaveFreqMinAdj[setChange] = min(minFreq, strandSetWaveFreqMaxAdj[setChange])
+ 		}
+ 	}
+ 
+@@ -1172,16 +1222,16 @@ if mouse_check_button(mb_left) && slider_interract_maxFreq
+ 
+ 	if setSelectedID != -1
+ 	{
+-		strandSetWaveFreqMaxAdj[setSelectedID]  = clamp(slx-ex, 0, 40)
++		strandSetWaveFreqMaxAdj[setSelectedID]  = max(clamp(slx-ex, 0, 40), strandSetWaveFreqMinAdj[setSelectedID])
+ 		setWaveFreqMaxOverrode[setSelectedID]   = 1
+ 		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+-		maxFreq = clamp(slx-ex, 0, 40)
++		maxFreq = max(clamp(slx-ex, 0, 40), minFreq)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setWaveFreqMaxOverrode[setChange] != 1 strandSetWaveFreqMaxAdj[setChange] = maxFreq
++			if setWaveFreqMaxOverrode[setChange] != 1 strandSetWaveFreqMaxAdj[setChange] = max(maxFreq, strandSetWaveFreqMinAdj[setChange])
+ 		}
+ 	}
+ 	draw_set_color(c_white)
+@@ -1200,7 +1250,7 @@ if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+ 	{
+ 		reset_textBoxes(); pleaseGen = true
+ 		textBox_maxFreq = 1
+-		if setSelectedID == -1 { str = string(maxFreq);                                  textBox_mixer1_value  = string(maxFreq) }
++		if setSelectedID == -1 { str = string(maxFreq);                                  textBox_maxFreq_value = string(maxFreq) }
+ 		if setSelectedID != -1 { str = string(strandSetWaveFreqMaxAdj[setSelectedID]);   textBox_maxFreq_value = string(strandSetWaveFreqMaxAdj[setSelectedID]) }
+ 	}
+ }
+@@ -1209,15 +1259,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_maxFreq = 0 }
+ if textBox_maxFreq == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setWaveFreqMaxOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(maxFreq))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetWaveFreqMaxAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(maxFreq)), ey-9, 1320+34+string_width(string(maxFreq)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1235,32 +1288,40 @@ if textBox_maxFreq == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		maxFreq = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_maxFreq_value = str
+ 
+-	if real(textBox_maxFreq_value) > 40 { textBox_maxFreq_value="40"; str="40" }
+-	maxFreq = clamp(real(textBox_maxFreq_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetWaveFreqMaxAdj[setSelectedID] = maxFreq
+-		// note: setWaveFreqMaxOverrode intentionally not set here (legacy behaviour)
++		strandSetWaveFreqMaxAdj[setSelectedID] = max(clamp(real(str), 0, 40), strandSetWaveFreqMinAdj[setSelectedID])
++		setWaveFreqMaxOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		maxFreq = max(clamp(real(str), 0, 40), minFreq)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setWaveFreqMaxOverrode[setChange] != 1 strandSetWaveFreqMaxAdj[setChange] = maxFreq
++			if setWaveFreqMaxOverrode[setChange] != 1 strandSetWaveFreqMaxAdj[setChange] = max(maxFreq, strandSetWaveFreqMinAdj[setChange])
+ 		}
+ 	}
+ 
+@@ -1335,15 +1396,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_tapering = 0 }
+ if textBox_tapering == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setTaperOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(tapering))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetTaperAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(tapering)), ey-9, 1320+string_width(string(tapering)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1361,29 +1425,37 @@ if textBox_tapering == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		tapering = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_tapering_value = str
+ 
+-	if real(textBox_tapering_value) > 100 { textBox_tapering_value="100"; str="100" }
+-	tapering = clamp(real(textBox_tapering_value), 0, 100)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetTaperAdj[setSelectedID] = tapering
+-		setTaperOverrode[setSelectedID]  = 1
++		strandSetTaperAdj[setSelectedID] = clamp(real(str), 0, 100)
++		setTaperOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		tapering = clamp(real(str), 0, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setTaperOverrode[setChange] != 1 strandSetTaperAdj[setChange] = tapering
+@@ -1461,15 +1533,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_lifeVariant = 0 }
+ if textBox_lifeVariant == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setVariOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(lifeVariant))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetVariAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(str)), ey-9, 1320+string_width(string(str)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1487,29 +1562,37 @@ if textBox_lifeVariant == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		lifeVariant = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "1"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_lifeVariant_value = str
+ 
+-	if real(textBox_lifeVariant_value) > 100 { textBox_lifeVariant_value="100"; str="100" }
+-	lifeVariant = clamp(real(textBox_lifeVariant_value), 1, 100)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetVariAdj[setSelectedID] = lifeVariant
+-		setVariOverrode[setSelectedID]  = 1
++		strandSetVariAdj[setSelectedID] = clamp(real(str), 1, 100)
++		setVariOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		lifeVariant = clamp(real(str), 1, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setVariOverrode[setChange] != 1 strandSetVariAdj[setChange] = lifeVariant
+@@ -1587,15 +1670,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_YRanRange = 0 }
+ if textBox_YRanRange == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and strandYRanRangeOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(yRanRange))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandYRanRange[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(str)), ey-9, 1320+string_width(string(str)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1613,29 +1699,37 @@ if textBox_YRanRange == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		yRanRange = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "1"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 100 str = "100"
+ 	textBox_YRanRange_value = str
+ 
+-	if real(textBox_YRanRange_value) > 100 { textBox_YRanRange_value="100"; str="100" }
+-	yRanRange = clamp(real(textBox_YRanRange_value), 1, 100)
+ 	if setSelectedID != -1
+ 	{
+-		strandYRanRange[setSelectedID]         = yRanRange
++		strandYRanRange[setSelectedID] = clamp(real(str), 1, 100)
+ 		strandYRanRangeOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		yRanRange = clamp(real(str), 1, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if strandYRanRangeOverrode[setChange] != 1 strandYRanRange[setChange] = yRanRange
+@@ -1674,19 +1768,20 @@ if mouse_check_button(mb_left) && slider_interract_minScale
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setThickMinAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
++		setThickMinAdj[setSelectedID]      = min(clamp(slx-ex, 1, 40), setThickMaxAdj[setSelectedID])
+ 		setThickMinOverrode[setSelectedID] = 1
+ 		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+-		minScale = clamp(slx-ex, 1, 40)
++		minScale = min(clamp(slx-ex, 1, 40), maxScale)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setThickMinOverrode[setChange] != 1 setThickMinAdj[setChange] = minScale
++			if setThickMinOverrode[setChange] != 1 setThickMinAdj[setChange] = min(minScale, setThickMaxAdj[setChange])
+ 		}
+ 	}
+ }
+@@ -1713,15 +1808,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_minScale = 0 }
+ if textBox_minScale == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setThickMinOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(minScale))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setThickMinAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(minScale)), ey-9, 1320+string_width(string(minScale)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1739,33 +1837,40 @@ if textBox_minScale == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		minScale = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_minScale_value = str
+ 
+-	if real(textBox_minScale_value) > 40 { textBox_minScale_value="40"; str="40" }
+-	minScale = clamp(real(textBox_minScale_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		setThickMinAdj[setSelectedID]      = real(str)
++		setThickMinAdj[setSelectedID] = min(clamp(real(str), 1, 40), setThickMaxAdj[setSelectedID])
+ 		setThickMinOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		minScale = min(clamp(real(str), 1, 40), maxScale)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setThickMinOverrode[setChange] != 1 setThickMinAdj[setChange] = real(str)
+-			else minScale = clamp(real(textBox_minScale_value), 0, 40)
++			if setThickMinOverrode[setChange] != 1 setThickMinAdj[setChange] = min(minScale, setThickMaxAdj[setChange])
+ 		}
+ 	}
+ 
+@@ -1796,19 +1901,20 @@ if mouse_check_button(mb_left) && slider_interract_maxScale
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setThickMaxAdj[setSelectedID]      = clamp(slx-ex, 1, 40)
++		setThickMaxAdj[setSelectedID]      = max(clamp(slx-ex, 1, 40), setThickMinAdj[setSelectedID])
+ 		setThickMaxOverrode[setSelectedID] = 1
+ 		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+-		maxScale = clamp(slx-ex, 1, 40)
++		maxScale = max(clamp(slx-ex, 1, 40), minScale)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setThickMaxOverrode[setChange] != 1 setThickMaxAdj[setChange] = maxScale
++			if setThickMaxOverrode[setChange] != 1 setThickMaxAdj[setChange] = max(maxScale, setThickMinAdj[setChange])
+ 		}
+ 	}
+ }
+@@ -1836,15 +1942,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_maxScale = 0 }
+ if textBox_maxScale == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setThickMaxOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(maxScale))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setThickMaxAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(maxScale)), ey-9, 1320+34+string_width(string(maxScale)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1862,34 +1971,40 @@ if textBox_maxScale == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		maxScale = real(str)
+-		if maxScale < 1 { maxScale=1; str=1 }
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_maxScale_value = str
+ 
+-	if real(textBox_maxScale_value) > 40 { textBox_maxScale_value="40"; str="40" }
+-	maxScale = clamp(real(textBox_maxScale_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		setThickMaxAdj[setSelectedID]      = real(str)
++		setThickMaxAdj[setSelectedID] = max(clamp(real(str), 1, 40), setThickMinAdj[setSelectedID])
+ 		setThickMaxOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		maxScale = max(clamp(real(str), 1, 40), minScale)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+-			if setThickMaxOverrode[setChange] != 1 setThickMaxAdj[setChange] = real(str)
+-			else maxScale = clamp(real(textBox_maxScale_value), 0, 40)
++			if setThickMaxOverrode[setChange] != 1 setThickMaxAdj[setChange] = max(maxScale, setThickMinAdj[setChange])
+ 		}
+ 	}
+ 
+@@ -1927,6 +2042,7 @@ if mouse_check_button(mb_left) && slider_interract_tipThick
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -1966,15 +2082,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_tipThick = 0 }
+ if textBox_tipThick == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setTipThickOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(tipThick))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+2+string_width(string(tipThick)), ey-9, 1318+2+string_width(string(tipThick)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -1992,29 +2111,37 @@ if textBox_tipThick == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_tipThick_value = str
+ 
+-	if real(textBox_tipThick_value) > 40 { textBox_tipThick_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_tipThick_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setTipThickAdj[setSelectedID] = clamp(real(textBox_tipThick_value), 0, 40)
++		setTipThickAdj[setSelectedID] = clamp(real(str), 0, 40)
+ 		setTipThickOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		tipThick = clamp(real(textBox_tipThick_value), 0, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		tipThick = clamp(real(str), 0, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setTipThickOverrode[setChange] != 1 setTipThickAdj[setChange] = tipThick
+@@ -2049,6 +2176,7 @@ if mouse_check_button(mb_left) && slider_interract_rootThick
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2088,15 +2216,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_rootThick = 0 }
+ if textBox_rootThick == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setRootThickOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(rootThick))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+34+2+string_width(string(rootThick)), ey-9, 1318+34+2+string_width(string(rootThick)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2114,29 +2245,37 @@ if textBox_rootThick == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_rootThick_value = str
+ 
+-	if real(textBox_rootThick_value) > 40 { textBox_rootThick_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_rootThick_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setRootThickAdj[setSelectedID] = clamp(real(textBox_rootThick_value), 0, 40)
++		setRootThickAdj[setSelectedID] = clamp(real(str), 0, 40)
+ 		setRootThickOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		rootThick = clamp(real(textBox_rootThick_value), 0, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		rootThick = clamp(real(str), 0, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setRootThickOverrode[setChange] != 1 setRootThickAdj[setChange] = rootThick
+@@ -2177,6 +2316,7 @@ if mouse_check_button(mb_left) && slider_interract_thickVary
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+100); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2216,15 +2356,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_thickVary = 0 }
+ if textBox_thickVary == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setThickVaryOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(thickVary))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+2+string_width(string(thickVary)), ey-9, 1318+2+string_width(string(thickVary)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 3
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2242,29 +2385,37 @@ if textBox_thickVary == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 3
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_thickVary_value = str
+ 
+-	if real(textBox_thickVary_value) > 100 { textBox_thickVary_value="100"; str="100" }
++	if real(str) > 100 str = "100"
++	textBox_thickVary_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setThickVaryAdj[setSelectedID] = clamp(real(textBox_thickVary_value), 0, 100)
++		setThickVaryAdj[setSelectedID] = clamp(real(str), 0, 100)
+ 		setThickVaryOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		thickVary = clamp(real(textBox_thickVary_value), 0, 100)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		thickVary = clamp(real(str), 0, 100)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setThickVaryOverrode[setChange] != 1 setThickVaryAdj[setChange] = thickVary
+@@ -2305,6 +2456,7 @@ if mouse_check_button(mb_left) && slider_interract_fadeIn
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2344,15 +2496,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_fadeIn = 0 }
+ if textBox_fadeIn == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setFadeInOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(fadeIn))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+2+string_width(string(fadeIn)), ey-9, 1318+2+string_width(string(fadeIn)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2370,29 +2525,37 @@ if textBox_fadeIn == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_fadeIn_value = str
+ 
+-	if real(textBox_fadeIn_value) > 40 { textBox_fadeIn_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_fadeIn_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setFadeInAdj[setSelectedID] = clamp(real(textBox_fadeIn_value), 1, 40)
++		setFadeInAdj[setSelectedID] = clamp(real(str), 1, 40)
+ 		setFadeInOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		fadeIn = clamp(real(textBox_fadeIn_value), 1, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		fadeIn = clamp(real(str), 1, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setFadeInOverrode[setChange] != 1 setFadeInAdj[setChange] = fadeIn
+@@ -2427,6 +2590,7 @@ if mouse_check_button(mb_left) && slider_interract_fadeOut
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2466,15 +2630,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_fadeOut = 0 }
+ if textBox_fadeOut == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setFadeOutOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(fadeOut))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+34+2+string_width(string(fadeOut)), ey-9, 1318+34+2+string_width(string(fadeOut)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2492,29 +2659,37 @@ if textBox_fadeOut == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "1"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_fadeOut_value = str
+ 
+-	if real(textBox_fadeOut_value) > 40 { textBox_fadeOut_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_fadeOut_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setFadeOutAdj[setSelectedID] = clamp(real(textBox_fadeOut_value), 1, 40)
++		setFadeOutAdj[setSelectedID] = clamp(real(str), 1, 40)
+ 		setFadeOutOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		fadeOut = clamp(real(textBox_fadeOut_value), 1, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		fadeOut = clamp(real(str), 1, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setFadeOutOverrode[setChange] != 1 setFadeOutAdj[setChange] = fadeOut
+@@ -2556,6 +2731,7 @@ if mouse_check_button(mb_left) && slider_interract_noiseAmt
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2595,15 +2771,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_noiseAmt = 0 }
+ if textBox_noiseAmt == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setNoiseAmtOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(noiseAmt))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+2+string_width(string(noiseAmt)), ey-9, 1318+2+string_width(string(noiseAmt)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2621,29 +2800,37 @@ if textBox_noiseAmt == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_noiseAmt_value = str
+ 
+-	if real(textBox_noiseAmt_value) > 40 { textBox_noiseAmt_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_noiseAmt_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setNoiseAmtAdj[setSelectedID] = clamp(real(textBox_noiseAmt_value), 0, 40)
++		setNoiseAmtAdj[setSelectedID] = clamp(real(str), 0, 40)
+ 		setNoiseAmtOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		noiseAmt = clamp(real(str), 0, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setNoiseAmtOverrode[setChange] != 1 setNoiseAmtAdj[setChange] = noiseAmt
+@@ -2678,6 +2865,7 @@ if mouse_check_button(mb_left) && slider_interract_noiseFreq
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -2717,15 +2905,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_noiseFreq = 0 }
+ if textBox_noiseFreq == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setNoiseFreqOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(noiseFreq))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1318+34+2+string_width(string(noiseFreq)), ey-9, 1318+34+2+string_width(string(noiseFreq)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2743,29 +2934,37 @@ if textBox_noiseFreq == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
+-	textBox_noiseFreq_value = str
+ 
+-	if real(textBox_noiseFreq_value) > 40 { textBox_noiseFreq_value="40"; str="40" }
++	if real(str) > 40 str = "40"
++	textBox_noiseFreq_value = str
+ 
+ 	if setSelectedID != -1
+ 	{
+-		setNoiseFreqAdj[setSelectedID] = clamp(real(textBox_noiseFreq_value), 0, 40)
++		setNoiseFreqAdj[setSelectedID] = clamp(real(str), 0, 40)
+ 		setNoiseFreqOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
+-		noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		noiseFreq = clamp(real(str), 0, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setNoiseFreqOverrode[setChange] != 1 setNoiseFreqAdj[setChange] = noiseFreq
+@@ -2807,13 +3006,13 @@ if mouse_check_button(mb_left) && slider_interract_length
+ 
+ 	if setSelectedID != -1
+ 	{
+-		strandLengthOverride[setSelectedID] = clamp(slx-ex, 0, 100) * 38
++		strandLengthOverride[setSelectedID] = clamp(slx-ex, 1, 100) * 38
+ 		setLengthOverrode[setSelectedID]    = 1
+ 		localUpdateSet = setSelectedID
+ 	}
+ 	else
+ 	{
+-		length = clamp(slx-ex, 0, 100) * 38
++		length = clamp(slx-ex, 1, 100) * 38
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setLengthOverrode[setChange] != 1 strandLengthOverride[setChange] = length
+@@ -2843,15 +3042,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_length = 0 }
+ if textBox_length == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setLengthOverrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(length))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandLengthOverride[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(length)), ey-9, 1320+string_width(string(length)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+-	#region // Numpad input (allows up to 4 digits)
+-	if string_length(str) <= 4
++	#region // Numpad input
++	if string_length(str) < 4
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2869,29 +3071,37 @@ if textBox_length == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 6
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		length = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "38"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 4
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 3800 str = "3800"
+ 	textBox_length_value = str
+ 
+-	if real(textBox_length_value) > 3800 { textBox_length_value="3800"; str="3800" }
+-	length = clamp(real(textBox_length_value), 1, 3800)
+ 	if setSelectedID != -1
+ 	{
+-		strandLengthOverride[setSelectedID] = length
+-		setLengthOverrode[setSelectedID]    = 1
++		strandLengthOverride[setSelectedID] = clamp(real(str), 38, 3800)
++		setLengthOverrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		length = clamp(real(str), 38, 3800)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setLengthOverrode[setChange] != 1 strandLengthOverride[setChange] = length
+@@ -2973,15 +3183,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer1 = 0 }
+ if textBox_mixer1 == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerAmt1Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer1))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj1[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(mixer1)), ey-9, 1320+string_width(string(mixer1)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -2999,29 +3212,37 @@ if textBox_mixer1 == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer1 = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer1_value = str
+ 
+-	if real(textBox_mixer1_value) > 40 { textBox_mixer1_value="40"; str="40" }
+-	mixer1 = clamp(real(textBox_mixer1_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerAdj1[setSelectedID]   = mixer1
++		strandSetMixerAdj1[setSelectedID] = clamp(real(str), 0, 40)
+ 		setMixerAmt1Overrode[setSelectedID] = 1
+ 	}
+ 	else
+ 	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer1 = clamp(real(str), 0, 40)
+ 		for (setChange = 0; setChange < 12; setChange++)
+ 		{
+ 			if setMixerAmt1Overrode[setChange] != 1 strandSetMixerAdj1[setChange] = mixer1
+@@ -3056,6 +3277,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer1_offset
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -3096,15 +3318,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer1_offset = 0 }
+ if textBox_mixer1_offset == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerOfs1Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer1_offset))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj1[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(mixer1_offset)), ey-9, 1320+34+string_width(string(mixer1_offset)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -3122,26 +3347,41 @@ if textBox_mixer1_offset == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer1_offset = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer1_offset_value = str
+ 
+-	if real(textBox_mixer1_offset_value) > 40 { textBox_mixer1_offset_value="40"; str="40" }
+-	mixer1_offset = clamp(real(textBox_mixer1_offset_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerOffsetAdj1[setSelectedID] = mixer1_offset
+-		setMixerOfs1Overrode[setSelectedID]     = 1
++		strandSetMixerOffsetAdj1[setSelectedID] = clamp(real(str), 0, 40)
++		setMixerOfs1Overrode[setSelectedID] = 1
++	}
++	else
++	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer1_offset = clamp(real(str), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setMixerOfs1Overrode[setChange] != 1 strandSetMixerOffsetAdj1[setChange] = mixer1_offset
++		}
+ 	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+@@ -3214,15 +3454,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer2 = 0 }
+ if textBox_mixer2 == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerAmt2Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer2))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj2[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(mixer2)), ey-9, 1320+string_width(string(mixer2)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -3240,27 +3483,42 @@ if textBox_mixer2 == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer2 = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer2_value = str
+ 
+-	if real(textBox_mixer2_value) > 40 { textBox_mixer2_value="40"; str="40" }
+-	mixer2 = clamp(real(textBox_mixer2_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerAdj2[setSelectedID]   = mixer2
++		strandSetMixerAdj2[setSelectedID] = clamp(real(str), 0, 40)
+ 		setMixerAmt2Overrode[setSelectedID] = 1
+ 	}
++	else
++	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer2 = clamp(real(str), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setMixerAmt2Overrode[setChange] != 1 strandSetMixerAdj2[setChange] = mixer2
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -3290,6 +3548,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer2_offset
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -3330,15 +3589,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer2_offset = 0 }
+ if textBox_mixer2_offset == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerOfs2Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer2_offset))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj2[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(mixer2_offset)), ey-9, 1320+34+string_width(string(mixer2_offset)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -3356,26 +3618,41 @@ if textBox_mixer2_offset == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer2_offset = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
+ 		keyboard_lastkey = -1
+ 	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
++		keyboard_lastkey = -1
++	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer2_offset_value = str
+ 
+-	if real(textBox_mixer2_offset_value) > 40 { textBox_mixer2_offset_value="40"; str="40" }
+-	mixer2_offset = clamp(real(textBox_mixer2_offset_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerOffsetAdj2[setSelectedID] = mixer2_offset
+-		setMixerOfs2Overrode[setSelectedID]     = 1
++		strandSetMixerOffsetAdj2[setSelectedID] = clamp(real(str), 0, 40)
++		setMixerOfs2Overrode[setSelectedID] = 1
++	}
++	else
++	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer2_offset = clamp(real(str), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setMixerOfs2Overrode[setChange] != 1 strandSetMixerOffsetAdj2[setChange] = mixer2_offset
++		}
+ 	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+@@ -3448,15 +3725,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer3 = 0 }
+ if textBox_mixer3 == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerAmt3Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer3))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj3[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+string_width(string(mixer3)), ey-9, 1320+string_width(string(mixer3)), ey+7, 2)
++		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -3474,27 +3754,42 @@ if textBox_mixer3 == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer3 = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer3_value = str
+ 
+-	if real(textBox_mixer3_value) > 40 { textBox_mixer3_value="40"; str="40" }
+-	mixer3 = clamp(real(textBox_mixer3_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerAdj3[setSelectedID]   = mixer3
++		strandSetMixerAdj3[setSelectedID] = clamp(real(str), 0, 40)
+ 		setMixerAmt3Overrode[setSelectedID] = 1
+ 	}
++	else
++	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer3 = clamp(real(str), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setMixerAmt3Overrode[setChange] != 1 strandSetMixerAdj3[setChange] = mixer3
++		}
++	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+ }
+@@ -3524,6 +3819,7 @@ if mouse_check_button(mb_left) && slider_interract_mixer3_offset
+ {
+ 	over = 1
+ 	slx  = clamp(mouse_x, ex, ex+40); pleaseGen = true
++	reset_textBoxes()   // an open box would re-apply its stale text over this drag
+ 
+ 	if setSelectedID != -1
+ 	{
+@@ -3564,15 +3860,18 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer3_offset = 0 }
+ if textBox_mixer3_offset == 1
+ {
+ 	draw_set_color(tbCol)
++	if setSelectedID != -1 and setMixerOfs3Overrode[setSelectedID] != 0 draw_set_color(tbColOver)
+ 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+-	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer3_offset))
+-	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj3[setSelectedID])) }
++
++	// Draw the buffer being typed, not the stored variable - the readout and
++	// the caret then always agree with each other and with what was keyed in.
++	draw_text(1318+34, ey+11, str)
+ 	if tickytime > 0.5 and tickytime < 0.9
+-		draw_line_width(1320+34+string_width(string(mixer3_offset)), ey-9, 1320+34+string_width(string(mixer3_offset)), ey+7, 2)
++		draw_line_width(1318+34+2+string_width(str), ey-9, 1318+34+2+string_width(str), ey+7, 2)
+ 	draw_set_color(c_white)
+ 
+ 	#region // Numpad input
+-	if string_length(str) < 4
++	if string_length(str) < 2
+ 	{
+ 		switch (keyboard_key)
+ 		{
+@@ -3590,26 +3889,41 @@ if textBox_mixer3_offset == 1
+ 	}
+ 	#endregion
+ 
+-	if keyboard_lastkey != -1 and string_length(str) < 4
++	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
++	// inside it, so a box padded to the limit ("0000") accepted neither a
++	// digit nor a backspace and could only be escaped by clicking away.
++	if keyboard_lastkey == 8
+ 	{
+-		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+-			str += keyboard_lastchar
+-		mixer3_offset = real(str)
+-		if keyboard_lastkey == 8
+-		{
+-			str = string_copy(str, 1, string_length(str)-1)
+-			if str == "" str = "0"
+-		}
++		str = string_copy(str, 1, string_length(str)-1)
++		if str == "" str = "0"
++		keyboard_lastkey = -1
++	}
++	else if keyboard_lastkey != -1 and string_length(str) < 2
++	{
++		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
++		// whatever keyboard_lastchar still held - repeating the last digit.
++		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
+ 		keyboard_lastkey = -1
+ 	}
++
++	if real(str) > 40 str = "40"
+ 	textBox_mixer3_offset_value = str
+ 
+-	if real(textBox_mixer3_offset_value) > 40 { textBox_mixer3_offset_value="40"; str="40" }
+-	mixer3_offset = clamp(real(textBox_mixer3_offset_value), 0, 40)
+ 	if setSelectedID != -1
+ 	{
+-		strandSetMixerOffsetAdj3[setSelectedID] = mixer3_offset
+-		setMixerOfs3Overrode[setSelectedID]     = 1
++		strandSetMixerOffsetAdj3[setSelectedID] = clamp(real(str), 0, 40)
++		setMixerOfs3Overrode[setSelectedID] = 1
++	}
++	else
++	{
++		// The global is only written when NO set is selected. It used to be
++		// assigned first either way, so editing one set quietly moved the
++		// global setting and every set that follows it.
++		mixer3_offset = clamp(real(str), 0, 40)
++		for (setChange = 0; setChange < 12; setChange++)
++		{
++			if setMixerOfs3Overrode[setChange] != 1 strandSetMixerOffsetAdj3[setChange] = mixer3_offset
++		}
+ 	}
+ 
+ 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+@@ -3898,14 +4212,17 @@ if hexColEdit
+ 	if tickytime > 0.5 and tickytime < 0.9
+ 		draw_line_width(1536+string_width(string(str2)), 733, 1536+string_width(string(str2)), 719, 2)
+ 
+-	// Backspace
++	// Backspace first, so it can never be swallowed by the length gate below.
+ 	if keyboard_lastkey == 8
++	{
+ 		str2 = string_copy(str2, 1, string_length(str2)-1)
+-
+-	// Character input (hex digits 0-9, a-f, A-F)
+-	if keyboard_lastkey != -1 and string_length(str2) <= 5
++		keyboard_lastkey = -1
++	}
++	// Character input (hex digits 0-9, a-f, A-F). 46 is vk_delete, not '.', and
++	// accepting it appended whatever keyboard_lastchar still held.
++	else if keyboard_lastkey != -1 and string_length(str2) <= 5
+ 	{
+-		if (keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57))
++		if (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+ 		   or (keyboard_lastkey >= 65 and keyboard_lastkey <= 70)
+ 		   or (keyboard_lastkey >= 97 and keyboard_lastkey <= 102)
+ 			str2 += keyboard_lastchar
+diff --git a/objects/obj_surfaceDweller/Step_1.gml b/objects/obj_surfaceDweller/Step_1.gml
+index e6faf27..b7cdc9b 100644
+--- a/objects/obj_surfaceDweller/Step_1.gml
++++ b/objects/obj_surfaceDweller/Step_1.gml
+@@ -84,7 +84,7 @@ if gameTick360>360 gameTick360=0
+ 
+ debugMsg="Begin Step"
+ smallTip="" // clear the tooltip
+-tickytime+=0.1
++tickytime+=0.025 // text box caret blink - quarter of the old speed
+ if tickytime>=1 tickytime=0
+ /*
+ if !surface_exists(canvas) or !surface_exists(nm_canvas) or !surface_exists(mask_canvas) or !surface_exists(depth_canvas) or
+diff --git a/scripts/doHighlighting/doHighlighting.gml b/scripts/doHighlighting/doHighlighting.gml
+index d129d7a..992197c 100644
+--- a/scripts/doHighlighting/doHighlighting.gml
++++ b/scripts/doHighlighting/doHighlighting.gml
+@@ -22,7 +22,11 @@ if img==9
+ 				// choose a start point within a set area
+ 					setID=b				
+ 					sx=xx 
+-				lifeVariant=strandSetVariAdj[b]
++				// lifeVariant is ALSO the global 'Variation' setting that the slider and
++				// text box write. Assigning the per-set value to it here overwrote the
++				// typed value every frame, which is why the Variation box would not take
++				// an edit. Use a local for the per-set working value instead.
++				var _lvS=strandSetVariAdj[b]
+ 				// V1.95 - unconditional, matching mainCalc / doMainStep
+ 				var _hlH = strandLengthOverride[b]
+ 				if _hlH<=0 _hlH = length
+@@ -96,15 +100,15 @@ if img==9
+ 
+ 								
+ 								// now in 1.43
+-								var xA= lerp ( 0, path_get_x( editingPath[0],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj1[b])*100))) , strandSetMixerAdj1[b] ) // influence of mixer 1
+-								var xB= lerp ( 0, path_get_x( editingPath[1],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj2[b])*100))) , strandSetMixerAdj2[b] ) // influence of mixer 2
+-								var xC= lerp ( 0, path_get_x( editingPath[2],  (n-(lifeVariant))   /   (4096+((strandSetMixerOffsetAdj3[b])*100))) , strandSetMixerAdj3[b] ) // influence of mixer 3
++								var xA= lerp ( 0, path_get_x( editingPath[0],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj1[b])*100))) , strandSetMixerAdj1[b] ) // influence of mixer 1
++								var xB= lerp ( 0, path_get_x( editingPath[1],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj2[b])*100))) , strandSetMixerAdj2[b] ) // influence of mixer 2
++								var xC= lerp ( 0, path_get_x( editingPath[2],  (n-(_lvS))   /   (4096+((strandSetMixerOffsetAdj3[b])*100))) , strandSetMixerAdj3[b] ) // influence of mixer 3
+ 								
+ 								// New mixer overrides.
+ 								// in version 1.43 - Aug 30th 2020
+ 								
+ 								
+-								var tempX=  (lerp (   lerp( xA , xB , 0.5 )   ,  xC , 0.5 ) / lifeVariant)*8 // mix all 3
++								var tempX=  (lerp (   lerp( xA , xB , 0.5 )   ,  xC , 0.5 ) / _lvS)*8 // mix all 3
+ 								
+ 								straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01)) // be sure to tapre the Stragglers
+ 								
+@@ -121,7 +125,7 @@ if img==9
+ 												//,setXpos // (B) location (so that we can taper to the middle of the set
+ 												//,(n/3000)*(tapering*0.01)) // (CONTROL)
+ 											,straggleXX,
+-											0.5+((lifeVariant-50)/100))//strandDecision) //  shifts them around
++											0.5+((_lvS-50)/100))//strandDecision) //  shifts them around
+ 												
+ 												
+ 									var algTaper = algFinalX//lerp (algFinalX,setXpos	,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))		
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index b5b1ec5..395a701 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -431,7 +431,11 @@ renderF=0 // incremental render - current set being rendered
+                         if (idList > strandIDsize) idList = 0;
+                     }
+ 
+-                    lifeVariant = strandSetVariAdj[f];
++                    // lifeVariant is ALSO the global 'Variation' setting that the slider and
++                    // text box write. Assigning the per-set value to it here overwrote the
++                    // typed value every frame, which is why the Variation box would not take
++                    // an edit. Use a local for the per-set working value instead.
++                    var _lvS = strandSetVariAdj[f];
+                     
+                     // Spacing and initial X position logic
+                     xx = (320 - (strandSetSpaceAdj[f] * 10)) + ((strandSetSpaceAdj[f] * 10) * 0.5) + ((preRandSpacing[f, h] + (f * ((setDistance * 2) * 5))));
+@@ -569,13 +573,13 @@ renderF=0 // incremental render - current set being rendered
+                         curlRotator += preRandCurling[f, h];
+                         nx = xx + (lut_sin[_liWave] * ((yy - yOffset[f]) / 100));
+ 
+-                        var xA = lerp(0, path_get_x(editingPath[0], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj1[f] * 100))), strandSetMixerAdj1[f]);
+-                        var xB = lerp(0, path_get_x(editingPath[1], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj2[f] * 100))), strandSetMixerAdj2[f]);
+-                        var xC = lerp(0, path_get_x(editingPath[2], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj3[f] * 100))), strandSetMixerAdj3[f]);
+-                        var tempX = (lerp(lerp(xA, xB, 0.5), xC, 0.5) / lifeVariant) * 8;
++                        var xA = lerp(0, path_get_x(editingPath[0], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj1[f] * 100))), strandSetMixerAdj1[f]);
++                        var xB = lerp(0, path_get_x(editingPath[1], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj2[f] * 100))), strandSetMixerAdj2[f]);
++                        var xC = lerp(0, path_get_x(editingPath[2], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj3[f] * 100))), strandSetMixerAdj3[f]);
++                        var tempX = (lerp(lerp(xA, xB, 0.5), xC, 0.5) / _lvS) * 8;
+ 
+                         straggleXX = lerp(xx + tempX, setXpos, (n / 3000) * (strandSetTaperAdj[f] * 0.01));
+-                        var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((lifeVariant - 50) / 100));
++                        var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((_lvS - 50) / 100));
+                         var algTaper  = lerp(algFinalX, setXpos, (n / life) * (clamp(strandSetTaperAdj[f], 1, strandSetTaperAdj[f]) * 0.01));
+ 
+                         // V1.90 NOISE - gradual left/right deviation, root anchored
+diff --git a/scripts/mainCalc/mainCalc.gml b/scripts/mainCalc/mainCalc.gml
+index df4de15..5daf73e 100644
+--- a/scripts/mainCalc/mainCalc.gml
++++ b/scripts/mainCalc/mainCalc.gml
+@@ -158,7 +158,11 @@ or (_localLive==1 and previewCanvasComplete==0)
+             {
+             setID=b
+             sx=xx
+-            lifeVariant=strandSetVariAdj[b]
++            // lifeVariant is ALSO the global 'Variation' setting that the slider and
++            // text box write. Assigning the per-set value to it here overwrote the
++            // typed value every frame, which is why the Variation box would not take
++            // an edit. Use a local for the per-set working value instead.
++            var _lvS=strandSetVariAdj[b]
+             // V1.95 - was conditional, so a set whose Length override is 0 (the slider
+             // reaches 0) silently inherited the PREVIOUS set's hairLength. Set 0 inherits
+             // from set 10 of the PREVIOUS FRAME, which is why the first set is the one seen
+@@ -228,12 +232,12 @@ or (_localLive==1 and previewCanvasComplete==0)
+                     deviationFromX = lut_sin[_liDev]
+                     nx = xx + (lut_sin[_liWave] * (yy/100))
+ 
+-                    var xA=lerp(0,path_get_x(editingPath[0],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
+-                    var xB=lerp(0,path_get_x(editingPath[1],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
+-                    var xC=lerp(0,path_get_x(editingPath[2],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
+-                    var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/lifeVariant)*8
++                    var xA=lerp(0,path_get_x(editingPath[0],(n-_lvS)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
++                    var xB=lerp(0,path_get_x(editingPath[1],(n-_lvS)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
++                    var xC=lerp(0,path_get_x(editingPath[2],(n-_lvS)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
++                    var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/_lvS)*8
+                     straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
+-                    var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
++                    var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((_lvS-50)/100))
+                     var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
+ 
+                     // V1.90 NOISE - gradual left/right deviation, root anchored.
+@@ -307,7 +311,11 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                 {
+                 setID=b
+                 sx=xx
+-                lifeVariant=strandSetVariAdj[b]
++                // lifeVariant is ALSO the global 'Variation' setting that the slider and
++                // text box write. Assigning the per-set value to it here overwrote the
++                // typed value every frame, which is why the Variation box would not take
++                // an edit. Use a local for the per-set working value instead.
++                var _lvS2=strandSetVariAdj[b]
+                 var _hlB2 = strandLengthOverride[b]   // V1.95 - see the first loop
+                 if _hlB2<=0 _hlB2 = length
+                 hairLength = _hlB2 + preRandLifeVariant[b]
+@@ -359,12 +367,12 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                         deviationFromX = lut_sin[_liDev]
+                         nx = xx + (lut_sin[_liWave] * (yy/100))
+ 
+-                        var xA=lerp(0,path_get_x(editingPath[0],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
+-                        var xB=lerp(0,path_get_x(editingPath[1],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
+-                        var xC=lerp(0,path_get_x(editingPath[2],(n-lifeVariant)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
+-                        var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/lifeVariant)*8
++                        var xA=lerp(0,path_get_x(editingPath[0],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj1[b]*100))),strandSetMixerAdj1[b])
++                        var xB=lerp(0,path_get_x(editingPath[1],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj2[b]*100))),strandSetMixerAdj2[b])
++                        var xC=lerp(0,path_get_x(editingPath[2],(n-_lvS2)/(4096+(strandSetMixerOffsetAdj3[b]*100))),strandSetMixerAdj3[b])
++                        var tempX=(lerp(lerp(xA,xB,0.5),xC,0.5)/_lvS2)*8
+                         straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
+-                        var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
++                        var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((_lvS2-50)/100))
+                         var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
+ 
+                         // V1.90 NOISE - gradual left/right deviation, root anchored.

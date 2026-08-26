@@ -431,7 +431,11 @@ renderF=0 // incremental render - current set being rendered
                         if (idList > strandIDsize) idList = 0;
                     }
 
-                    lifeVariant = strandSetVariAdj[f];
+                    // lifeVariant is ALSO the global 'Variation' setting that the slider and
+                    // text box write. Assigning the per-set value to it here overwrote the
+                    // typed value every frame, which is why the Variation box would not take
+                    // an edit. Use a local for the per-set working value instead.
+                    var _lvS = strandSetVariAdj[f];
                     
                     // Spacing and initial X position logic
                     xx = (320 - (strandSetSpaceAdj[f] * 10)) + ((strandSetSpaceAdj[f] * 10) * 0.5) + ((preRandSpacing[f, h] + (f * ((setDistance * 2) * 5))));
@@ -569,13 +573,13 @@ renderF=0 // incremental render - current set being rendered
                         curlRotator += preRandCurling[f, h];
                         nx = xx + (lut_sin[_liWave] * ((yy - yOffset[f]) / 100));
 
-                        var xA = lerp(0, path_get_x(editingPath[0], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj1[f] * 100))), strandSetMixerAdj1[f]);
-                        var xB = lerp(0, path_get_x(editingPath[1], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj2[f] * 100))), strandSetMixerAdj2[f]);
-                        var xC = lerp(0, path_get_x(editingPath[2], (n - lifeVariant) / (4096 + (strandSetMixerOffsetAdj3[f] * 100))), strandSetMixerAdj3[f]);
-                        var tempX = (lerp(lerp(xA, xB, 0.5), xC, 0.5) / lifeVariant) * 8;
+                        var xA = lerp(0, path_get_x(editingPath[0], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj1[f] * 100))), strandSetMixerAdj1[f]);
+                        var xB = lerp(0, path_get_x(editingPath[1], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj2[f] * 100))), strandSetMixerAdj2[f]);
+                        var xC = lerp(0, path_get_x(editingPath[2], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj3[f] * 100))), strandSetMixerAdj3[f]);
+                        var tempX = (lerp(lerp(xA, xB, 0.5), xC, 0.5) / _lvS) * 8;
 
                         straggleXX = lerp(xx + tempX, setXpos, (n / 3000) * (strandSetTaperAdj[f] * 0.01));
-                        var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((lifeVariant - 50) / 100));
+                        var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((_lvS - 50) / 100));
                         var algTaper  = lerp(algFinalX, setXpos, (n / life) * (clamp(strandSetTaperAdj[f], 1, strandSetTaperAdj[f]) * 0.01));
 
                         // V1.90 NOISE - gradual left/right deviation, root anchored
