@@ -1,15 +1,19 @@
-/// @description Mixer editor exit button (V1.90)
+/// @description Mixer editor exit button
 // obj_surfaceDweller is persistent and keeps drawing the whole main UI in this
 // room, so this button lives in Draw GUI to guarantee it sits on top of it.
 // Leaving the editor was previously only discoverable via ENTER, the main UI's
 // X, or ESC - none of which are visible from here.
 
-// Kept clear of the 0-20px window drag strip and of every main-UI hit region,
-// all of which start at x >= 985.
-var _bl = 30
-var _bt = 30
-var _br = 300
-var _bb = 74
+// The button MUST stay off the canvas. checkAndOffset treats any left click
+// inside 0,0 - 1023,1023 as a drag of the selected set, so a button sitting up
+// there moved sets every time it was pressed. It lives in the bottom info strip
+// instead, centred on the canvas (x 512) and below y 1024.
+// The strip is already occupied at x 3-340 (speed modes, curl) and x 846-1017
+// (help, blur, UV loader), so 372-652 is the free middle.
+var _bl = 372
+var _bt = 1026
+var _br = 652
+var _bb = 1054
 
 var _hov = point_in_rectangle(mouse_x, mouse_y, _bl, _bt, _br, _bb)
 
@@ -30,11 +34,7 @@ draw_set_font(bigFont)
 draw_set_halign(fa_center)
 draw_set_valign(fa_middle)
 draw_set_color(c_white)
-draw_text((_bl + _br) / 2, (_bt + _bb) / 2 - 6, "EXIT MIXER EDITOR")
-
-draw_set_font(smallFont)
-draw_set_color(make_color_rgb(170, 170, 178))
-draw_text((_bl + _br) / 2, _bb - 12, "ENTER  /  ESC")
+draw_text((_bl + _br) / 2, (_bt + _bb) / 2, "EXIT MIXER EDITOR   (ENTER / ESC)")
 
 draw_set_font(regFont)
 draw_set_halign(fa_left)

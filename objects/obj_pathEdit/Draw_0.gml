@@ -64,7 +64,7 @@ if mouse_check_button(mb_left) and editPoint>0
 		draw_text(room_width-50,1000,"Mixer editor V1.1\n"+
 		"Mixer: "+string(pathPointer+1)+"  (UP/DOWN to switch)\n"+
 		"Select the mixer from the UI panel\n"+
-		"EXIT MIXER EDITOR - top left, or press ENTER/ESC.\nRight click on any point to zero out the X-position.")
+		"EXIT MIXER EDITOR - bottom centre, or press ENTER/ESC.\nRight click on any point to zero out the X-position.")
 		
 		if keyboard_check_pressed(vk_enter) 
 		{

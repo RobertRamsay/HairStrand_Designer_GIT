@@ -577,8 +577,8 @@ if mouse_check_button(mb_left) && slider_interract_strands
 }
 
 // Draw notch and value
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setCountOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setCountOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom)
 draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strands), sly);                                draw_text(1318, ey+11, string(strands)) }
@@ -604,11 +604,11 @@ else
 // Textbox active: draw, handle input
 if textBox_strands == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom)
 	draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(strands))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandCountOverride[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandCountOverride[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(textBox_strands_value)), ey-9, 1320+string_width(string(strands)), ey+7, 2)
 	draw_set_color(c_white)
@@ -712,8 +712,8 @@ if mouse_check_button(mb_left) && slider_interract_distancings
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setSpacingOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setSpacingOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom)
 draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+distancings), sly);                         draw_text(1318, ey+11, string(distancings)) }
@@ -734,10 +734,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_distancings = 0 }
 
 if textBox_distancings == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(distancings))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetSpaceAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetSpaceAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(distancings)), ey-9, 1320+string_width(string(distancings)), ey+7, 2)
 	draw_set_color(c_white)
@@ -824,7 +824,7 @@ if mouse_check_button(mb_left) && slider_interract_setDistancings
 }
 
 draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
-draw_set_color(c_gray)
+draw_set_color(tbCol)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 draw_text(1318, ey+11, string(setDistance))
 draw_set_color(c_white)
@@ -843,7 +843,7 @@ else { if mouse_check_button_pressed(mb_left) textBox_setDistance = 0 }
 
 if textBox_setDistance == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	draw_text(1318, ey+11, string(setDistance))
 	if tickytime > 0.5 and tickytime < 0.9
@@ -935,8 +935,8 @@ if mouse_check_button(mb_left) && slider_interract_wavyness
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setWaveynessOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setWaveynessOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+wavyness), sly);                              draw_text(1318, ey+11, string(wavyness)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetWavynessAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(strandSetWavynessAdj[setSelectedID])) }
@@ -956,10 +956,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_wavyness = 0 }
 
 if textBox_wavyness == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(wavyness))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetWavynessAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetWavynessAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(wavyness)), ey-9, 1320+string_width(string(wavyness)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1063,8 +1063,8 @@ if mouse_check_button(mb_left) && slider_interract_minFreq
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setWaveFreqMinOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setWaveFreqMinOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+minFreq), sly);                                  draw_text(1318, ey+11, string(minFreq)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetWaveFreqMinAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(strandSetWaveFreqMinAdj[setSelectedID])) }
@@ -1084,10 +1084,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_minFreq = 0 }
 
 if textBox_minFreq == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(minFreq))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetWaveFreqMinAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetWaveFreqMinAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(minFreq)), ey-9, 1320+string_width(string(minFreq)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1187,8 +1187,8 @@ if mouse_check_button(mb_left) && slider_interract_maxFreq
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setWaveFreqMaxOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setWaveFreqMaxOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+maxFreq), sly);                                  draw_text(1318+34, ey+11, string(maxFreq)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetWaveFreqMaxAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(strandSetWaveFreqMaxAdj[setSelectedID])) }
@@ -1208,10 +1208,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_maxFreq = 0 }
 
 if textBox_maxFreq == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(maxFreq))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(strandSetWaveFreqMaxAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetWaveFreqMaxAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+34+string_width(string(maxFreq)), ey-9, 1320+34+string_width(string(maxFreq)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1313,8 +1313,8 @@ if mouse_check_button(mb_left) && slider_interract_tapering
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setTaperOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setTaperOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+tapering), sly);                            draw_text(1318, ey+11, string(tapering)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetTaperAdj[setSelectedID]), sly);    draw_text(1318, ey+11, string(strandSetTaperAdj[setSelectedID])) }
@@ -1334,10 +1334,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_tapering = 0 }
 
 if textBox_tapering == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(tapering))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetTaperAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetTaperAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(tapering)), ey-9, 1320+string_width(string(tapering)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1439,8 +1439,8 @@ if mouse_check_button(mb_left) && slider_interract_lifeVariant
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setVariOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setVariOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+lifeVariant), sly);                            draw_text(1318, ey+11, string(lifeVariant)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetVariAdj[setSelectedID]), sly);        draw_text(1318, ey+11, string(strandSetVariAdj[setSelectedID])) }
@@ -1460,10 +1460,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_lifeVariant = 0 }
 
 if textBox_lifeVariant == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(lifeVariant))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetVariAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetVariAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(str)), ey-9, 1320+string_width(string(str)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1565,8 +1565,8 @@ if mouse_check_button(mb_left) && slider_interract_yRanRange
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && strandYRanRangeOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && strandYRanRangeOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+yRanRange), sly);                         draw_text(1318, ey+11, string(yRanRange)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandYRanRange[setSelectedID]), sly);    draw_text(1318, ey+11, string(strandYRanRange[setSelectedID])) }
@@ -1586,10 +1586,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_YRanRange = 0 }
 
 if textBox_YRanRange == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(yRanRange))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandYRanRange[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandYRanRange[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(str)), ey-9, 1320+string_width(string(str)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1691,8 +1691,8 @@ if mouse_check_button(mb_left) && slider_interract_minScale
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setThickMinOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setThickMinOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+minScale), sly);                         draw_text(1318, ey+11, string(minScale)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setThickMinAdj[setSelectedID]), sly);    draw_text(1318, ey+11, string(setThickMinAdj[setSelectedID])) }
@@ -1712,10 +1712,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_minScale = 0 }
 
 if textBox_minScale == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(minScale))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setThickMinAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setThickMinAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(minScale)), ey-9, 1320+string_width(string(minScale)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1813,8 +1813,8 @@ if mouse_check_button(mb_left) && slider_interract_maxScale
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setThickMaxOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setThickMaxOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+maxScale), sly);                         draw_text(1318+34, ey+11, string(maxScale)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setThickMaxAdj[setSelectedID]), sly);    draw_text(1318+34, ey+11, string(setThickMaxAdj[setSelectedID])) }
@@ -1835,10 +1835,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_maxScale = 0 }
 
 if textBox_maxScale == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(maxScale))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setThickMaxAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setThickMaxAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+34+string_width(string(maxScale)), ey-9, 1320+34+string_width(string(maxScale)), ey+7, 2)
 	draw_set_color(c_white)
@@ -1944,8 +1944,8 @@ if mouse_check_button(mb_left) && slider_interract_tipThick
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setTipThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setTipThickOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+tipThick), sly);                        draw_text(1318, ey+11, string(tipThick)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setTipThickAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
@@ -1965,10 +1965,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_tipThick = 0 }
 
 if textBox_tipThick == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(tipThick))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setTipThickAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+2+string_width(string(tipThick)), ey-9, 1318+2+string_width(string(tipThick)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2066,8 +2066,8 @@ if mouse_check_button(mb_left) && slider_interract_rootThick
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setRootThickOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setRootThickOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+rootThick), sly);                        draw_text(1318+34, ey+11, string(rootThick)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setRootThickAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
@@ -2087,10 +2087,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_rootThick = 0 }
 
 if textBox_rootThick == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(rootThick))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setRootThickAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+34+2+string_width(string(rootThick)), ey-9, 1318+34+2+string_width(string(rootThick)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2194,8 +2194,8 @@ if mouse_check_button(mb_left) && slider_interract_thickVary
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setThickVaryOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setThickVaryOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+thickVary), sly);                        draw_text(1318, ey+11, string(thickVary)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setThickVaryAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
@@ -2215,10 +2215,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_thickVary = 0 }
 
 if textBox_thickVary == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(thickVary))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setThickVaryAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+2+string_width(string(thickVary)), ey-9, 1318+2+string_width(string(thickVary)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2322,8 +2322,8 @@ if mouse_check_button(mb_left) && slider_interract_fadeIn
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setFadeInOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setFadeInOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeIn), sly);                        draw_text(1318, ey+11, string(fadeIn)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeInAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
@@ -2343,10 +2343,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_fadeIn = 0 }
 
 if textBox_fadeIn == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(fadeIn))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setFadeInAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+2+string_width(string(fadeIn)), ey-9, 1318+2+string_width(string(fadeIn)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2444,8 +2444,8 @@ if mouse_check_button(mb_left) && slider_interract_fadeOut
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setFadeOutOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setFadeOutOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+fadeOut), sly);                        draw_text(1318+34, ey+11, string(fadeOut)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setFadeOutAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
@@ -2465,10 +2465,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_fadeOut = 0 }
 
 if textBox_fadeOut == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(fadeOut))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setFadeOutAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+34+2+string_width(string(fadeOut)), ey-9, 1318+34+2+string_width(string(fadeOut)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2573,8 +2573,8 @@ if mouse_check_button(mb_left) && slider_interract_noiseAmt
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setNoiseAmtOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setNoiseAmtOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseAmt), sly);                        draw_text(1318, ey+11, string(noiseAmt)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseAmtAdj[setSelectedID]), sly);   draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
@@ -2594,10 +2594,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_noiseAmt = 0 }
 
 if textBox_noiseAmt == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(noiseAmt))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(setNoiseAmtAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+2+string_width(string(noiseAmt)), ey-9, 1318+2+string_width(string(noiseAmt)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2695,8 +2695,8 @@ if mouse_check_button(mb_left) && slider_interract_noiseFreq
 	}
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setNoiseFreqOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setNoiseFreqOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+noiseFreq), sly);                        draw_text(1318+34, ey+11, string(noiseFreq)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+setNoiseFreqAdj[setSelectedID]), sly);   draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
@@ -2716,10 +2716,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_noiseFreq = 0 }
 
 if textBox_noiseFreq == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(noiseFreq))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(setNoiseFreqAdj[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+34+2+string_width(string(noiseFreq)), ey-9, 1318+34+2+string_width(string(noiseFreq)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2822,8 +2822,8 @@ if mouse_check_button(mb_left) && slider_interract_length
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setLengthOverrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setLengthOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+(length/38)), sly);                                  draw_text(1318, ey+11, string(length)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+(strandLengthOverride[setSelectedID]/38)), sly);    draw_text(1318, ey+11, string(strandLengthOverride[setSelectedID])) }
@@ -2842,10 +2842,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_length = 0 }
 
 if textBox_length == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(length))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandLengthOverride[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandLengthOverride[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(length)), ey-9, 1320+string_width(string(length)), ey+7, 2)
 	draw_set_color(c_white)
@@ -2951,8 +2951,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer1
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerAmt1Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerAmt1Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer1), sly);                             draw_text(1318, ey+11, string(mixer1)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerAdj1[setSelectedID]), sly);  draw_text(1318, ey+11, string(strandSetMixerAdj1[setSelectedID])) }
@@ -2972,10 +2972,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer1 = 0 }
 
 if textBox_mixer1 == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer1))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetMixerAdj1[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj1[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(mixer1)), ey-9, 1320+string_width(string(mixer1)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3074,8 +3074,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer1_offset
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerOfs1Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerOfs1Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer1_offset), sly);                                  draw_text(1318+34, ey+11, string(mixer1_offset)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerOffsetAdj1[setSelectedID]), sly);        draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj1[setSelectedID])) }
@@ -3095,10 +3095,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer1_offset = 0 }
 
 if textBox_mixer1_offset == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer1_offset))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj1[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj1[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+34+string_width(string(mixer1_offset)), ey-9, 1320+34+string_width(string(mixer1_offset)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3192,8 +3192,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer2
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerAmt2Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerAmt2Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer2), sly);                             draw_text(1318, ey+11, string(mixer2)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerAdj2[setSelectedID]), sly);  draw_text(1318, ey+11, string(strandSetMixerAdj2[setSelectedID])) }
@@ -3213,10 +3213,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer2 = 0 }
 
 if textBox_mixer2 == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer2))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetMixerAdj2[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj2[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(mixer2)), ey-9, 1320+string_width(string(mixer2)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3308,8 +3308,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer2_offset
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerOfs2Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerOfs2Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer2_offset), sly);                              draw_text(1318+34, ey+11, string(mixer2_offset)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerOffsetAdj2[setSelectedID]), sly);    draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj2[setSelectedID])) }
@@ -3329,10 +3329,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer2_offset = 0 }
 
 if textBox_mixer2_offset == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer2_offset))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj2[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj2[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+34+string_width(string(mixer2_offset)), ey-9, 1320+34+string_width(string(mixer2_offset)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3426,8 +3426,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer3
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerAmt3Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerAmt3Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer3), sly);                             draw_text(1318, ey+11, string(mixer3)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerAdj3[setSelectedID]), sly);  draw_text(1318, ey+11, string(strandSetMixerAdj3[setSelectedID])) }
@@ -3447,10 +3447,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer3 = 0 }
 
 if textBox_mixer3 == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318, ey+11, string(mixer3))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318, ey+11, string(strandSetMixerAdj3[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318, ey+11, string(strandSetMixerAdj3[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+string_width(string(mixer3)), ey-9, 1320+string_width(string(mixer3)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3542,8 +3542,8 @@ if mouse_check_button(mb_left) && slider_interract_mixer3_offset
 	draw_set_color(c_white)
 }
 
-draw_set_color(c_gray)
-if (setSelectedID != -1 && setMixerOfs3Overrode[setSelectedID] != 0) draw_set_color(or_color)
+draw_set_color(tbCol)
+if (setSelectedID != -1 && setMixerOfs3Overrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 if setSelectedID == -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+mixer3_offset), sly);                              draw_text(1318+34, ey+11, string(mixer3_offset)) }
 if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+strandSetMixerOffsetAdj3[setSelectedID]), sly);    draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj3[setSelectedID])) }
@@ -3563,10 +3563,10 @@ else { if mouse_check_button_pressed(mb_left) textBox_mixer3_offset = 0 }
 
 if textBox_mixer3_offset == 1
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 	if setSelectedID == -1 draw_text(1318+34, ey+11, string(mixer3_offset))
-	if setSelectedID != -1 { draw_set_color(or_editColor); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj3[setSelectedID])) }
+	if setSelectedID != -1 { draw_set_color(tbColOver); draw_text(1318+34, ey+11, string(strandSetMixerOffsetAdj3[setSelectedID])) }
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1320+34+string_width(string(mixer3_offset)), ey-9, 1320+34+string_width(string(mixer3_offset)), ey+7, 2)
 	draw_set_color(c_white)
@@ -3861,7 +3861,7 @@ if mouse_check_button(mb_left) && slider_interract_bluVal
 // ============================================================
 #region
 
-draw_set_color(c_gray)
+draw_set_color(tbCol)
 
 // Build hex string from current colour components
 hexColR = dec_to_hex(color_get_red(newColor));   if hexColR == "" hexColR = "00"
@@ -3893,7 +3893,7 @@ if mouse_check_button_pressed(mb_left)
 
 if hexColEdit
 {
-	draw_set_color(c_black)
+	draw_set_color(tbCol)
 	draw_set_font(regFont)
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1536+string_width(string(str2)), 733, 1536+string_width(string(str2)), 719, 2)
@@ -4543,7 +4543,8 @@ if RootCol_active == 1 draw_sprite(spr_colHL, 0, 1566, 620)
 if TipCol_active  == 1 draw_sprite(spr_colHL, 0, 1566, 647)
 
 // Seed value display
-draw_set_color(c_gray)
+draw_set_color(tbCol)
+if setSelectedID != -1 and randomOverride[setSelectedID] != 0 draw_set_color(tbColOver)
 draw_set_font(regFont)
 if setSelectedID != -1 draw_text(1214, 1006, string(randomSeedVal[setSelectedID]))
 else                    draw_text(1214, 1006, string(seedVal))

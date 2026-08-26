@@ -176,6 +176,12 @@ gpu_set_texfilter(1) // turn on filter
 
 or_color=make_color_rgb(200,100,30)
 or_editColor=make_color_rgb(160,60,10)
+
+// Text-box / value readout colours. White normally, yellow when the selected
+// set overrides that value. or_color is left alone - it still tints the small
+// per-set override indicator dots.
+tbCol=c_white
+tbColOver=make_color_rgb(255,225,60)
 blu_color=make_color_rgb(30,130,240)
 grn_color=make_color_rgb(30,230,50)
 yel_color=make_color_rgb(240,230,20)
