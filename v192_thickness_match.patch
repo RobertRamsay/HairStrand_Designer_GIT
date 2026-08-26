@@ -1,0 +1,272 @@
+diff --git a/objects/g/KeyPress_83.gml b/objects/g/KeyPress_83.gml
+index 48245a7..0209f04 100644
+--- a/objects/g/KeyPress_83.gml
++++ b/objects/g/KeyPress_83.gml
+@@ -6,7 +6,7 @@ if instance_exists(obj_surfaceDweller)
+         {
+         if canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             alarm[1]=2
+diff --git a/objects/g/Step_1.gml b/objects/g/Step_1.gml
+index 7797a9e..63994e6 100644
+--- a/objects/g/Step_1.gml
++++ b/objects/g/Step_1.gml
+@@ -16,7 +16,7 @@ if instance_exists(obj_surfaceDweller)
+         // then let Alarm 1 append the authoritative colour block next frame.
+         if keyboard_check_pressed(ord("S")) and canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             // Begin Step runs before Alarm processing, so use 2 to guarantee the
+diff --git a/objects/obj_save/Create_0.gml b/objects/obj_save/Create_0.gml
+index 5d18e13..5cfbc31 100644
+--- a/objects/obj_save/Create_0.gml
++++ b/objects/obj_save/Create_0.gml
+@@ -1,7 +1,7 @@
+ /// @description Insert description here
+ // You can write your code in this editor
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ 
+diff --git a/objects/obj_surfaceDweller/Alarm_1.gml b/objects/obj_surfaceDweller/Alarm_1.gml
+index 93a3e55..d3d082a 100644
+--- a/objects/obj_surfaceDweller/Alarm_1.gml
++++ b/objects/obj_surfaceDweller/Alarm_1.gml
+@@ -228,7 +228,7 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
+     pleaseGen=true
+ 
+     // This running build always saves the current project format afterwards.
+-    mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++    mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+ 
+     // Synchronise the Begin-Step snapshot so the restore itself does not cause
+     // an unnecessary autosave on the following frame.
+diff --git a/objects/obj_surfaceDweller/Create_0.gml b/objects/obj_surfaceDweller/Create_0.gml
+index d66effc..67d4faa 100644
+--- a/objects/obj_surfaceDweller/Create_0.gml
++++ b/objects/obj_surfaceDweller/Create_0.gml
+@@ -2,7 +2,7 @@ draw_set_color(c_white);
+ 
+ demoMode=0 // for DEMO mode
+ demoInfo="DEMO (no save options)"
+-versionHSD="1.91.0.0"
++versionHSD="1.92.0.0"
+ 
+ showHeart=0
+ uiExtras=1 // little dots for overrides.
+@@ -111,6 +111,14 @@ liveLocalTick=3
+ // Set by the manual (L) loader only when a project file was really read, so a
+ // cancelled file dialog cannot trigger a full preview rebuild.
+ v191ManualLoadOk=0
++
++// V1.92 - preview stroke calibration.
++// The final render stamps spr_strander (frame 0, ~30px of visible alpha at
++// scale 1) at every point on a 4096 canvas. The preview draws lines on a 1024
++// canvas, so the matching line width is 30*scA/4 = 7.5*scA. The old constant
++// was 5 with an upper clamp of 10, which under-drew every strand by ~1.45x and
++// stopped growing entirely past scA 2 - hence "the final looks way thicker".
++previewWidthK=7.5
+ yRanRange=20 // new is 1.53
+ 
+ editingPath[0]=StragglePath_A1
+@@ -697,7 +705,7 @@ loading=false
+ 
+ theFile=""
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index a863c7b..3cd1bc1 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -4633,7 +4633,7 @@ if firstTime and skipIntro == 0
+ 
+ 	// ---- what is new ----
+ 	draw_set_color(_accent)
+-	draw_text(_cx, _ct + 158, "New in 1.91  -  Per-set overrides on every notched slider")
++	draw_text(_cx, _ct + 158, "New in 1.92  -  Preview thickness now matches the final render")
+ 
+ 	if demoMode == 1
+ 	{
+diff --git a/objects/obj_surfaceDweller/Step_0.gml b/objects/obj_surfaceDweller/Step_0.gml
+index 8ac09ea..d0fec10 100644
+--- a/objects/obj_surfaceDweller/Step_0.gml
++++ b/objects/obj_surfaceDweller/Step_0.gml
+@@ -38,7 +38,7 @@ if !variable_instance_exists(id,"setColourOverridesReady")
+ // Per-set colour data did not exist before project format 1.85.
+ // If an older project/autosave is loaded, deliberately ignore any accidental
+ // trailing colour block and treat its four legacy colours as global-only.
+-// Once converted in memory, future saves use the current 1.91 project header.
++// Once converted in memory, future saves use the current 1.92 project header.
+ var _colourProjectVersion=real(string_copy(mainS,46,4))
+ if _colourProjectVersion<1.85 and !loading
+ 	{
+@@ -59,7 +59,7 @@ if _colourProjectVersion<1.85 and !loading
+ 		setTipColOverrode[_legacyColourSet]=0
+ 		}
+ 	
+-	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++	mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+ 	colourUiLastA=customColVarA
+ 	colourUiLastB=customColVarB
+ 	colourUiLastRoot=customRootCol
+diff --git a/objects/obj_surfaceDweller/Step_2.gml b/objects/obj_surfaceDweller/Step_2.gml
+index af6b695..197cfd1 100644
+--- a/objects/obj_surfaceDweller/Step_2.gml
++++ b/objects/obj_surfaceDweller/Step_2.gml
+@@ -159,8 +159,8 @@ if keyboard_check_pressed(ord("L")) and fileCustom!="" and file_exists(fileCusto
+ 	forceUpdate=1
+ 	
+ 	// The loaded header was needed for compatibility checks above. From this
+-	// point onward this running 1.91 build saves projects as the current format.
+-	mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
++	// point onward this running 1.92 build saves projects as the current format.
++	mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+ 	}
+ 
+ if bkCol_active==1 
+diff --git a/options/windows/options_windows.yy b/options/windows/options_windows.yy
+index 88bc279..2cd5298 100644
+--- a/options/windows/options_windows.yy
++++ b/options/windows/options_windows.yy
+@@ -11,9 +11,9 @@
+   "option_windows_description_info":"",
+   "option_windows_disable_sandbox":true,
+   "option_windows_display_cursor":true,
+-  "option_windows_display_name":"HairStrand Desginer 1.91",
++  "option_windows_display_name":"HairStrand Desginer 1.92",
+   "option_windows_enable_steam":false,
+-  "option_windows_executable_name":"HairStrand_Designer_V1_91.exe",
++  "option_windows_executable_name":"HairStrand_Designer_V1_92.exe",
+   "option_windows_icon":"${options_dir}/windows/icons/icon.ico",
+   "option_windows_installer_finished":"${base_options_dir}/windows/installer/finished.bmp",
+   "option_windows_installer_header":"${base_options_dir}/windows/installer/header.bmp",
+@@ -31,7 +31,7 @@
+   "option_windows_texture_page":"4096x4096",
+   "option_windows_use_raw_mouse":false,
+   "option_windows_use_splash":true,
+-  "option_windows_version":"1.9.1.0",
++  "option_windows_version":"1.9.2.0",
+   "option_windows_vsync":true,
+   "resourceType":"GMWindowsOptions",
+   "resourceVersion":"2.0",
+diff --git a/scripts/doAutoSave/doAutoSave.gml b/scripts/doAutoSave/doAutoSave.gml
+index 5f6d379..c4324ec 100644
+--- a/scripts/doAutoSave/doAutoSave.gml
++++ b/scripts/doAutoSave/doAutoSave.gml
+@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
+ 			theFile = file_text_open_write(fileCustom);
+ 			
+ // Autosaves are always written as the current project format.
+-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay");
++file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay");
+ 			file_text_writeln(theFile);
+ 			
+ // instruction line			
+diff --git a/scripts/doCalc/doCalc.gml b/scripts/doCalc/doCalc.gml
+index 09aec1a..3871790 100644
+--- a/scripts/doCalc/doCalc.gml
++++ b/scripts/doCalc/doCalc.gml
+@@ -6,8 +6,15 @@ function doCalc(){
+ 						    
+ 							
+ 						
+-							var _thickVaryS = setThickVaryAdj[b] // V1.91 per-set
+-							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),0.8,maxScale)
++							// V1.92 - identical rule to doMainStep so the preview and the
++							// final render agree: one random draw, per-set variance, and
++							// the per-set thickness range as the clamp when overridden.
++							var _thickVaryS = setThickVaryAdj[b] // per-set variance
++							var _tbLo = 0.8
++							var _tbHi = maxScale
++							if setThickMinOverrode[b]==1 _tbLo = setThickMinAdj[b]
++							if setThickMaxOverrode[b]==1 _tbHi = setThickMaxAdj[b]
++							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),_tbLo,_tbHi)
+ 							strandThickBase[b,v]=thicknessBase // store
+ 							// DEPTH TONE
+ 							//var d=clamp(24+((231/(floor((strands)-(b*diminish))))*v),24,255) // new limited base at 24
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index dce012b..2ac6fa6 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -386,14 +386,21 @@ renderF=0 // incremental render - current set being rendered
+ 					yyy = 400
+                     subSpriteChoice = preRandSubSprite[f, h];
+                     angChoice = preRandAngChoice[f, h];
+-                    var _thickVaryS = setThickVaryAdj[f];   // V1.91 per-set
+-                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, maxScale);
+-
+-                    // Apply thickness overrides
++                    // V1.92 - identical rule to doCalc. The old code re-rolled
++                    // random_range once per active override AFTER taking the cached
++                    // preview value, which both discarded that value and pulled extra
++                    // numbers out of the random stream - so an overridden set drifted
++                    // away from its own preview. One draw, clamps chosen up front.
++                    var _thickVaryS = setThickVaryAdj[f];   // per-set variance
++                    var _tbLo = 0.8;
++                    var _tbHi = maxScale;
++                    if (setThickMinOverrode[f] == 1) _tbLo = setThickMinAdj[f];
++                    if (setThickMaxOverrode[f] == 1) _tbHi = setThickMaxAdj[f];
++                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), _tbLo, _tbHi);
++
++                    // The first maxPreviewStrandsPerSet strands reuse exactly what the
++                    // preview drew, so preview and final are the same strands.
+                     if (h < maxPreviewStrandsPerSet) thicknessBase = strandThickBase[f, h];
+-                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], maxScale);
+-                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, setThickMaxAdj[f]);
+-                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], setThickMaxAdj[f]);
+ 
+                     if (idMode == 0) {
+                         idChoice = colorIDarray[idList];
+diff --git a/scripts/mainCalc/mainCalc.gml b/scripts/mainCalc/mainCalc.gml
+index 19a8560..5374951 100644
+--- a/scripts/mainCalc/mainCalc.gml
++++ b/scripts/mainCalc/mainCalc.gml
+@@ -205,7 +205,7 @@ or (_localLive==1 and previewCanvasComplete==0)
+                     var scz=lerp(_tMin,_tMax, lut_sin[_li180])
+                     var tA=lerp(scx,scz,cmx)
+                     var tB=lerp(scy,scz,cmy)
+-                    var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
++                    var scA=(clamp((tA+tB)*thicknessBase,0.15,100)/2) // V1.92 - same order as doMainStep
+                     dpthAdd=preRandDepthAdd[b,v]
+ 
+                     // Alpha fade - V1.91 per-set. The old code clamped the
+@@ -255,7 +255,7 @@ or (_localLive==1 and previewCanvasComplete==0)
+                         if finalX+xOffset[b]<4098 && yy+yOffset[b]<4070 and firstTime==0
+                             {
+                             if setHovveredID==b {} // hovered highlight handled elsewhere
+-                            draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),clamp(scA*5,1,10))
++                            draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),max(scA*previewWidthK,0.5))   // V1.92 - matches the final sprite footprint
+                             if topmost==0           topmost=yy
+                             if yy<topmost           topmost=yy
+                             if yy>bottommost        bottommost=yy
+@@ -334,7 +334,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                         var scz=lerp(_tMin,_tMax, lut_sin[_li180])
+                         var tA=lerp(scx,scz,cmx)
+                         var tB=lerp(scy,scz,cmy)
+-                        var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
++                        var scA=(clamp((tA+tB)*thicknessBase,0.15,100)/2) // V1.92 - same order as doMainStep
+ 
+                         dpthAdd=preRandDepthAdd[b,v]
+ 
+@@ -388,7 +388,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                             {
+                             if finalX+xOffset[b]<4098 && yy+yOffset[b]<4070 and firstTime==0
+                                 {
+-                                draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),clamp(scA*5,1,10))
++                                draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),max(scA*previewWidthK,0.5))   // V1.92 - matches the final sprite footprint
+                                 if setHovveredID==b
+                                     {
+                                     if dsin(gameTick360*10*(60/fps))>=0 draw_set_color(c_white) else draw_set_color(c_black)

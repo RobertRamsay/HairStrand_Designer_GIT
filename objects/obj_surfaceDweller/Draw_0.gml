@@ -4633,7 +4633,7 @@ if firstTime and skipIntro == 0
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.91  -  Per-set overrides on every notched slider")
+	draw_text(_cx, _ct + 158, "New in 1.92  -  Preview thickness now matches the final render")
 
 	if demoMode == 1
 	{

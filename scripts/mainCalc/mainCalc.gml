@@ -205,7 +205,7 @@ or (_localLive==1 and previewCanvasComplete==0)
                     var scz=lerp(_tMin,_tMax, lut_sin[_li180])
                     var tA=lerp(scx,scz,cmx)
                     var tB=lerp(scy,scz,cmy)
-                    var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
+                    var scA=(clamp((tA+tB)*thicknessBase,0.15,100)/2) // V1.92 - same order as doMainStep
                     dpthAdd=preRandDepthAdd[b,v]
 
                     // Alpha fade - V1.91 per-set. The old code clamped the
@@ -255,7 +255,7 @@ or (_localLive==1 and previewCanvasComplete==0)
                         if finalX+xOffset[b]<4098 && yy+yOffset[b]<4070 and firstTime==0
                             {
                             if setHovveredID==b {} // hovered highlight handled elsewhere
-                            draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),clamp(scA*5,1,10))
+                            draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),max(scA*previewWidthK,0.5))   // V1.92 - matches the final sprite footprint
                             if topmost==0           topmost=yy
                             if yy<topmost           topmost=yy
                             if yy>bottommost        bottommost=yy
@@ -334,7 +334,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                         var scz=lerp(_tMin,_tMax, lut_sin[_li180])
                         var tA=lerp(scx,scz,cmx)
                         var tB=lerp(scy,scz,cmy)
-                        var scA=(clamp((tA+tB),0.15,100)/2)*thicknessBase
+                        var scA=(clamp((tA+tB)*thicknessBase,0.15,100)/2) // V1.92 - same order as doMainStep
 
                         dpthAdd=preRandDepthAdd[b,v]
 
@@ -388,7 +388,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                             {
                             if finalX+xOffset[b]<4098 && yy+yOffset[b]<4070 and firstTime==0
                                 {
-                                draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),clamp(scA*5,1,10))
+                                draw_line_width((finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25,(finalX+xOffset[b])*0.25,(yy+yOffset[b])*0.25+(optimalStep*0.25),max(scA*previewWidthK,0.5))   // V1.92 - matches the final sprite footprint
                                 if setHovveredID==b
                                     {
                                     if dsin(gameTick360*10*(60/fps))>=0 draw_set_color(c_white) else draw_set_color(c_black)

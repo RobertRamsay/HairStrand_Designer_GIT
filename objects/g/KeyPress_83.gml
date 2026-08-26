@@ -6,7 +6,7 @@ if instance_exists(obj_surfaceDweller)
         {
         if canSave and demoMode==0
             {
-            mainS="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+            mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
             v185ManualSavePending=1
             v185ManualSavePath=""
             alarm[1]=2

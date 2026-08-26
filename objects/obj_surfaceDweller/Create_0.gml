@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.91.0.0"
+versionHSD="1.92.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -111,6 +111,14 @@ liveLocalTick=3
 // Set by the manual (L) loader only when a project file was really read, so a
 // cancelled file dialog cannot trigger a full preview rebuild.
 v191ManualLoadOk=0
+
+// V1.92 - preview stroke calibration.
+// The final render stamps spr_strander (frame 0, ~30px of visible alpha at
+// scale 1) at every point on a 4096 canvas. The preview draws lines on a 1024
+// canvas, so the matching line width is 30*scA/4 = 7.5*scA. The old constant
+// was 5 with an upper clamp of 10, which under-drew every strand by ~1.45x and
+// stopped growing entirely past scA 2 - hence "the final looks way thicker".
+previewWidthK=7.5
 yRanRange=20 // new is 1.53
 
 editingPath[0]=StragglePath_A1
@@ -697,7 +705,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.91.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

@@ -6,8 +6,15 @@ function doCalc(){
 						    
 							
 						
-							var _thickVaryS = setThickVaryAdj[b] // V1.91 per-set
-							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),0.8,maxScale)
+							// V1.92 - identical rule to doMainStep so the preview and the
+							// final render agree: one random draw, per-set variance, and
+							// the per-set thickness range as the clamp when overridden.
+							var _thickVaryS = setThickVaryAdj[b] // per-set variance
+							var _tbLo = 0.8
+							var _tbHi = maxScale
+							if setThickMinOverrode[b]==1 _tbLo = setThickMinAdj[b]
+							if setThickMaxOverrode[b]==1 _tbHi = setThickMaxAdj[b]
+							thicknessBase = clamp(random_range(_thickVaryS/100,_thickVaryS/20),_tbLo,_tbHi)
 							strandThickBase[b,v]=thicknessBase // store
 							// DEPTH TONE
 							//var d=clamp(24+((231/(floor((strands)-(b*diminish))))*v),24,255) // new limited base at 24

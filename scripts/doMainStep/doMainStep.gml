@@ -386,14 +386,21 @@ renderF=0 // incremental render - current set being rendered
 					yyy = 400
                     subSpriteChoice = preRandSubSprite[f, h];
                     angChoice = preRandAngChoice[f, h];
-                    var _thickVaryS = setThickVaryAdj[f];   // V1.91 per-set
-                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, maxScale);
+                    // V1.92 - identical rule to doCalc. The old code re-rolled
+                    // random_range once per active override AFTER taking the cached
+                    // preview value, which both discarded that value and pulled extra
+                    // numbers out of the random stream - so an overridden set drifted
+                    // away from its own preview. One draw, clamps chosen up front.
+                    var _thickVaryS = setThickVaryAdj[f];   // per-set variance
+                    var _tbLo = 0.8;
+                    var _tbHi = maxScale;
+                    if (setThickMinOverrode[f] == 1) _tbLo = setThickMinAdj[f];
+                    if (setThickMaxOverrode[f] == 1) _tbHi = setThickMaxAdj[f];
+                    thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), _tbLo, _tbHi);
 
-                    // Apply thickness overrides
+                    // The first maxPreviewStrandsPerSet strands reuse exactly what the
+                    // preview drew, so preview and final are the same strands.
                     if (h < maxPreviewStrandsPerSet) thicknessBase = strandThickBase[f, h];
-                    if (setThickMinOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], maxScale);
-                    if (setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), 0.8, setThickMaxAdj[f]);
-                    if (setThickMinOverrode[f] == 1 && setThickMaxOverrode[f] == 1) thicknessBase = clamp(random_range(_thickVaryS / 100, _thickVaryS / 20), setThickMinAdj[f], setThickMaxAdj[f]);
 
                     if (idMode == 0) {
                         idChoice = colorIDarray[idList];
