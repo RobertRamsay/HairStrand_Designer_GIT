@@ -32,7 +32,15 @@ else
 	draw_text(mouse_x-50, mouse_y+50, "Load Custom image \nAs a Palette")
 	draw_set_font(regFont)
 	if mouse_check_button_pressed(mb_left)  { keyboard_key_press(vk_f9); keyboard_key_release(vk_f9) }
-	if mouse_check_button_pressed(mb_right) { newPalImg=-1; sprite_flush(newPalImg); sprite_delete(newPalImg) }
+	if mouse_check_button_pressed(mb_right)
+	{
+		if sprite_exists(newPalImg)
+		{
+			sprite_flush(newPalImg)
+			sprite_delete(newPalImg)
+		}
+		newPalImg = -1
+	}
 }
 
 generating = false
