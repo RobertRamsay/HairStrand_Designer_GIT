@@ -13,7 +13,8 @@ function nullify_sliderInterracts() {
 	slider_interract_maxScale=false;
 	slider_interract_fadeIn=false;
 	slider_interract_fadeOut=false;
-	slider_interract_noiseAmt=false; // V1.86 NOISE
+	slider_interract_noiseAmt=false;  // V1.90 NOISE
+	slider_interract_noiseFreq=false; // V1.90 NOISE
 	slider_interract_frizz=false;
 	slider_interract_length=false;
 	slider_interract_mixer1=false;

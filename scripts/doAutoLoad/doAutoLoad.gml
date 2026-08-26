@@ -272,23 +272,42 @@ if canLoad
                     }
                 }
 
-            // V1.86 - global NOISE amount. Written at the very end of the file,
-            // so a 1.86 project saved before this feature existed simply hits
-            // EOF here and keeps the Create-event default of 0.
+            // V1.90 - global NOISE amount + frequency. Written at the very end
+            // of the file, so a project saved before this feature existed simply
+            // hits EOF here and keeps the Create-event defaults.
+            // The short-lived V1.86 block is still accepted: it held a single
+            // 0-100 amount, which is rescaled to the 0-40 dual-slider range.
             noiseAmt=0
+            noiseFreq=10
             if real(string_copy(mainS,46,4)) >= 1.86 and !file_text_eof(theFile)
                 {
                 tString=file_text_read_string(theFile); file_text_readln(theFile);
-                if tString=="V1.86 - Noise"
+
+                if tString=="V1.90 - Noise"
                     {
                     if !file_text_eof(theFile)
                         {
                         tString=file_text_read_string(theFile); file_text_readln(theFile); noiseAmt=real(analiseString(tString));
                         }
+                    if !file_text_eof(theFile)
+                        {
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); noiseFreq=real(analiseString(tString));
+                        }
+                    }
+
+                if tString=="V1.86 - Noise"
+                    {
+                    if !file_text_eof(theFile)
+                        {
+                        tString=file_text_read_string(theFile); file_text_readln(theFile); noiseAmt=real(analiseString(tString))*0.4;
+                        }
+                    noiseFreq=10
                     }
                 }
-            noiseAmt=clamp(noiseAmt,0,100)
+            noiseAmt=clamp(noiseAmt,0,40)
+            noiseFreq=clamp(noiseFreq,0,40)
             textBox_noiseAmt_value=string(noiseAmt)
+            textBox_noiseFreq_value=string(noiseFreq)
             }
 
         // Loading always returns to global editing, so expose the loaded globals

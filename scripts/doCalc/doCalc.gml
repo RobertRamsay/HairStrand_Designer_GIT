@@ -103,7 +103,7 @@ function doCalc(){
 							angChoice=preRandAngChoice[b,v]
 
 							// ------------------------------------------------
-							// V1.86 NOISE - per-strand setup.
+							// V1.90 NOISE - per-strand setup.
 							// Phases are hashed from the set seed + set/strand
 							// index, so the result is seed-driven and repeatable
 							// WITHOUT drawing from the random stream (drawing
@@ -121,11 +121,14 @@ function doCalc(){
 								noiseP1=frac(abs(sin(_nA)        *43758.5453))*1440
 								noiseP2=frac(abs(sin(_nA+17.31)  *43758.5453))*1440
 								noiseP3=frac(abs(sin(_nA+53.77)  *43758.5453))*1440
+								// Frequency slider scales all three octaves together.
+								// noiseFreq 10 = neutral (1.0), 0 = 0.2, 40 = 3.4.
+								var _nFMul=0.2+(noiseFreq*0.08)
 								var _nCyc=1440/max(life,1)
-								noiseS1=_nCyc*1.0   // ~1 slow sweep down the fibre
-								noiseS2=_nCyc*2.7
-								noiseS3=_nCyc*6.3
-								noiseAmpS=(noiseAmt*0.01)*(life*noiseScale)
+								noiseS1=_nCyc*1.0*_nFMul   // slow sweep down the fibre
+								noiseS2=_nCyc*2.7*_nFMul
+								noiseS3=_nCyc*6.3*_nFMul
+								noiseAmpS=(noiseAmt*0.025)*(life*noiseScale)
 								}
 
 }

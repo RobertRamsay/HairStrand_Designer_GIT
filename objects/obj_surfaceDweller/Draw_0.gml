@@ -2363,9 +2363,12 @@ if textBox_fadeOut == 1
 
 
 // ============================================================
-// SLIDER: NOISE  (V1.86) - row 13, directly under Fading
-// 0 = off. Above 0 enables the per-point three-octave deviation.
+// DUAL SLIDERS: NOISE AMOUNT + NOISE FREQUENCY  (V1.90)
+// Row 13, directly under Fading.
+// Amount 0 = off. Above 0 enables the per-point three-octave deviation.
 // ============================================================
+
+// ---- Noise Amount (left) ----
 #region
 
 var over = 0
@@ -2374,13 +2377,7 @@ var ey   = 436 + (28*13)
 var sly  = ey
 var slx  = ex + noiseAmt
 
-// TEMPORARY LABEL - delete this line once the panel graphic carries "Noise".
-draw_set_color(c_gray)
-draw_set_valign(fa_bottom); draw_set_halign(fa_left)
-draw_text(1035, ey+11, "Noise")
-draw_set_color(c_white)
-
-if mouse_x >= ex and mouse_x <= ex+100
+if mouse_x >= ex and mouse_x <= ex+40
 {
 	if mouse_y > sly-10 and mouse_y < sly+10
 	{
@@ -2391,17 +2388,17 @@ if mouse_x >= ex and mouse_x <= ex+100
 if mouse_check_button(mb_left) && slider_interract_noiseAmt
 {
 	over     = 1
-	slx      = clamp(mouse_x, ex, ex+100); pleaseGen = true
-	noiseAmt = clamp(slx-ex, 0, 100)
+	slx      = clamp(mouse_x, ex, ex+40); pleaseGen = true
+	noiseAmt = clamp(slx-ex, 0, 40)
 }
 
-draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
+draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
 draw_set_color(c_gray)
 draw_set_valign(fa_bottom); draw_set_halign(fa_left)
 draw_text(1318, ey+11, string(noiseAmt))
 draw_set_color(c_white)
 
-if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1340 and mouse_y < ey+10
 {
 	if mouse_check_button_pressed(mb_left)
 	{
@@ -2455,14 +2452,107 @@ if textBox_noiseAmt == 1
 	}
 	textBox_noiseAmt_value = str
 
-	if real(textBox_noiseAmt_value) > 100 { textBox_noiseAmt_value="100"; str="100" }
-	noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 100)
+	if real(textBox_noiseAmt_value) > 40 { textBox_noiseAmt_value="40"; str="40" }
+	noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 40)
 
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
 
 #endregion
-// END SLIDER: NOISE
+// END SLIDER: NOISE AMOUNT
+
+// ---- Noise Frequency (right) ----
+#region
+
+var over = 0
+var ex   = 1198 + 60
+var ey   = 436 + (28*13)
+var sly  = ey
+var slx  = ex + noiseFreq
+
+if mouse_x >= ex and mouse_x <= ex+40
+{
+	if mouse_y > sly-10 and mouse_y < sly+10
+	{
+		if mouse_check_button_pressed(mb_left) { nullify_sliderInterracts(); slider_interract_noiseFreq = true }
+	}
+}
+
+if mouse_check_button(mb_left) && slider_interract_noiseFreq
+{
+	over      = 1
+	slx       = clamp(mouse_x, ex, ex+40); pleaseGen = true
+	noiseFreq = clamp(slx-ex, 0, 40)
+}
+
+draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+40), sly)
+draw_set_color(c_gray)
+draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+draw_text(1318+34, ey+11, string(noiseFreq))
+draw_set_color(c_white)
+
+if mouse_x > 1347 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
+{
+	if mouse_check_button_pressed(mb_left)
+	{
+		reset_textBoxes(); pleaseGen = true
+		str                     = string(noiseFreq)
+		textBox_noiseFreq       = 1
+		textBox_noiseFreq_value = string(noiseFreq)
+	}
+}
+else { if mouse_check_button_pressed(mb_left) textBox_noiseFreq = 0 }
+
+if textBox_noiseFreq == 1
+{
+	draw_set_color(c_black)
+	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
+	draw_text(1318+34, ey+11, string(noiseFreq))
+	if tickytime > 0.5 and tickytime < 0.9
+		draw_line_width(1320+34+string_width(string(noiseFreq)), ey-9, 1320+34+string_width(string(noiseFreq)), ey+7, 2)
+	draw_set_color(c_white)
+
+	#region // Numpad input
+	if string_length(str) < 4
+	{
+		switch (keyboard_key)
+		{
+			case vk_numpad0: str+="0"; keyboard_lastkey=-1; break
+			case vk_numpad1: str+="1"; keyboard_lastkey=-1; break
+			case vk_numpad2: str+="2"; keyboard_lastkey=-1; break
+			case vk_numpad3: str+="3"; keyboard_lastkey=-1; break
+			case vk_numpad4: str+="4"; keyboard_lastkey=-1; break
+			case vk_numpad5: str+="5"; keyboard_lastkey=-1; break
+			case vk_numpad6: str+="6"; keyboard_lastkey=-1; break
+			case vk_numpad7: str+="7"; keyboard_lastkey=-1; break
+			case vk_numpad8: str+="8"; keyboard_lastkey=-1; break
+			case vk_numpad9: str+="9"; keyboard_lastkey=-1; break
+		}
+	}
+	#endregion
+
+	if keyboard_lastkey != -1 and string_length(str) < 4
+	{
+		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
+			str += keyboard_lastchar
+		noiseFreq = real(str)
+		if keyboard_lastkey == 8
+		{
+			str = string_copy(str, 1, string_length(str)-1)
+			if str == "" str = "0"
+		}
+		keyboard_lastkey = -1
+	}
+	textBox_noiseFreq_value = str
+
+	if real(textBox_noiseFreq_value) > 40 { textBox_noiseFreq_value="40"; str="40" }
+	noiseFreq = clamp(real(textBox_noiseFreq_value), 0, 40)
+
+	if keyboard_check_pressed(vk_enter) forceUpdate = 1
+}
+
+#endregion
+// END SLIDER: NOISE FREQUENCY
 
 
 // ============================================================

@@ -164,7 +164,7 @@ or (img==9 and seedUpdate==1))
                     var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
                     var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
 
-                    // V1.86 NOISE - gradual left/right deviation, root anchored.
+                    // V1.90 NOISE - gradual left/right deviation, root anchored.
                     var _nzOfs=0
                     if noiseOn==1
                         {
@@ -292,7 +292,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                         var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
                         var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
 
-                        // V1.86 NOISE - gradual left/right deviation, root anchored.
+                        // V1.90 NOISE - gradual left/right deviation, root anchored.
                         var _nzOfsB=0
                         if noiseOn==1
                             {

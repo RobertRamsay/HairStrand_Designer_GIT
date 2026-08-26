@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.86.0.0"
+versionHSD="1.90.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -309,10 +309,11 @@ scaleOut=500 // scaling out
 fadeIn=8//100 // set fade in speed (alpha)
 fadeOut=12// // set fade out speed (alpha+scale)
 
-// V1.86 NOISE - gradual left/right deviation along each fibre.
-// 0 = off (original algorithm, no extra cost). Anything above 0 enables the
+// V1.90 NOISE - gradual left/right deviation along each fibre.
+// Amount 0 = off (original algorithm, no extra cost). Above 0 enables the
 // three-octave per-point noise lookup, which is deliberately more expensive.
-noiseAmt=0        // 0-100 slider value
+noiseAmt=0        // 0-40 slider value - how far the fibre wanders
+noiseFreq=10      // 0-40 slider value - how often it wanders (10 = neutral)
 noiseOn=0         // per-strand gate, set in doCalc / doMainStep
 noiseAmpS=0       // per-strand amplitude in pixels
 noiseP1=0         // per-strand LUT phase, octave 1
@@ -614,6 +615,9 @@ textBox_fadeOut_value=string(fadeOut)
 textBox_noiseAmt=0 //activate
 textBox_noiseAmt_value=string(noiseAmt)
 
+textBox_noiseFreq=0 //activate
+textBox_noiseFreq_value=string(noiseFreq)
+
 textBox_frizz=0 //activate
 //textBox_frizz_value=string(length)
 
@@ -650,7 +654,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.86.0 - 17thAugb2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

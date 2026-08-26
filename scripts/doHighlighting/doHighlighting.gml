@@ -127,7 +127,7 @@ if img==9
 							
 							//var preFinalX= ( lerp (xx,algFinalX,((alogrithmInfluence[b]-25)/25) )  )  // afected by the algorithms (mixers)
 							//algTaper = lerp (preFinalX,setXpos	,(n/life)*(strandSetTaperAdj[b]*0.01))	// intervention
-							// V1.86 NOISE - must match mainCalc / doMainStep so the
+							// V1.90 NOISE - must match mainCalc / doMainStep so the
 							// selection bounding boxes stay lined up with the strands.
 							var _nzOfs=0
 							if noiseOn==1

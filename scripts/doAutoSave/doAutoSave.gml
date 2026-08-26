@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.86.0 - 17thAug2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.90.0 - 26thAug2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			
@@ -469,11 +469,13 @@ var o=obj_surfaceDweller
 								file_text_writeln(theFile);
 								}
 
-							// V1.86 - global NOISE amount. Appended at the very
-							// end so every older project file still loads fine.
-							file_text_write_string(theFile,"V1.86 - Noise");
+							// V1.90 - global NOISE amount + frequency. Appended at
+							// the very end so every older project file still loads.
+							file_text_write_string(theFile,"V1.90 - Noise");
 							file_text_writeln(theFile);
 							file_text_write_string(theFile,"noiseAmt:"+string(o.noiseAmt)+";");
+							file_text_writeln(theFile);
+							file_text_write_string(theFile,"noiseFreq:"+string(o.noiseFreq)+";");
 							file_text_writeln(theFile);
 
 
