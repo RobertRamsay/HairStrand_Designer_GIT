@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"window_command_toggle",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"window_command_toggle",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

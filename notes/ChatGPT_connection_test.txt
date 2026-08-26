@@ -1,0 +1,3 @@
+ChatGPT GitHub connection test.
+
+Added on 16 August 2026 to confirm repository read/write access.

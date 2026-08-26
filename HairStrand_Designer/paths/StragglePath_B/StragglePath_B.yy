@@ -1,0 +1,27 @@
+{
+  "$GMPath":"",
+  "%Name":"StragglePath_B",
+  "closed":false,
+  "kind":1,
+  "name":"StragglePath_B",
+  "parent":{
+    "name":"Paths",
+    "path":"folders/Paths.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":0.0,"y":0.0,},
+    {"speed":100.0,"x":-40.0,"y":437.0,},
+    {"speed":100.0,"x":64.29077,"y":725.44727,},
+    {"speed":100.0,"x":-110.0,"y":1086.5709,},
+    {"speed":100.0,"x":98.0,"y":1718.146,},
+    {"speed":100.0,"x":-3.0,"y":2617.076,},
+    {"speed":100.0,"x":-100.48633,"y":3035.0,},
+    {"speed":100.0,"x":14.2907715,"y":3395.4473,},
+    {"speed":100.0,"x":-74.70923,"y":3665.4473,},
+    {"speed":100.0,"x":-83.0647,"y":3899.7817,},
+    {"speed":100.0,"x":58.0,"y":4117.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

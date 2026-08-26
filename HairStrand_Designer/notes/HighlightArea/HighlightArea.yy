@@ -1,0 +1,11 @@
+{
+  "$GMNotes":"v1",
+  "%Name":"HighlightArea",
+  "name":"HighlightArea",
+  "parent":{
+    "name":"Notes",
+    "path":"folders/Notes.yy",
+  },
+  "resourceType":"GMNotes",
+  "resourceVersion":"2.0",
+}

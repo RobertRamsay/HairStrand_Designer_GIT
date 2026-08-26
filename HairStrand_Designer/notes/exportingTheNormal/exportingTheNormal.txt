@@ -1,0 +1,13 @@
+								
+								{
+								
+								surface_set_target(tNormsurf)
+									{
+										shader_set(shd_normal)
+										draw_surface(nm_canvas,0,0)
+										shader_reset()
+									}
+								surface_reset_target()
+								
+								
+								}

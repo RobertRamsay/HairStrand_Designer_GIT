@@ -1,0 +1,412 @@
+diff --git a/objects/obj_copy/Draw_64.gml b/objects/obj_copy/Draw_64.gml
+index 6873502..803950b 100644
+--- a/objects/obj_copy/Draw_64.gml
++++ b/objects/obj_copy/Draw_64.gml
+@@ -121,9 +121,9 @@ if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
+         setMixerAmt3Overrode : _o.setMixerAmt3Overrode[_src],
+         setMixerOfs3Overrode : _o.setMixerOfs3Overrode[_src],
+ 
+-        // Position / algorithm influence.
+-        xOffset : _o.xOffset[_src],
+-        yOffset : _o.yOffset[_src],
++        // Algorithm influence.
++        // NOTE: xOffset / yOffset are deliberately NOT captured. A paste must
++        // only move settings, never move the destination set on the canvas.
+         alogrithmInfluence : _o.alogrithmInfluence[_src],
+         taperInfluence : _o.taperInfluence[_src],
+ 
+@@ -195,8 +195,8 @@ and copyBufferReady and _selected != -1
+     _o.setMixerAmt3Overrode[_dst] = copyBuffer.setMixerAmt3Overrode
+     _o.setMixerOfs3Overrode[_dst] = copyBuffer.setMixerOfs3Overrode
+ 
+-    _o.xOffset[_dst] = copyBuffer.xOffset
+-    _o.yOffset[_dst] = copyBuffer.yOffset
++    // xOffset / yOffset intentionally untouched - the destination set keeps the
++    // X / Y position it already had.
+     _o.alogrithmInfluence[_dst] = copyBuffer.alogrithmInfluence
+     _o.taperInfluence[_dst] = copyBuffer.taperInfluence
+ 
+diff --git a/objects/obj_surfaceDweller/Create_0.gml b/objects/obj_surfaceDweller/Create_0.gml
+index ccac90c..8f99cdd 100644
+--- a/objects/obj_surfaceDweller/Create_0.gml
++++ b/objects/obj_surfaceDweller/Create_0.gml
+@@ -309,6 +309,20 @@ scaleOut=500 // scaling out
+ fadeIn=8//100 // set fade in speed (alpha)
+ fadeOut=12// // set fade out speed (alpha+scale)
+ 
++// V1.86 NOISE - gradual left/right deviation along each fibre.
++// 0 = off (original algorithm, no extra cost). Anything above 0 enables the
++// three-octave per-point noise lookup, which is deliberately more expensive.
++noiseAmt=0        // 0-100 slider value
++noiseOn=0         // per-strand gate, set in doCalc / doMainStep
++noiseAmpS=0       // per-strand amplitude in pixels
++noiseP1=0         // per-strand LUT phase, octave 1
++noiseP2=0         // per-strand LUT phase, octave 2
++noiseP3=0         // per-strand LUT phase, octave 3
++noiseS1=0         // per-strand LUT step per point, octave 1
++noiseS2=0         // per-strand LUT step per point, octave 2
++noiseS3=0         // per-strand LUT step per point, octave 3
++noiseScale=0.06   // master amplitude tuning - raise for wilder deviation
++
+ 
+ seedUpdate=0
+ seedValstring=0
+@@ -597,6 +611,9 @@ textBox_fadeIn_value=string(fadeIn)
+ textBox_fadeOut=0 //activate
+ textBox_fadeOut_value=string(fadeOut)
+ 
++textBox_noiseAmt=0 //activate
++textBox_noiseAmt_value=string(noiseAmt)
++
+ textBox_frizz=0 //activate
+ //textBox_frizz_value=string(length)
+ 
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index adcb905..f7f17c5 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -2362,6 +2362,109 @@ if textBox_fadeOut == 1
+ // END SLIDER: FADE OUT
+ 
+ 
++// ============================================================
++// SLIDER: NOISE  (V1.86) - row 13, directly under Fading
++// 0 = off. Above 0 enables the per-point three-octave deviation.
++// ============================================================
++#region
++
++var over = 0
++var ex   = 1198
++var ey   = 436 + (28*13)
++var sly  = ey
++var slx  = ex + noiseAmt
++
++// TEMPORARY LABEL - delete this line once the panel graphic carries "Noise".
++draw_set_color(c_gray)
++draw_set_valign(fa_bottom); draw_set_halign(fa_left)
++draw_text(1035, ey+11, "Noise")
++draw_set_color(c_white)
++
++if mouse_x >= ex and mouse_x <= ex+100
++{
++	if mouse_y > sly-10 and mouse_y < sly+10
++	{
++		if mouse_check_button_pressed(mb_left) { nullify_sliderInterracts(); slider_interract_noiseAmt = true }
++	}
++}
++
++if mouse_check_button(mb_left) && slider_interract_noiseAmt
++{
++	over     = 1
++	slx      = clamp(mouse_x, ex, ex+100); pleaseGen = true
++	noiseAmt = clamp(slx-ex, 0, 100)
++}
++
++draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
++draw_set_color(c_gray)
++draw_set_valign(fa_bottom); draw_set_halign(fa_left)
++draw_text(1318, ey+11, string(noiseAmt))
++draw_set_color(c_white)
++
++if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
++{
++	if mouse_check_button_pressed(mb_left)
++	{
++		reset_textBoxes(); pleaseGen = true
++		str                    = string(noiseAmt)
++		textBox_noiseAmt       = 1
++		textBox_noiseAmt_value = string(noiseAmt)
++	}
++}
++else { if mouse_check_button_pressed(mb_left) textBox_noiseAmt = 0 }
++
++if textBox_noiseAmt == 1
++{
++	draw_set_color(c_black)
++	draw_set_valign(fa_bottom); draw_set_halign(fa_left)
++	draw_text(1318, ey+11, string(noiseAmt))
++	if tickytime > 0.5 and tickytime < 0.9
++		draw_line_width(1320+string_width(string(noiseAmt)), ey-9, 1320+string_width(string(noiseAmt)), ey+7, 2)
++	draw_set_color(c_white)
++
++	#region // Numpad input
++	if string_length(str) < 4
++	{
++		switch (keyboard_key)
++		{
++			case vk_numpad0: str+="0"; keyboard_lastkey=-1; break
++			case vk_numpad1: str+="1"; keyboard_lastkey=-1; break
++			case vk_numpad2: str+="2"; keyboard_lastkey=-1; break
++			case vk_numpad3: str+="3"; keyboard_lastkey=-1; break
++			case vk_numpad4: str+="4"; keyboard_lastkey=-1; break
++			case vk_numpad5: str+="5"; keyboard_lastkey=-1; break
++			case vk_numpad6: str+="6"; keyboard_lastkey=-1; break
++			case vk_numpad7: str+="7"; keyboard_lastkey=-1; break
++			case vk_numpad8: str+="8"; keyboard_lastkey=-1; break
++			case vk_numpad9: str+="9"; keyboard_lastkey=-1; break
++		}
++	}
++	#endregion
++
++	if keyboard_lastkey != -1 and string_length(str) < 4
++	{
++		if keyboard_lastkey == 46 or (keyboard_lastkey >= 48 and keyboard_lastkey <= 57)
++			str += keyboard_lastchar
++		noiseAmt = real(str)
++		if keyboard_lastkey == 8
++		{
++			str = string_copy(str, 1, string_length(str)-1)
++			if str == "" str = "0"
++		}
++		keyboard_lastkey = -1
++	}
++	textBox_noiseAmt_value = str
++
++	if real(textBox_noiseAmt_value) > 100 { textBox_noiseAmt_value="100"; str="100" }
++	noiseAmt = clamp(real(textBox_noiseAmt_value), 0, 100)
++
++	if keyboard_check_pressed(vk_enter) forceUpdate = 1
++}
++
++#endregion
++// END SLIDER: NOISE
++
++
+ // ============================================================
+ // SLIDER: STRAND LENGTH
+ // ============================================================
+diff --git a/scripts/doAutoLoad/doAutoLoad.gml b/scripts/doAutoLoad/doAutoLoad.gml
+index 83594e4..fc302f7 100644
+--- a/scripts/doAutoLoad/doAutoLoad.gml
++++ b/scripts/doAutoLoad/doAutoLoad.gml
+@@ -271,6 +271,24 @@ if canLoad
+                         }
+                     }
+                 }
++
++            // V1.86 - global NOISE amount. Written at the very end of the file,
++            // so a 1.86 project saved before this feature existed simply hits
++            // EOF here and keeps the Create-event default of 0.
++            noiseAmt=0
++            if real(string_copy(mainS,46,4)) >= 1.86 and !file_text_eof(theFile)
++                {
++                tString=file_text_read_string(theFile); file_text_readln(theFile);
++                if tString=="V1.86 - Noise"
++                    {
++                    if !file_text_eof(theFile)
++                        {
++                        tString=file_text_read_string(theFile); file_text_readln(theFile); noiseAmt=real(analiseString(tString));
++                        }
++                    }
++                }
++            noiseAmt=clamp(noiseAmt,0,100)
++            textBox_noiseAmt_value=string(noiseAmt)
+             }
+ 
+         // Loading always returns to global editing, so expose the loaded globals
+diff --git a/scripts/doAutoSave/doAutoSave.gml b/scripts/doAutoSave/doAutoSave.gml
+index 58b5fa0..81a5d40 100644
+--- a/scripts/doAutoSave/doAutoSave.gml
++++ b/scripts/doAutoSave/doAutoSave.gml
+@@ -468,8 +468,15 @@ var o=obj_surfaceDweller
+ 								file_text_write_string(theFile,"setTipCol["+string(set)+"]:"+string(o.setTipCol[set])+";");
+ 								file_text_writeln(theFile);
+ 								}
+-										
+-								
++
++							// V1.86 - global NOISE amount. Appended at the very
++							// end so every older project file still loads fine.
++							file_text_write_string(theFile,"V1.86 - Noise");
++							file_text_writeln(theFile);
++							file_text_write_string(theFile,"noiseAmt:"+string(o.noiseAmt)+";");
++							file_text_writeln(theFile);
++
++
+ 				}
+ 			
+ 			
+diff --git a/scripts/doCalc/doCalc.gml b/scripts/doCalc/doCalc.gml
+index 03bf5ad..7cda328 100644
+--- a/scripts/doCalc/doCalc.gml
++++ b/scripts/doCalc/doCalc.gml
+@@ -101,5 +101,31 @@ function doCalc(){
+ 			
+ 							subSpriteChoice=preRandSubSprite[b,v]
+ 							angChoice=preRandAngChoice[b,v]
+-							
++
++							// ------------------------------------------------
++							// V1.86 NOISE - per-strand setup.
++							// Phases are hashed from the set seed + set/strand
++							// index, so the result is seed-driven and repeatable
++							// WITHOUT drawing from the random stream (drawing
++							// from it here would shift every existing project).
++							// ------------------------------------------------
++							noiseOn=0
++							noiseP1=0; noiseP2=0; noiseP3=0
++							noiseS1=0; noiseS2=0; noiseS3=0
++							noiseAmpS=0
++
++							if noiseAmt>0
++								{
++								noiseOn=1
++								var _nA=(v*12.9898)+(b*78.233)+(randomSeedVal[b]*37.719)
++								noiseP1=frac(abs(sin(_nA)        *43758.5453))*1440
++								noiseP2=frac(abs(sin(_nA+17.31)  *43758.5453))*1440
++								noiseP3=frac(abs(sin(_nA+53.77)  *43758.5453))*1440
++								var _nCyc=1440/max(life,1)
++								noiseS1=_nCyc*1.0   // ~1 slow sweep down the fibre
++								noiseS2=_nCyc*2.7
++								noiseS3=_nCyc*6.3
++								noiseAmpS=(noiseAmt*0.01)*(life*noiseScale)
++								}
++
+ }
+diff --git a/scripts/doHighlighting/doHighlighting.gml b/scripts/doHighlighting/doHighlighting.gml
+index aad160f..a8ba1e2 100644
+--- a/scripts/doHighlighting/doHighlighting.gml
++++ b/scripts/doHighlighting/doHighlighting.gml
+@@ -127,7 +127,18 @@ if img==9
+ 							
+ 							//var preFinalX= ( lerp (xx,algFinalX,((alogrithmInfluence[b]-25)/25) )  )  // afected by the algorithms (mixers)
+ 							//algTaper = lerp (preFinalX,setXpos	,(n/life)*(strandSetTaperAdj[b]*0.01))	// intervention
+-							finalX=	algTaper// ( lerp (preFinalX,algTaper,((taperInfluence[b]-25)/25) )  ) // finally taper  				
++							// V1.86 NOISE - must match mainCalc / doMainStep so the
++							// selection bounding boxes stay lined up with the strands.
++							var _nzOfs=0
++							if noiseOn==1
++								{
++								var _n1=lut_sin[round(noiseP1+(n*noiseS1)) mod 1440]
++								var _n2=lut_sin[round(noiseP2+(n*noiseS2)) mod 1440]
++								var _n3=lut_sin[round(noiseP3+(n*noiseS3)) mod 1440]
++								_nzOfs=((_n1*0.62)+(_n2*0.28)+(_n3*0.10))*noiseAmpS*(n/life)
++								}
++
++							finalX=	algTaper+_nzOfs// ( lerp (preFinalX,algTaper,((taperInfluence[b]-25)/25) )  ) // finally taper
+ 								
+ 
+ 								//strandColor[b,v]=colrCustom
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index 678e2a6..3e259e4 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -467,6 +467,30 @@ renderF=0 // incremental render - current set being rendered
+                     var tMax = t_maxScale * padFactor;
+                     var tMax2 = tMax * 2;
+ 
++                    // ---------------------------------------------------------
++                    // V1.86 NOISE - per-strand setup. Phases are hashed from the
++                    // set seed + set/strand index so the deviation is seed-driven
++                    // and repeatable WITHOUT drawing from the random stream.
++                    // noiseAmt = 0 skips all of this and the loop cost with it.
++                    // ---------------------------------------------------------
++                    noiseOn = 0;
++                    noiseP1 = 0; noiseP2 = 0; noiseP3 = 0;
++                    noiseS1 = 0; noiseS2 = 0; noiseS3 = 0;
++                    noiseAmpS = 0;
++
++                    if (noiseAmt > 0) {
++                        noiseOn = 1;
++                        var _nA = (h * 12.9898) + (f * 78.233) + (randomSeedVal[f] * 37.719);
++                        noiseP1 = frac(abs(sin(_nA)         * 43758.5453)) * 1440;
++                        noiseP2 = frac(abs(sin(_nA + 17.31) * 43758.5453)) * 1440;
++                        noiseP3 = frac(abs(sin(_nA + 53.77) * 43758.5453)) * 1440;
++                        var _nCyc = 1440 / max(life, 1);
++                        noiseS1 = _nCyc * 1.0;   // ~1 slow sweep down the fibre
++                        noiseS2 = _nCyc * 2.7;
++                        noiseS3 = _nCyc * 6.3;
++                        noiseAmpS = (noiseAmt * 0.01) * (life * noiseScale);
++                    }
++
+                     // Color channel extraction for optimized blending
+                     var cRvA = color_get_red(customColVarA); var cGvA = color_get_green(customColVarA); var cBvA = color_get_blue(customColVarA);
+                     var cRvB = color_get_red(customColVarB); var cGvB = color_get_green(customColVarB); var cBvB = color_get_blue(customColVarB);
+@@ -528,7 +552,18 @@ renderF=0 // incremental render - current set being rendered
+                         straggleXX = lerp(xx + tempX, setXpos, (n / 3000) * (strandSetTaperAdj[f] * 0.01));
+                         var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((lifeVariant - 50) / 100));
+                         var algTaper  = lerp(algFinalX, setXpos, (n / life) * (clamp(strandSetTaperAdj[f], 1, strandSetTaperAdj[f]) * 0.01));
+-                        finalX = xOffset[f] + algTaper;
++
++                        // V1.86 NOISE - gradual left/right deviation, root anchored
++                        // so the fibre stays continuous and connected at the root.
++                        var _nzOfs = 0;
++                        if (noiseOn == 1) {
++                            var _n1 = lut_sin[round(noiseP1 + (n * noiseS1)) mod 1440];
++                            var _n2 = lut_sin[round(noiseP2 + (n * noiseS2)) mod 1440];
++                            var _n3 = lut_sin[round(noiseP3 + (n * noiseS3)) mod 1440];
++                            _nzOfs = ((_n1 * 0.62) + (_n2 * 0.28) + (_n3 * 0.10)) * noiseAmpS * (n * _lifeRcp);
++                        }
++
++                        finalX = xOffset[f] + algTaper + _nzOfs;
+ 
+                         pt_finalX[pt_count] = finalX; pt_yy[pt_count] = yy; pt_scA[pt_count] = scA; pt_a[pt_count] = a;
+                         pt_colr[pt_count] = colr; pt_colrCustom[pt_count] = colrCustom; pt_depthTone[pt_count] = depthTone;
+diff --git a/scripts/mainCalc/mainCalc.gml b/scripts/mainCalc/mainCalc.gml
+index d9d78e9..09209cd 100644
+--- a/scripts/mainCalc/mainCalc.gml
++++ b/scripts/mainCalc/mainCalc.gml
+@@ -163,7 +163,18 @@ or (img==9 and seedUpdate==1))
+                     straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
+                     var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
+                     var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
+-                    finalX=algTaper
++
++                    // V1.86 NOISE - gradual left/right deviation, root anchored.
++                    var _nzOfs=0
++                    if noiseOn==1
++                        {
++                        var _n1=lut_sin[round(noiseP1+(n*noiseS1)) mod 1440]
++                        var _n2=lut_sin[round(noiseP2+(n*noiseS2)) mod 1440]
++                        var _n3=lut_sin[round(noiseP3+(n*noiseS3)) mod 1440]
++                        _nzOfs=((_n1*0.62)+(_n2*0.28)+(_n3*0.10))*noiseAmpS*(n/life)
++                        }
++
++                    finalX=algTaper+_nzOfs
+ 
+                     // Colour — pre-extracted channels
+                     var _blend=clamp(dpth+dpthAdd,0,1)
+@@ -280,7 +291,18 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                         straggleXX=lerp(xx+tempX,setXpos,(n/3000)*(strandSetTaperAdj[b]*0.01))
+                         var algFinalX=lerp((lerp(xx,nx,(strandSetWavynessAdj[b]*0.01)*ampFactor)),straggleXX,0.5+((lifeVariant-50)/100))
+                         var algTaper=lerp(algFinalX,setXpos,(n/life)*(clamp(strandSetTaperAdj[b],1,strandSetTaperAdj[b])*0.01))
+-                        finalX=algTaper
++
++                        // V1.86 NOISE - gradual left/right deviation, root anchored.
++                        var _nzOfsB=0
++                        if noiseOn==1
++                            {
++                            var _m1=lut_sin[round(noiseP1+(n*noiseS1)) mod 1440]
++                            var _m2=lut_sin[round(noiseP2+(n*noiseS2)) mod 1440]
++                            var _m3=lut_sin[round(noiseP3+(n*noiseS3)) mod 1440]
++                            _nzOfsB=((_m1*0.62)+(_m2*0.28)+(_m3*0.10))*noiseAmpS*(n/life)
++                            }
++
++                        finalX=algTaper+_nzOfsB
+                         // Colour — this selected set's override values
+                         var tempRv=lerp(color_get_red(setColVarA[b]),color_get_red(setColVarB[b]),clamp(dpth+dpthAdd,0,1))
+                         var tempGv=lerp(color_get_green(setColVarA[b]),color_get_green(setColVarB[b]),clamp(dpth+dpthAdd,0,1))
+diff --git a/scripts/nullify_sliderInterracts/nullify_sliderInterracts.gml b/scripts/nullify_sliderInterracts/nullify_sliderInterracts.gml
+index 3e8e378..6970782 100644
+--- a/scripts/nullify_sliderInterracts/nullify_sliderInterracts.gml
++++ b/scripts/nullify_sliderInterracts/nullify_sliderInterracts.gml
+@@ -13,6 +13,7 @@ function nullify_sliderInterracts() {
+ 	slider_interract_maxScale=false;
+ 	slider_interract_fadeIn=false;
+ 	slider_interract_fadeOut=false;
++	slider_interract_noiseAmt=false; // V1.86 NOISE
+ 	slider_interract_frizz=false;
+ 	slider_interract_length=false;
+ 	slider_interract_mixer1=false;
+diff --git a/scripts/reset_textBoxes/reset_textboxes.gml b/scripts/reset_textBoxes/reset_textboxes.gml
+index 0b585f9..cb5aa70 100644
+--- a/scripts/reset_textBoxes/reset_textboxes.gml
++++ b/scripts/reset_textBoxes/reset_textboxes.gml
+@@ -17,6 +17,7 @@ function reset_textBoxes() {
+ 	textBox_mixer2_offset=0
+ 	textBox_mixer3=0
+ 	textBox_mixer3_offset=0
++	textBox_noiseAmt=0
+ 	textBox_overrideCount=0
+ 	textBox_overrideLength=0
+ 	textBox_rootThick=0

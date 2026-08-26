@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"killSurfaces",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"killSurfaces",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

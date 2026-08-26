@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"exportIndividual",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"exportIndividual",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

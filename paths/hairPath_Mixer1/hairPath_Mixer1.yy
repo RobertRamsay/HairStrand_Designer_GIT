@@ -1,0 +1,25 @@
+{
+  "$GMPath":"",
+  "%Name":"hairPath_Mixer1",
+  "closed":false,
+  "kind":1,
+  "name":"hairPath_Mixer1",
+  "parent":{
+    "name":"Paths",
+    "path":"folders/Paths.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":0.0,"y":0.0,},
+    {"speed":100.0,"x":3.0,"y":512.0,},
+    {"speed":100.0,"x":0.0,"y":1024.0,},
+    {"speed":100.0,"x":-26.0,"y":1531.0,},
+    {"speed":100.0,"x":0.0,"y":2048.0,},
+    {"speed":100.0,"x":29.0,"y":2556.0,},
+    {"speed":100.0,"x":0.0,"y":3072.0,},
+    {"speed":100.0,"x":-38.0,"y":3588.0,},
+    {"speed":100.0,"x":0.0,"y":4096.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

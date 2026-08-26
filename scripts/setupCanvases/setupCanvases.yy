@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"setupCanvases",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"setupCanvases",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

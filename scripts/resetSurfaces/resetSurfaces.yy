@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"resetSurfaces",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"resetSurfaces",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

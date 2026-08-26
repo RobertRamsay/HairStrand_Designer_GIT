@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"doHighlighting",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"doHighlighting",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

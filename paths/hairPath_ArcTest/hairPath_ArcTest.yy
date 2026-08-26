@@ -1,0 +1,25 @@
+{
+  "$GMPath":"",
+  "%Name":"hairPath_ArcTest",
+  "closed":false,
+  "kind":1,
+  "name":"hairPath_ArcTest",
+  "parent":{
+    "name":"Paths",
+    "path":"folders/Paths.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":0.0,"y":0.0,},
+    {"speed":100.0,"x":3.0,"y":512.0,},
+    {"speed":100.0,"x":0.0,"y":1024.0,},
+    {"speed":100.0,"x":-26.0,"y":1531.0,},
+    {"speed":100.0,"x":0.0,"y":2048.0,},
+    {"speed":100.0,"x":172.0,"y":2396.0,},
+    {"speed":100.0,"x":536.0,"y":2314.0,},
+    {"speed":100.0,"x":536.0,"y":1979.0,},
+    {"speed":100.0,"x":165.0,"y":1988.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

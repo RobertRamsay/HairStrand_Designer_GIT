@@ -1,0 +1,25 @@
+{
+  "$GMPath":"",
+  "%Name":"hairPath_Base",
+  "closed":false,
+  "kind":0,
+  "name":"hairPath_Base",
+  "parent":{
+    "name":"Paths",
+    "path":"folders/Paths.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":0.0,"y":0.0,},
+    {"speed":100.0,"x":0.0,"y":512.0,},
+    {"speed":100.0,"x":0.0,"y":1024.0,},
+    {"speed":100.0,"x":0.0,"y":1536.0,},
+    {"speed":100.0,"x":0.0,"y":2048.0,},
+    {"speed":100.0,"x":0.0,"y":2560.0,},
+    {"speed":100.0,"x":0.0,"y":3072.0,},
+    {"speed":100.0,"x":0.0,"y":3584.0,},
+    {"speed":100.0,"x":0.0,"y":4096.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

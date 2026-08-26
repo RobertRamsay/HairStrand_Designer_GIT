@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"checkAndOffset",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"checkAndOffset",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
