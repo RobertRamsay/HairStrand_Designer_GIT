@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			
@@ -255,7 +255,7 @@ var o=obj_surfaceDweller
 				
 			// save path points and reassign when loaded
 			
-			for (a=0;a<path_get_number(o.editingPath[0]);a++)
+			for (a=0;a<11;a++) // V1.95 - the loader reads exactly 11 per path; path_get_number() would desync the entire file if a path ever gained or lost a point
 				{
 					var pathX=string(path_get_point_x(o.editingPath[0],a))
 					var pathY=string(path_get_point_y(o.editingPath[0],a))
@@ -265,7 +265,7 @@ var o=obj_surfaceDweller
 					file_text_writeln(theFile);					
 				}
 				
-			for (a=0;a<path_get_number(editingPath[1]);a++)
+			for (a=0;a<11;a++) // V1.95
 				{
 					var pathX=string(path_get_point_x(o.editingPath[1],a))
 					var pathY=string(path_get_point_y(o.editingPath[1],a))
@@ -275,7 +275,7 @@ var o=obj_surfaceDweller
 					file_text_writeln(theFile);					
 				}
 				
-			for (a=0;a<path_get_number(editingPath[2]);a++)
+			for (a=0;a<11;a++) // V1.95
 				{
 					var pathX=string(path_get_point_x(o.editingPath[2],a))
 					var pathY=string(path_get_point_y(o.editingPath[2],a))

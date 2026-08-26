@@ -13,7 +13,10 @@ function updatePreRands(argument0){
 				
 				random_set_seed(randomSeedVal[e]) // here we can interviene on the randomizer per set...V1.7.0					
 				
-				preRandLifeVariant[e]=random(lifeVariant*2)
+				// V1.95 - was random(lifeVariant*2). lifeVariant is a per-strand working
+				// variable, so this used whichever set the last preview pass ended on -
+				// a different value before and after a reload.
+				preRandLifeVariant[e]=random(strandSetVariAdj[e]*2)
 				for (pr=0;pr<100;pr++) // pre randomization feature to keep hairs consistent (see doCalc)
 					{
 						preRandAmp[e,pr]=random(1000)/10000
@@ -28,7 +31,10 @@ function updatePreRands(argument0){
 						preRandYY[e,pr]=random_range(-strandYRanRange[e],strandYRanRange[e]*3)+120 // in 1.673
 						
 						preRandRootRange[e,pr]=random((rootPosition*50))/3
-						preRandRoot[e,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+rootRange))
+						// V1.95 - was +rootRange, another leftover per-strand global. Use the
+						// range generated for this strand on the line above, which is what
+						// doCalc pairs it with anyway.
+						preRandRoot[e,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+preRandRootRange[e,pr]))
 						preRandStrandDecision[e,pr]=random(100)/100
 						preRandStraggleChoice[e,pr]=choose(editingPath[0],editingPath[1],editingPath[2])
 						preRandDepth[e,pr]=random(100)/100
@@ -51,7 +57,7 @@ function updatePreRands(argument0){
 		else
 		{ // optimised approach.
 			var c=clamp(argument0,0,10);
-			preRandLifeVariant[c]=random(lifeVariant*2)
+			preRandLifeVariant[c]=random(strandSetVariAdj[c]*2) // V1.95 - see the all-sets path
 			for (pr=0;pr<100;pr++) // pre randomization feature to keep hairs consistent (see doCalc)
 					{
 						preRandAmp[c,pr]=random(1000)/10000
@@ -63,7 +69,7 @@ function updatePreRands(argument0){
 						preRandFreq[c,pr]=random_range(strandSetWaveFreqMinAdj[c],strandSetWaveFreqMaxAdj[c]) // new in 1.5 20th Oct
 						preRandYY[c,pr]=random_range(-strandYRanRange[c],strandYRanRange[c]*3)+120 // V1.94 - was a different band to the all-sets path above
 						preRandRootRange[c,pr]=random((rootPosition*50))/3
-						preRandRoot[c,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+rootRange))
+						preRandRoot[c,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+preRandRootRange[c,pr])) // V1.95 - see above
 						preRandStrandDecision[c,pr]=random(100)/100
 						preRandStraggleChoice[c,pr]=choose(editingPath[0],editingPath[1],editingPath[2])
 						preRandDepth[c,pr]=random(100)/100	

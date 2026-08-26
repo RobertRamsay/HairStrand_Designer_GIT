@@ -4633,7 +4633,7 @@ if firstTime and skipIntro == 0
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.94  -  Preview and render now share the same per-set seed")
+	draw_text(_cx, _ct + 158, "New in 1.95  -  Set state no longer leaks between sets or across a reload")
 
 	if demoMode == 1
 	{

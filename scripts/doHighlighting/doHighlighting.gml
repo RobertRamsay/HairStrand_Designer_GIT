@@ -23,7 +23,10 @@ if img==9
 					setID=b				
 					sx=xx 
 				lifeVariant=strandSetVariAdj[b]
-				if strandLengthOverride[b]>0 {hairLength=strandLengthOverride[b]+preRandLifeVariant[b]} // assign new value
+				// V1.95 - unconditional, matching mainCalc / doMainStep
+				var _hlH = strandLengthOverride[b]
+				if _hlH<=0 _hlH = length
+				hairLength = _hlH + preRandLifeVariant[b]
 				/*
 				if setLengthOverrode[b]==1 {hairLength=strandLengthOverride[b]+preRandLifeVariant[b]} // assign new value
 				else

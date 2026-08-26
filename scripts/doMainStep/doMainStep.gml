@@ -393,8 +393,11 @@ renderF=0 // incremental render - current set being rendered
                 // it disagreed with the preview (which uses preRandLifeVariant), and
                 // lifeVariant is not assigned until inside the strand loop below, so
                 // this was rolling against the PREVIOUS set's variance.
-                // Guarded like mainCalc: an override of 0 must not collapse the set.
-                if (strandLengthOverride[f] > 0) hairLength = strandLengthOverride[f] + preRandLifeVariant[f];
+                // V1.95 - unconditional, with the same fallback as the preview, so
+                // hairLength can never carry over from the previous set or frame.
+                var _hlF = strandLengthOverride[f];
+                if (_hlF <= 0) _hlF = length;
+                hairLength = _hlF + preRandLifeVariant[f];
                 if (setCountOverrode[f] == 1) strandSet = strandCountOverride[f]; else strandSet = strands;
 
                 // -------------------------------------------------------------

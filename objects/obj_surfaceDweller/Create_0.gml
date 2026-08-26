@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.94.0.0"
+versionHSD="1.95.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -717,7 +717,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

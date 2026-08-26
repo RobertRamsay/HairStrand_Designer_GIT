@@ -159,7 +159,13 @@ or (_localLive==1 and previewCanvasComplete==0)
             setID=b
             sx=xx
             lifeVariant=strandSetVariAdj[b]
-            if strandLengthOverride[b]>0 {hairLength=strandLengthOverride[b]+preRandLifeVariant[b]}
+            // V1.95 - was conditional, so a set whose Length override is 0 (the slider
+            // reaches 0) silently inherited the PREVIOUS set's hairLength. Set 0 inherits
+            // from set 10 of the PREVIOUS FRAME, which is why the first set is the one seen
+            // to move after a reload.
+            var _hlB = strandLengthOverride[b]
+            if _hlB<=0 _hlB = length
+            hairLength = _hlB + preRandLifeVariant[b]
             if setCountOverrode[b]==1 {strandSet=strandCountOverride[b]} else {strandSet=strands}
 
             for (v=0;v<clamp(strandSet,0,maxPreviewStrandsPerSet);v++)
@@ -302,7 +308,9 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                 setID=b
                 sx=xx
                 lifeVariant=strandSetVariAdj[b]
-                if strandLengthOverride[b]>0 {hairLength=strandLengthOverride[b]+preRandLifeVariant[b]}
+                var _hlB2 = strandLengthOverride[b]   // V1.95 - see the first loop
+                if _hlB2<=0 _hlB2 = length
+                hairLength = _hlB2 + preRandLifeVariant[b]
                 if setCountOverrode[b]==1 {strandSet=strandCountOverride[b]} else {strandSet=strands}
 
                 for (v=0;v<clamp(strandSet,0,maxPreviewStrandsPerSet);v++)
