@@ -1,7 +1,0 @@
-Change Room Settings of Room_HSD
-to 3840*2160
-Enable Viewports
-Cam 1920*1080
-VP 3840*2160
-
-// windowed version (via options and create step of surfDweller) window_set_topmost(1);

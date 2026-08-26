@@ -1,2 +1,0 @@
-Asks for Frizz after exporting by AO button only
-History colour picing not working
