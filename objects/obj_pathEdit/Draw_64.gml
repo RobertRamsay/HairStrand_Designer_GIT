@@ -30,7 +30,7 @@ draw_rectangle(_bl, _bt, _br, _bb, 0)
 draw_set_color(_edge)
 draw_rectangle(_bl, _bt, _br, _bb, 1)
 
-draw_set_font(bigFont)
+draw_set_font(fnt_test)
 draw_set_halign(fa_center)
 draw_set_valign(fa_middle)
 draw_set_color(c_white)

@@ -9,7 +9,7 @@
   "option_operagx_internalShareUrl":"",
   "option_operagx_interpolate_pixels":true,
   "option_operagx_mod_editUrl":"",
-  "option_operagx_mod_game_name":"${project_name}",
+  "option_operagx_mod_game_name":"HairStrand_Designer_V1_84",
   "option_operagx_mod_guid":"",
   "option_operagx_mod_internalShareUrl":"",
   "option_operagx_mod_next_version":"1.0.0.0",

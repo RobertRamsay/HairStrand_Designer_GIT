@@ -1,6 +1,6 @@
 {
   "$GMProject":"v1",
-  "%Name":"HairStrand_Designer_V1_84",
+  "%Name":"HairStrand_Designer",
   "AudioGroups":[
     {"$GMAudioGroup":"v1","%Name":"audiogroup_default","exportDir":"","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
   ],
@@ -35,7 +35,7 @@
   "MetaData":{
     "IDEVersion":"2026.0.0.16",
   },
-  "name":"HairStrand_Designer_V1_84",
+  "name":"HairStrand_Designer",
   "resources":[
     {"id":{"name":"window_command_hook","path":"extensions/window_command_hook/window_command_hook.yy",},},
     {"id":{"name":"bigFont","path":"fonts/bigFont/bigFont.yy",},},
