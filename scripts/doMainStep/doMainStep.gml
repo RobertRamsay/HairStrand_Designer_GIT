@@ -11,22 +11,15 @@ function doMainStep() {
     // AUTOSAVE & LOADING LOGIC
     // -------------------------------------------------------------------------
     
-    // Check for an existing autosave on startup if not skipping intro
+    // The splash screen already asked. autoloading is only still 1 here if the
+    // user pressed LOAD AUTOSAVE, so load straight away - no popup.
     if (autoloading == 1 && readyToCheckAutoloads == 1 && skipIntro == 0) {
         alFile = file_text_open_read("Autosave.txt");
         if (alFile != -1) {
-            var ask = show_question("An autosave has been detected, do you wish to load it?");
-            if (ask == true) {
-                doAutoLoad();
-                autoloading = 0;
-            } else {
-                autoloading = 0;
-            }
-        } else {
-            // No file found, reset flag
-            autoloading = 0;
+            file_text_close(alFile);
+            doAutoLoad();
         }
-        if (alFile != -1) file_text_close(alFile);
+        autoloading = 0;
     }
 
     // Direct autoload if intro is skipped

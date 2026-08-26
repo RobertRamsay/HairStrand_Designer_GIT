@@ -4313,44 +4313,191 @@ if showHelp == 1 draw_sprite(spr_HelpPanel, 0, 0, 0)
 
 // ============================================================
 // STARTUP SPLASH SCREEN
+// Dark overlay + a centred card carrying the title, the version, the
+// "new in" line and two buttons. LOAD AUTOSAVE only appears when an
+// Autosave.txt is actually present, and pulses so it is noticed.
+// This replaces the old show_question() popup in doMainStep.
 // ============================================================
 #region
 
 if firstTime and skipIntro == 0
 {
-	draw_set_font(bigFont)
-	draw_set_color(c_black)
-	draw_set_alpha(0.90)
+	// ---- one-off autosave probe (splashAutosaveFound starts at -1) ----
+	if splashAutosaveFound == -1
+	{
+		splashAutosaveFound = 0
+		var _splashFile = file_text_open_read("Autosave.txt")
+		if _splashFile != -1
+		{
+			splashAutosaveFound = 1
+			file_text_close(_splashFile)
+		}
+	}
+
+	// ---- palette ----
+	var _dim     = make_color_rgb(10, 10, 12)
+	var _card    = make_color_rgb(26, 26, 30)
+	var _edge    = make_color_rgb(70, 70, 78)
+	var _accent  = make_color_rgb(90, 200, 130)
+	var _muted   = make_color_rgb(140, 140, 148)
+
+	// ---- full screen dim ----
+	draw_set_color(_dim)
+	draw_set_alpha(0.94)
 	draw_rectangle(0, 0, 1920, 1080, 0)
 	draw_set_alpha(1)
-	draw_set_color(c_white)
-	draw_set_halign(fa_center)
 
-	if demoMode == 1 draw_text((1920/2)+2, 300, demoInfo)
-	draw_text((1920/2)+2, 300, "Hair Strand Designer " + string(versionHSD))
-	
+	// ---- card ----
+	// The card is deliberately kept left of x=1190. Draw_0 has already run every
+	// slider hit-test by the time the splash draws, so a click landing on the
+	// slider column (x 1198-1308) would still nudge a slider underneath.
+	var _cx = 845
+	var _cl = 500
+	var _cr = 1190
+	var _ct = 320
+	var _cb = 700
+
+	draw_set_color(_card)
+	draw_rectangle(_cl, _ct, _cr, _cb, 0)
+	draw_set_color(_edge)
+	draw_rectangle(_cl, _ct, _cr, _cb, 1)
+
+	// accent rule across the top of the card
+	draw_set_color(_accent)
+	draw_rectangle(_cl, _ct, _cr, _ct + 3, 0)
+
+	// ---- title ----
+	draw_set_halign(fa_center)
+	draw_set_valign(fa_middle)
+	draw_set_font(bigFont)
+	draw_set_color(c_white)
+	draw_text_transformed(_cx, _ct + 78, "HAIR STRAND DESIGNER", 2.4, 2.4, 0)
 
 	draw_set_font(regFont)
+	draw_set_color(_muted)
+	draw_text(_cx, _ct + 118, "v" + string(versionHSD))
 
-	
+	// ---- what is new ----
+	draw_set_color(_accent)
+	draw_text(_cx, _ct + 158, "New in 1.90  -  Noise: Amount + Frequency")
 
-	draw_set_halign(fa_center)
-	draw_set_color(c_ltgray)
-	draw_text((1920/2)+2, 480,
-		"Please avoid exporting textures to the same folder as the application")
+	if demoMode == 1
+	{
+		draw_set_color(make_color_rgb(220, 170, 60))
+		draw_text(_cx, _ct + 186, demoInfo)
+	}
 
+	// ---- divider ----
+	draw_set_color(_edge)
+	draw_line(_cl + 60, _ct + 210, _cr - 60, _ct + 210)
+
+	// ---- buttons ----
+	var _bw = 240
+	var _bh = 54
+	var _by = _ct + 258
+	var _loadL = 0
+	var _loadR = 0
+	var _startL = 0
+	var _startR = 0
+
+	if splashAutosaveFound == 1
+	{
+		_loadL  = _cx - 260
+		_loadR  = _loadL + _bw
+		_startL = _cx + 20
+		_startR = _startL + _bw
+	}
+	else
+	{
+		_startL = _cx - (_bw / 2)
+		_startR = _startL + _bw
+	}
+
+	// LOAD AUTOSAVE - only when a file was found, and it pulses
+	if splashAutosaveFound == 1
+	{
+		var _pulse = abs(dsin(gameTick360 * 4))
+		var _hovL  = point_in_rectangle(mouse_x, mouse_y, _loadL, _by, _loadR, _by + _bh)
+
+		var _fillR = 20 + (_pulse * 40)
+		var _fillG = 60 + (_pulse * 110)
+		var _fillB = 34 + (_pulse * 60)
+		if _hovL
+		{
+			_fillR = 40 + (_pulse * 50)
+			_fillG = 120 + (_pulse * 120)
+			_fillB = 70 + (_pulse * 70)
+		}
+
+		draw_set_color(make_color_rgb(_fillR, _fillG, _fillB))
+		draw_rectangle(_loadL, _by, _loadR, _by + _bh, 0)
+		draw_set_color(_accent)
+		draw_rectangle(_loadL, _by, _loadR, _by + _bh, 1)
+		draw_rectangle(_loadL - 1, _by - 1, _loadR + 1, _by + _bh + 1, 1)
+
+		draw_set_color(c_white)
+		draw_set_font(bigFont)
+		draw_text(_loadL + (_bw / 2), _by + (_bh / 2), "LOAD AUTOSAVE")
+		draw_set_font(regFont)
+
+		if _hovL and mouse_check_button_pressed(mb_left)
+		{
+			dynamicRes            = 1
+			firstTime             = false
+			readyToCheckAutoloads = 1
+			autoloading           = 1   // doMainStep performs the load, no popup
+		}
+	}
+
+	// GET STARTED
+	var _hovS = point_in_rectangle(mouse_x, mouse_y, _startL, _by, _startR, _by + _bh)
+
+	draw_set_color(make_color_rgb(44, 44, 50))
+	if _hovS draw_set_color(make_color_rgb(64, 64, 72))
+	draw_rectangle(_startL, _by, _startR, _by + _bh, 0)
+	draw_set_color(_edge)
+	if _hovS draw_set_color(c_white)
+	draw_rectangle(_startL, _by, _startR, _by + _bh, 1)
 
 	draw_set_color(c_white)
-	draw_text((1920/2), 520, "Press Enter or click to get started.")
-	draw_set_color(c_black)
-	draw_set_halign(fa_left)
+	draw_set_font(bigFont)
+	draw_text(_startL + (_bw / 2), _by + (_bh / 2), "GET STARTED")
+	draw_set_font(regFont)
 
-	if keyboard_check_pressed(vk_enter) or mouse_check_button_pressed(mb_left) or mouse_check_button_pressed(mb_right)
+	if _hovS and mouse_check_button_pressed(mb_left)
 	{
-		dynamicRes          = 1
-		firstTime           = false
+		dynamicRes            = 1
+		firstTime             = false
 		readyToCheckAutoloads = 1
+		autoloading           = 0   // start fresh, leave Autosave.txt untouched
 	}
+
+	// Enter always means GET STARTED.
+	if keyboard_check_pressed(vk_enter)
+	{
+		dynamicRes            = 1
+		firstTime             = false
+		readyToCheckAutoloads = 1
+		autoloading           = 0
+	}
+
+	// ---- footnotes ----
+	draw_set_color(_muted)
+	if splashAutosaveFound == 1
+	{
+		draw_text(_cx, _by + _bh + 34,
+			"Previous session found - GET STARTED leaves it untouched.")
+	}
+	else
+	{
+		draw_text(_cx, _by + _bh + 34, "No previous session found.")
+	}
+
+	draw_text(_cx, _cb + 40, "Please avoid exporting textures to the same folder as the application")
+
+	draw_set_color(c_white)
+	draw_set_halign(fa_left)
+	draw_set_valign(fa_bottom)
 }
 
 #endregion

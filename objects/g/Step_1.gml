@@ -6,10 +6,9 @@ if instance_exists(obj_surfaceDweller)
     {
     with (obj_surfaceDweller)
         {
-        // The original doMainStep() startup flow owns autoload prompting.
-        // Leave readyToCheckAutoloads==1 intact after the splash so it can ask:
-        // "An autosave has been detected, do you wish to load it?"
-        // Do not call doAutoLoad() directly here.
+        // The splash screen owns the autoload decision from V1.90 onward:
+        // LOAD AUTOSAVE leaves autoloading==1 so doMainStep performs the load,
+        // GET STARTED clears it. Do not call doAutoLoad() directly here.
         if firstTime==false canDrawUI=1
 
         // Manual project Save is handled by the old S-key event later this frame.

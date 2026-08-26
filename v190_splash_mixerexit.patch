@@ -1,0 +1,402 @@
+diff --git a/objects/g/Step_1.gml b/objects/g/Step_1.gml
+index 50fd182..4076d83 100644
+--- a/objects/g/Step_1.gml
++++ b/objects/g/Step_1.gml
+@@ -6,10 +6,9 @@ if instance_exists(obj_surfaceDweller)
+     {
+     with (obj_surfaceDweller)
+         {
+-        // The original doMainStep() startup flow owns autoload prompting.
+-        // Leave readyToCheckAutoloads==1 intact after the splash so it can ask:
+-        // "An autosave has been detected, do you wish to load it?"
+-        // Do not call doAutoLoad() directly here.
++        // The splash screen owns the autoload decision from V1.90 onward:
++        // LOAD AUTOSAVE leaves autoloading==1 so doMainStep performs the load,
++        // GET STARTED clears it. Do not call doAutoLoad() directly here.
+         if firstTime==false canDrawUI=1
+ 
+         // Manual project Save is handled by the old S-key event later this frame.
+diff --git a/objects/obj_pathEdit/Draw_0.gml b/objects/obj_pathEdit/Draw_0.gml
+index d2cb187..bb92514 100644
+--- a/objects/obj_pathEdit/Draw_0.gml
++++ b/objects/obj_pathEdit/Draw_0.gml
+@@ -33,6 +33,7 @@ for (a=0;a<path_get_number(obj_surfaceDweller.editingPath[pathPointer]);a++)
+ 	path_copy=path_duplicate(obj_surfaceDweller.editingPath[pathPointer])
+ 	path_rescale(path_copy,0.25,0.25)
+ 	draw_path(path_copy,512,10,0)
++	path_delete(path_copy) // V1.90 - the duplicate leaked one path per frame
+ 	
+ 
+ 
+@@ -60,10 +61,10 @@ if mouse_check_button(mb_left) and editPoint>0
+ 		}
+ 		
+ 		
+-		draw_text(room_width-50,1000,"Mixer editor V1.0\n"+
+-		"Mixer: "+string(pathPointer+1)+"\n"+
++		draw_text(room_width-50,1000,"Mixer editor V1.1\n"+
++		"Mixer: "+string(pathPointer+1)+"  (UP/DOWN to switch)\n"+
+ 		"Select the mixer from the UI panel\n"+
+-		"Press ENTER/ESC to return to main editor.\nRight click on any point to zero out the X-position.")
++		"EXIT MIXER EDITOR - top left, or press ENTER/ESC.\nRight click on any point to zero out the X-position.")
+ 		
+ 		if keyboard_check_pressed(vk_enter) 
+ 		{
+diff --git a/objects/obj_pathEdit/Draw_64.gml b/objects/obj_pathEdit/Draw_64.gml
+new file mode 100644
+index 0000000..25a2a67
+--- /dev/null
++++ b/objects/obj_pathEdit/Draw_64.gml
+@@ -0,0 +1,51 @@
++/// @description Mixer editor exit button (V1.90)
++// obj_surfaceDweller is persistent and keeps drawing the whole main UI in this
++// room, so this button lives in Draw GUI to guarantee it sits on top of it.
++// Leaving the editor was previously only discoverable via ENTER, the main UI's
++// X, or ESC - none of which are visible from here.
++
++// Kept clear of the 0-20px window drag strip and of every main-UI hit region,
++// all of which start at x >= 985.
++var _bl = 30
++var _bt = 30
++var _br = 300
++var _bb = 74
++
++var _hov = point_in_rectangle(mouse_x, mouse_y, _bl, _bt, _br, _bb)
++
++var _fill = make_color_rgb(44, 44, 50)
++var _edge = make_color_rgb(110, 110, 120)
++if _hov
++	{
++	_fill = make_color_rgb(150, 50, 50)
++	_edge = c_white
++	}
++
++draw_set_color(_fill)
++draw_rectangle(_bl, _bt, _br, _bb, 0)
++draw_set_color(_edge)
++draw_rectangle(_bl, _bt, _br, _bb, 1)
++
++draw_set_font(bigFont)
++draw_set_halign(fa_center)
++draw_set_valign(fa_middle)
++draw_set_color(c_white)
++draw_text((_bl + _br) / 2, (_bt + _bb) / 2 - 6, "EXIT MIXER EDITOR")
++
++draw_set_font(smallFont)
++draw_set_color(make_color_rgb(170, 170, 178))
++draw_text((_bl + _br) / 2, _bb - 12, "ENTER  /  ESC")
++
++draw_set_font(regFont)
++draw_set_halign(fa_left)
++draw_set_valign(fa_bottom)
++draw_set_color(c_white)
++
++// ESC is handled by obj_surfaceDweller's Key Press event, but that object is
++// only here because it is persistent. Handle it locally too so the editor can
++// always be left, and so the button and the key share one exit path.
++if (_hov and mouse_check_button_pressed(mb_left)) or keyboard_check_pressed(vk_escape)
++	{
++	obj_surfaceDweller.img = 9   // restore preview mode
++	room_goto(Room_HSD)
++	}
+diff --git a/objects/obj_pathEdit/obj_pathEdit.yy b/objects/obj_pathEdit/obj_pathEdit.yy
+index 60a2300..41833b1 100644
+--- a/objects/obj_pathEdit/obj_pathEdit.yy
++++ b/objects/obj_pathEdit/obj_pathEdit.yy
+@@ -3,6 +3,7 @@
+   "%Name":"obj_pathEdit",
+   "eventList":[
+     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
++    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":64,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+   ],
+   "managed":true,
+diff --git a/objects/obj_surfaceDweller/Create_0.gml b/objects/obj_surfaceDweller/Create_0.gml
+index b8c2039..a3818b5 100644
+--- a/objects/obj_surfaceDweller/Create_0.gml
++++ b/objects/obj_surfaceDweller/Create_0.gml
+@@ -94,6 +94,12 @@ autosaving=0
+ alFile=""
+ autoloading=1
+ readyToCheckAutoloads=0
++
++// V1.90 splash screen state.
++// -1 = Autosave.txt not probed yet, 0 = none found, 1 = found.
++// The splash owns the "load a previous session?" decision now, so the old
++// show_question() popup in doMainStep has gone.
++splashAutosaveFound=-1
+ yRanRange=20 // new is 1.53
+ 
+ editingPath[0]=StragglePath_A1
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index 56a3dec..6fecf91 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -4313,44 +4313,191 @@ if showHelp == 1 draw_sprite(spr_HelpPanel, 0, 0, 0)
+ 
+ // ============================================================
+ // STARTUP SPLASH SCREEN
++// Dark overlay + a centred card carrying the title, the version, the
++// "new in" line and two buttons. LOAD AUTOSAVE only appears when an
++// Autosave.txt is actually present, and pulses so it is noticed.
++// This replaces the old show_question() popup in doMainStep.
+ // ============================================================
+ #region
+ 
+ if firstTime and skipIntro == 0
+ {
+-	draw_set_font(bigFont)
+-	draw_set_color(c_black)
+-	draw_set_alpha(0.90)
++	// ---- one-off autosave probe (splashAutosaveFound starts at -1) ----
++	if splashAutosaveFound == -1
++	{
++		splashAutosaveFound = 0
++		var _splashFile = file_text_open_read("Autosave.txt")
++		if _splashFile != -1
++		{
++			splashAutosaveFound = 1
++			file_text_close(_splashFile)
++		}
++	}
++
++	// ---- palette ----
++	var _dim     = make_color_rgb(10, 10, 12)
++	var _card    = make_color_rgb(26, 26, 30)
++	var _edge    = make_color_rgb(70, 70, 78)
++	var _accent  = make_color_rgb(90, 200, 130)
++	var _muted   = make_color_rgb(140, 140, 148)
++
++	// ---- full screen dim ----
++	draw_set_color(_dim)
++	draw_set_alpha(0.94)
+ 	draw_rectangle(0, 0, 1920, 1080, 0)
+ 	draw_set_alpha(1)
+-	draw_set_color(c_white)
+-	draw_set_halign(fa_center)
+ 
+-	if demoMode == 1 draw_text((1920/2)+2, 300, demoInfo)
+-	draw_text((1920/2)+2, 300, "Hair Strand Designer " + string(versionHSD))
+-	
++	// ---- card ----
++	// The card is deliberately kept left of x=1190. Draw_0 has already run every
++	// slider hit-test by the time the splash draws, so a click landing on the
++	// slider column (x 1198-1308) would still nudge a slider underneath.
++	var _cx = 845
++	var _cl = 500
++	var _cr = 1190
++	var _ct = 320
++	var _cb = 700
++
++	draw_set_color(_card)
++	draw_rectangle(_cl, _ct, _cr, _cb, 0)
++	draw_set_color(_edge)
++	draw_rectangle(_cl, _ct, _cr, _cb, 1)
++
++	// accent rule across the top of the card
++	draw_set_color(_accent)
++	draw_rectangle(_cl, _ct, _cr, _ct + 3, 0)
++
++	// ---- title ----
++	draw_set_halign(fa_center)
++	draw_set_valign(fa_middle)
++	draw_set_font(bigFont)
++	draw_set_color(c_white)
++	draw_text_transformed(_cx, _ct + 78, "HAIR STRAND DESIGNER", 2.4, 2.4, 0)
+ 
+ 	draw_set_font(regFont)
++	draw_set_color(_muted)
++	draw_text(_cx, _ct + 118, "v" + string(versionHSD))
+ 
+-	
++	// ---- what is new ----
++	draw_set_color(_accent)
++	draw_text(_cx, _ct + 158, "New in 1.90  -  Noise: Amount + Frequency")
+ 
+-	draw_set_halign(fa_center)
+-	draw_set_color(c_ltgray)
+-	draw_text((1920/2)+2, 480,
+-		"Please avoid exporting textures to the same folder as the application")
++	if demoMode == 1
++	{
++		draw_set_color(make_color_rgb(220, 170, 60))
++		draw_text(_cx, _ct + 186, demoInfo)
++	}
+ 
++	// ---- divider ----
++	draw_set_color(_edge)
++	draw_line(_cl + 60, _ct + 210, _cr - 60, _ct + 210)
++
++	// ---- buttons ----
++	var _bw = 240
++	var _bh = 54
++	var _by = _ct + 258
++	var _loadL = 0
++	var _loadR = 0
++	var _startL = 0
++	var _startR = 0
++
++	if splashAutosaveFound == 1
++	{
++		_loadL  = _cx - 260
++		_loadR  = _loadL + _bw
++		_startL = _cx + 20
++		_startR = _startL + _bw
++	}
++	else
++	{
++		_startL = _cx - (_bw / 2)
++		_startR = _startL + _bw
++	}
++
++	// LOAD AUTOSAVE - only when a file was found, and it pulses
++	if splashAutosaveFound == 1
++	{
++		var _pulse = abs(dsin(gameTick360 * 4))
++		var _hovL  = point_in_rectangle(mouse_x, mouse_y, _loadL, _by, _loadR, _by + _bh)
++
++		var _fillR = 20 + (_pulse * 40)
++		var _fillG = 60 + (_pulse * 110)
++		var _fillB = 34 + (_pulse * 60)
++		if _hovL
++		{
++			_fillR = 40 + (_pulse * 50)
++			_fillG = 120 + (_pulse * 120)
++			_fillB = 70 + (_pulse * 70)
++		}
++
++		draw_set_color(make_color_rgb(_fillR, _fillG, _fillB))
++		draw_rectangle(_loadL, _by, _loadR, _by + _bh, 0)
++		draw_set_color(_accent)
++		draw_rectangle(_loadL, _by, _loadR, _by + _bh, 1)
++		draw_rectangle(_loadL - 1, _by - 1, _loadR + 1, _by + _bh + 1, 1)
++
++		draw_set_color(c_white)
++		draw_set_font(bigFont)
++		draw_text(_loadL + (_bw / 2), _by + (_bh / 2), "LOAD AUTOSAVE")
++		draw_set_font(regFont)
++
++		if _hovL and mouse_check_button_pressed(mb_left)
++		{
++			dynamicRes            = 1
++			firstTime             = false
++			readyToCheckAutoloads = 1
++			autoloading           = 1   // doMainStep performs the load, no popup
++		}
++	}
++
++	// GET STARTED
++	var _hovS = point_in_rectangle(mouse_x, mouse_y, _startL, _by, _startR, _by + _bh)
++
++	draw_set_color(make_color_rgb(44, 44, 50))
++	if _hovS draw_set_color(make_color_rgb(64, 64, 72))
++	draw_rectangle(_startL, _by, _startR, _by + _bh, 0)
++	draw_set_color(_edge)
++	if _hovS draw_set_color(c_white)
++	draw_rectangle(_startL, _by, _startR, _by + _bh, 1)
+ 
+ 	draw_set_color(c_white)
+-	draw_text((1920/2), 520, "Press Enter or click to get started.")
+-	draw_set_color(c_black)
+-	draw_set_halign(fa_left)
++	draw_set_font(bigFont)
++	draw_text(_startL + (_bw / 2), _by + (_bh / 2), "GET STARTED")
++	draw_set_font(regFont)
+ 
+-	if keyboard_check_pressed(vk_enter) or mouse_check_button_pressed(mb_left) or mouse_check_button_pressed(mb_right)
++	if _hovS and mouse_check_button_pressed(mb_left)
+ 	{
+-		dynamicRes          = 1
+-		firstTime           = false
++		dynamicRes            = 1
++		firstTime             = false
+ 		readyToCheckAutoloads = 1
++		autoloading           = 0   // start fresh, leave Autosave.txt untouched
+ 	}
++
++	// Enter always means GET STARTED.
++	if keyboard_check_pressed(vk_enter)
++	{
++		dynamicRes            = 1
++		firstTime             = false
++		readyToCheckAutoloads = 1
++		autoloading           = 0
++	}
++
++	// ---- footnotes ----
++	draw_set_color(_muted)
++	if splashAutosaveFound == 1
++	{
++		draw_text(_cx, _by + _bh + 34,
++			"Previous session found - GET STARTED leaves it untouched.")
++	}
++	else
++	{
++		draw_text(_cx, _by + _bh + 34, "No previous session found.")
++	}
++
++	draw_text(_cx, _cb + 40, "Please avoid exporting textures to the same folder as the application")
++
++	draw_set_color(c_white)
++	draw_set_halign(fa_left)
++	draw_set_valign(fa_bottom)
+ }
+ 
+ #endregion
+diff --git a/objects/obj_surfaceDweller/Draw_64.gml b/objects/obj_surfaceDweller/Draw_64.gml
+index aeb6fb2..b8564ca 100644
+--- a/objects/obj_surfaceDweller/Draw_64.gml
++++ b/objects/obj_surfaceDweller/Draw_64.gml
+@@ -35,18 +35,8 @@ if canDrawUI==1
+ 
+ #endregion
+ 
+-// Startup version information
+-if firstTime and skipIntro==0
+-	{
+-	draw_set_font(regFont)
+-	draw_set_halign(fa_center)
+-	draw_set_valign(fa_middle)
+-	draw_set_color(c_ltgray)
+-	draw_text(1920/2,390,"New in 1.90 - Noise: Amount + Frequency")
+-	draw_set_halign(fa_left)
+-	draw_set_valign(fa_bottom)
+-	draw_set_color(c_white)
+-	}
++// The startup version / "new in" information now lives on the splash card
++// drawn at the end of the Draw event, so nothing is drawn over it here.
+ 
+ if skipIntro==1 and pleaseGen
+ 	{
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index 4cf9ac3..4b2bac4 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -11,22 +11,15 @@ function doMainStep() {
+     // AUTOSAVE & LOADING LOGIC
+     // -------------------------------------------------------------------------
+     
+-    // Check for an existing autosave on startup if not skipping intro
++    // The splash screen already asked. autoloading is only still 1 here if the
++    // user pressed LOAD AUTOSAVE, so load straight away - no popup.
+     if (autoloading == 1 && readyToCheckAutoloads == 1 && skipIntro == 0) {
+         alFile = file_text_open_read("Autosave.txt");
+         if (alFile != -1) {
+-            var ask = show_question("An autosave has been detected, do you wish to load it?");
+-            if (ask == true) {
+-                doAutoLoad();
+-                autoloading = 0;
+-            } else {
+-                autoloading = 0;
+-            }
+-        } else {
+-            // No file found, reset flag
+-            autoloading = 0;
++            file_text_close(alFile);
++            doAutoLoad();
+         }
+-        if (alFile != -1) file_text_close(alFile);
++        autoloading = 0;
+     }
+ 
+     // Direct autoload if intro is skipped

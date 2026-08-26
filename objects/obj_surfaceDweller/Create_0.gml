@@ -94,6 +94,12 @@ autosaving=0
 alFile=""
 autoloading=1
 readyToCheckAutoloads=0
+
+// V1.90 splash screen state.
+// -1 = Autosave.txt not probed yet, 0 = none found, 1 = found.
+// The splash owns the "load a previous session?" decision now, so the old
+// show_question() popup in doMainStep has gone.
+splashAutosaveFound=-1
 yRanRange=20 // new is 1.53
 
 editingPath[0]=StragglePath_A1

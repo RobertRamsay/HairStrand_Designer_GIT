@@ -33,6 +33,7 @@ for (a=0;a<path_get_number(obj_surfaceDweller.editingPath[pathPointer]);a++)
 	path_copy=path_duplicate(obj_surfaceDweller.editingPath[pathPointer])
 	path_rescale(path_copy,0.25,0.25)
 	draw_path(path_copy,512,10,0)
+	path_delete(path_copy) // V1.90 - the duplicate leaked one path per frame
 	
 
 
@@ -60,10 +61,10 @@ if mouse_check_button(mb_left) and editPoint>0
 		}
 		
 		
-		draw_text(room_width-50,1000,"Mixer editor V1.0\n"+
-		"Mixer: "+string(pathPointer+1)+"\n"+
+		draw_text(room_width-50,1000,"Mixer editor V1.1\n"+
+		"Mixer: "+string(pathPointer+1)+"  (UP/DOWN to switch)\n"+
 		"Select the mixer from the UI panel\n"+
-		"Press ENTER/ESC to return to main editor.\nRight click on any point to zero out the X-position.")
+		"EXIT MIXER EDITOR - top left, or press ENTER/ESC.\nRight click on any point to zero out the X-position.")
 		
 		if keyboard_check_pressed(vk_enter) 
 		{
