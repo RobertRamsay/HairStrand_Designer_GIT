@@ -1,0 +1,355 @@
+diff --git a/objects/g/KeyPress_83.gml b/objects/g/KeyPress_83.gml
+index f842dd2..84dbbaa 100644
+--- a/objects/g/KeyPress_83.gml
++++ b/objects/g/KeyPress_83.gml
+@@ -6,7 +6,7 @@ if instance_exists(obj_surfaceDweller)
+         {
+         if canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             alarm[1]=2
+diff --git a/objects/g/Step_1.gml b/objects/g/Step_1.gml
+index 773b303..988a244 100644
+--- a/objects/g/Step_1.gml
++++ b/objects/g/Step_1.gml
+@@ -16,7 +16,7 @@ if instance_exists(obj_surfaceDweller)
+         // then let Alarm 1 append the authoritative colour block next frame.
+         if keyboard_check_pressed(ord("S")) and canSave and demoMode==0
+             {
+-            mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++            mainS="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+             v185ManualSavePending=1
+             v185ManualSavePath=""
+             // Begin Step runs before Alarm processing, so use 2 to guarantee the
+diff --git a/objects/obj_save/Create_0.gml b/objects/obj_save/Create_0.gml
+index 4ff2fa9..a19f35a 100644
+--- a/objects/obj_save/Create_0.gml
++++ b/objects/obj_save/Create_0.gml
+@@ -1,7 +1,7 @@
+ /// @description Insert description here
+ // You can write your code in this editor
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ 
+diff --git a/objects/obj_surfaceDweller/Alarm_1.gml b/objects/obj_surfaceDweller/Alarm_1.gml
+index 2b721d3..b5838c8 100644
+--- a/objects/obj_surfaceDweller/Alarm_1.gml
++++ b/objects/obj_surfaceDweller/Alarm_1.gml
+@@ -228,7 +228,7 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
+     pleaseGen=true
+ 
+     // This running build always saves the current project format afterwards.
+-    mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++    mainS="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+ 
+     // Synchronise the Begin-Step snapshot so the restore itself does not cause
+     // an unnecessary autosave on the following frame.
+diff --git a/objects/obj_surfaceDweller/Create_0.gml b/objects/obj_surfaceDweller/Create_0.gml
+index 68d3659..c406600 100644
+--- a/objects/obj_surfaceDweller/Create_0.gml
++++ b/objects/obj_surfaceDweller/Create_0.gml
+@@ -2,7 +2,7 @@ draw_set_color(c_white);
+ 
+ demoMode=0 // for DEMO mode
+ demoInfo="DEMO (no save options)"
+-versionHSD="1.93.0.0"
++versionHSD="1.94.0.0"
+ 
+ showHeart=0
+ uiExtras=1 // little dots for overrides.
+@@ -717,7 +717,7 @@ loading=false
+ 
+ theFile=""
+ 
+-mainS ="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++mainS ="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+ instr="Variable description (colon : ) VariableValue (semiColon ;)";
+ 
+ // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)
+@@ -764,7 +764,11 @@ for (setRands=0;setRands<11;setRands++) //f
+ 							//strandDecision=strandDecision[setRands,strandNum]
+ 			strandStraggleChoice[setRands,strandNum]=0
+ 							//
+-							strandDepth[setRands,strandNum]=0
++							// V1.94 - seeded with a real value, not 0. The renderer now
++							// reads this cache for the first 100 strands, and the preview
++							// only fills it while img==9; generating straight from another
++							// map view would otherwise render every strand at depth 0.
++							strandDepth[setRands,strandNum]=random(100)/100
+ 			//strandColor[setRands,strandNum]=c_white
+ 			}
+ 		
+diff --git a/objects/obj_surfaceDweller/Draw_0.gml b/objects/obj_surfaceDweller/Draw_0.gml
+index 58003e1..ef78db7 100644
+--- a/objects/obj_surfaceDweller/Draw_0.gml
++++ b/objects/obj_surfaceDweller/Draw_0.gml
+@@ -4633,7 +4633,7 @@ if firstTime and skipIntro == 0
+ 
+ 	// ---- what is new ----
+ 	draw_set_color(_accent)
+-	draw_text(_cx, _ct + 158, "New in 1.93  -  Preview thickness and tip fade now match the render")
++	draw_text(_cx, _ct + 158, "New in 1.94  -  Preview and render now share the same per-set seed")
+ 
+ 	if demoMode == 1
+ 	{
+diff --git a/objects/obj_surfaceDweller/KeyPress_76.gml b/objects/obj_surfaceDweller/KeyPress_76.gml
+index 8aacaca..d6f0095 100644
+--- a/objects/obj_surfaceDweller/KeyPress_76.gml
++++ b/objects/obj_surfaceDweller/KeyPress_76.gml
+@@ -325,7 +325,7 @@ var tString="" ;// temp string for reading and analizing
+ 			// PREVIEWER OPTI			
+ 			tString=file_text_read_string(theFile);
+ 			file_text_readln(theFile);
+-			maxPreviewStrandsPerSet=analise(tString)
++			maxPreviewStrandsPerSet=min(analise(tString),100) // V1.94 - the strand*/preRand* caches hold 100
+ 			
+ 			tString=file_text_read_string(theFile);
+ 			file_text_readln(theFile);
+diff --git a/objects/obj_surfaceDweller/Step_0.gml b/objects/obj_surfaceDweller/Step_0.gml
+index a841686..67e35b6 100644
+--- a/objects/obj_surfaceDweller/Step_0.gml
++++ b/objects/obj_surfaceDweller/Step_0.gml
+@@ -38,7 +38,7 @@ if !variable_instance_exists(id,"setColourOverridesReady")
+ // Per-set colour data did not exist before project format 1.85.
+ // If an older project/autosave is loaded, deliberately ignore any accidental
+ // trailing colour block and treat its four legacy colours as global-only.
+-// Once converted in memory, future saves use the current 1.93 project header.
++// Once converted in memory, future saves use the current 1.94 project header.
+ var _colourProjectVersion=real(string_copy(mainS,46,4))
+ if _colourProjectVersion<1.85 and !loading
+ 	{
+@@ -59,7 +59,7 @@ if _colourProjectVersion<1.85 and !loading
+ 		setTipColOverrode[_legacyColourSet]=0
+ 		}
+ 	
+-	mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++	mainS="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+ 	colourUiLastA=customColVarA
+ 	colourUiLastB=customColVarB
+ 	colourUiLastRoot=customRootCol
+diff --git a/objects/obj_surfaceDweller/Step_2.gml b/objects/obj_surfaceDweller/Step_2.gml
+index ad2f20f..9b63e1b 100644
+--- a/objects/obj_surfaceDweller/Step_2.gml
++++ b/objects/obj_surfaceDweller/Step_2.gml
+@@ -159,8 +159,8 @@ if keyboard_check_pressed(ord("L")) and fileCustom!="" and file_exists(fileCusto
+ 	forceUpdate=1
+ 	
+ 	// The loaded header was needed for compatibility checks above. From this
+-	// point onward this running 1.93 build saves projects as the current format.
+-	mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
++	// point onward this running 1.94 build saves projects as the current format.
++	mainS="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
+ 	}
+ 
+ if bkCol_active==1 
+diff --git a/options/windows/options_windows.yy b/options/windows/options_windows.yy
+index dabc580..33baf12 100644
+--- a/options/windows/options_windows.yy
++++ b/options/windows/options_windows.yy
+@@ -11,9 +11,9 @@
+   "option_windows_description_info":"",
+   "option_windows_disable_sandbox":true,
+   "option_windows_display_cursor":true,
+-  "option_windows_display_name":"HairStrand Desginer 1.93",
++  "option_windows_display_name":"HairStrand Desginer 1.94",
+   "option_windows_enable_steam":false,
+-  "option_windows_executable_name":"HairStrand_Designer_V1_93.exe",
++  "option_windows_executable_name":"HairStrand_Designer_V1_94.exe",
+   "option_windows_icon":"${options_dir}/windows/icons/icon.ico",
+   "option_windows_installer_finished":"${base_options_dir}/windows/installer/finished.bmp",
+   "option_windows_installer_header":"${base_options_dir}/windows/installer/header.bmp",
+@@ -31,7 +31,7 @@
+   "option_windows_texture_page":"4096x4096",
+   "option_windows_use_raw_mouse":false,
+   "option_windows_use_splash":true,
+-  "option_windows_version":"1.9.3.0",
++  "option_windows_version":"1.9.4.0",
+   "option_windows_vsync":true,
+   "resourceType":"GMWindowsOptions",
+   "resourceVersion":"2.0",
+diff --git a/scripts/doAutoLoad/doAutoLoad.gml b/scripts/doAutoLoad/doAutoLoad.gml
+index f441538..778f227 100644
+--- a/scripts/doAutoLoad/doAutoLoad.gml
++++ b/scripts/doAutoLoad/doAutoLoad.gml
+@@ -137,7 +137,7 @@ if canLoad
+             tString=file_text_read_string(theFile); file_text_readln(theFile); taperInfluence[s]=analise(tString)
+             }
+ 
+-        tString=file_text_read_string(theFile); file_text_readln(theFile); maxPreviewStrandsPerSet=analise(tString)
++        tString=file_text_read_string(theFile); file_text_readln(theFile); maxPreviewStrandsPerSet=min(analise(tString),100) // V1.94 - the strand*/preRand* caches hold 100
+         tString=file_text_read_string(theFile); file_text_readln(theFile); optimalStep=analise(tString)
+ 
+         if maxPreviewStrandsPerSet==0 or optimalStep==0
+diff --git a/scripts/doAutoSave/doAutoSave.gml b/scripts/doAutoSave/doAutoSave.gml
+index 0d91f35..c11675e 100644
+--- a/scripts/doAutoSave/doAutoSave.gml
++++ b/scripts/doAutoSave/doAutoSave.gml
+@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
+ 			theFile = file_text_open_write(fileCustom);
+ 			
+ // Autosaves are always written as the current project format.
+-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay");
++file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay");
+ 			file_text_writeln(theFile);
+ 			
+ // instruction line			
+diff --git a/scripts/doMainStep/doMainStep.gml b/scripts/doMainStep/doMainStep.gml
+index 2ac6fa6..21d88d2 100644
+--- a/scripts/doMainStep/doMainStep.gml
++++ b/scripts/doMainStep/doMainStep.gml
+@@ -143,6 +143,7 @@ renderF=0 // incremental render - current set being rendered
+             if (renderF == 0) {
+                 curlRotator = 0;
+                 renderH = 0;
++                idList = 0;   // V1.94 - was never reset, so ID map colours shifted run to run
+                 random_set_seed(seedVal);
+                 xx1 = 0; yy1 = 0; xx2 = 0; yy2 = 0;
+                 cache_strandPointer = 0;
+@@ -362,6 +363,23 @@ renderF=0 // incremental render - current set being rendered
+ 
+                 // Current batch index
+                 var f = renderF;
++
++                // -------------------------------------------------------------
++                // V1.94 PER-SET SEED
++                // The preview (mainCalc) and the pre-random tables (updatePreRands)
++                // both seed from randomSeedVal[set] at the start of every set. The
++                // renderer used to seed ONCE, from seedVal, at renderF==0 - and it
++                // renders one set per frame, so by the time set 1 began the stream
++                // had been moved on by set 0's draws AND by whatever mainCalc did in
++                // the Draw event in between. That made the render disagree with the
++                // preview and, worse, not reproduce itself. Seeding here puts every
++                // set on its own seed, frame boundaries and preview activity be
++                // damned, and matches where the cached strand tables came from.
++                // -------------------------------------------------------------
++                // The +f*7919 keeps each set on its own stream. randomSeedVal
++                // defaults to 1 for every set, so seeding with it alone would make
++                // every set an exact clone beyond the cached strands.
++                random_set_seed(randomSeedVal[f] + (f * 7919));
+                 if (doLogOnce == 1) { file_text_write_string(logFile, "SET ID:" + string(f)); file_text_writeln(logFile); }
+                 
+                 setID = f;
+@@ -371,7 +389,12 @@ renderF=0 // incremental render - current set being rendered
+                 a = 1;
+ 
+                 // Calculate Strand Set properties
+-                hairLength = strandLengthOverride[f] + random(lifeVariant * 2);
++                // V1.94 - was random(lifeVariant*2), re-rolled here. Two problems:
++                // it disagreed with the preview (which uses preRandLifeVariant), and
++                // lifeVariant is not assigned until inside the strand loop below, so
++                // this was rolling against the PREVIOUS set's variance.
++                // Guarded like mainCalc: an override of 0 must not collapse the set.
++                if (strandLengthOverride[f] > 0) hairLength = strandLengthOverride[f] + preRandLifeVariant[f];
+                 if (setCountOverrode[f] == 1) strandSet = strandCountOverride[f]; else strandSet = strands;
+ 
+                 // -------------------------------------------------------------
+@@ -382,6 +405,11 @@ renderF=0 // incremental render - current set being rendered
+                     var d = clamp(floor((255 / strandSet) * h), 20, 255);
+                     depthTone = make_color_rgb(d, d, d);
+                     dpth = random(100) / 100;
++                    // V1.94 - every other per-strand value below reuses the preview's
++                    // cached value for the first maxPreviewStrandsPerSet strands; dpth
++                    // was the one that did not, so the render's depth/tone blend never
++                    // matched what the preview showed.
++                    if (h < maxPreviewStrandsPerSet) dpth = strandDepth[f, h];
+ 					xxx = (1024 / 11) * h
+ 					yyy = 400
+                     subSpriteChoice = preRandSubSprite[f, h];
+@@ -433,7 +461,11 @@ renderF=0 // incremental render - current set being rendered
+                     if (h < maxPreviewStrandsPerSet) amp = strandAmp[f, h];
+ 
+                     yp = 0;
+-                    yy = (random(yjit) + 120) + yOffset[f];
++                    // V1.94 - was random(yjit)+120, i.e. [120,320). preRandYY (which the
++                    // cached strands below 100 come from) is [-yRan, yRan*3)+120, so the
++                    // uncached strands used to sit in a different, wider band - a visible
++                    // seam in the root line at strand 100.
++                    yy = (random_range(-strandYRanRange[f], strandYRanRange[f] * 3) + 120) + yOffset[f];
+                     if (h < maxPreviewStrandsPerSet) yy = strandYY[f, h] + yOffset[f];
+ 
+                     nx = 0;
+@@ -463,6 +495,11 @@ renderF=0 // incremental render - current set being rendered
+                     var t_maxScale = setThickMaxAdj[f];
+                     var cmx = setRootThickAdj[f] / 30;              // V1.91 per-set
+                     var cmy = setTipThickAdj[f] / 30;               // V1.91 per-set
++                    // V1.94 - dpthAdd was re-rolled inside the point loop; the preview
++                    // uses one value per strand from preRandDepthAdd. Same table now, so
++                    // the depth/colour blend agrees. (Reinstating the per-point speckle
++                    // means moving this line back into the loop as random_range.)
++                    dpthAdd = preRandDepthAdd[f, min(h, 99)];
+                     var _fadeInS  = clamp(setFadeInAdj[f],  1, 40); // V1.91 per-set
+                     var _fadeOutS = clamp(setFadeOutAdj[f], 1, 40); // V1.91 per-set
+                     var padFactor = 0.05 + (padding / 1000);
+@@ -510,14 +547,17 @@ renderF=0 // incremental render - current set being rendered
+                     // PASS 1: POINT CALCULATION — LUT version
+                     // ---------------------------------------------------------
+                     pt_count = 0;
+-                    var prevX_cache = xx;
++                    var prevX_cache = xOffset[f] + xx;   // V1.94 - finalX includes xOffset
+                     a = 1;
+                     var _lifeRcp = 1 / life; // avoid repeated division
+ 
+                     for (n = 0; n < life; n++) {
+                         // Root and tip gradients
+-                        if (root > n) { rt = 1 - (clamp((n * (3800 / life)) / root, 0, 1)); }
+-                        if (life - tip > n) { tp = 1 - (clamp(abs((life - tip - n)) / (tip * (life / 3800)), 0, 1)); }
++                        // V1.94 - the preview has these else branches; without them the
++                        // render latched the last computed rt/tp and smeared root colour
++                        // down the strand.
++                        if (root > n) { rt = 1 - (clamp((n * (3800 / life)) / root, 0, 1)); } else { rt = 0.01; }
++                        if (life - tip > n) { tp = 1 - (clamp(abs((life - tip - n)) / (tip * (life / 3800)), 0, 1)); } else { tp = 1; }
+ 
+                         // Thickness — LUT (dsin/dcos degree-based, exact match)
+                         var _li90  = round(n * _lifeRcp * 360) mod 1440;
+@@ -529,7 +569,6 @@ renderF=0 // incremental render - current set being rendered
+                         var tB = lerp(scy, scz, cmy);
+                         var scA = (clamp((tA + tB) * thicknessBase, 0.15, 100) / 2);
+ 
+-                        dpthAdd = clamp(random_range(-100, 100) / 1000, 0, 1);
+                         colr = make_color_rgb(clamp(255 * (dpth + dpthAdd), 0, 255), 255 * rt, 255 * tp);
+ 
+                         // Custom colour — pre-extracted channels
+diff --git a/scripts/mainCalc/mainCalc.gml b/scripts/mainCalc/mainCalc.gml
+index b58e6b0..cab74e5 100644
+--- a/scripts/mainCalc/mainCalc.gml
++++ b/scripts/mainCalc/mainCalc.gml
+@@ -195,7 +195,9 @@ or (_localLive==1 and previewCanvasComplete==0)
+                 for(n=0;n<life;n+=optimalStep)
+                     {
+                     if root>n {rt=1-(clamp((n*(3800/life))/root,0,1))} else rt=0.01
+-                    if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))}
++                    if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))} else tp=1
++                    a=1 // V1.94 - was never reset, so the body of every strand kept the
++                        // last fade-in sample's alpha instead of being fully opaque
+ 
+                     // Thickness — LUT (matches dsin/dcos exactly)
+                     var _li90  = round(n*_lifeRcp*360) mod 1440
+@@ -323,7 +325,8 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
+                     for(n=0;n<life;n+=optimalStep)
+                         {
+                         if root>n {rt=1-(clamp((n*(3800/life))/root,0,1))} else rt=0.01
+-                        if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))}
++                        if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))} else tp=1
++                        a=1 // V1.94 - see the first point loop
+ 
+                         // Thickness — LUT
+                         var _li90  = round(n*_lifeRcp*360) mod 1440
+diff --git a/scripts/updatePreRands/updatePreRands.gml b/scripts/updatePreRands/updatePreRands.gml
+index ae0ebfa..32db05a 100644
+--- a/scripts/updatePreRands/updatePreRands.gml
++++ b/scripts/updatePreRands/updatePreRands.gml
+@@ -61,7 +61,7 @@ function updatePreRands(argument0){
+ 									clamp (hairLength*   (1+(lifeVariant/100)) , 10 , 3900)
+ 									)
+ 						preRandFreq[c,pr]=random_range(strandSetWaveFreqMinAdj[c],strandSetWaveFreqMaxAdj[c]) // new in 1.5 20th Oct
+-						preRandYY[c,pr]=random(strandYRanRange[c])+120+(strandYRanRange[c]/2)
++						preRandYY[c,pr]=random_range(-strandYRanRange[c],strandYRanRange[c]*3)+120 // V1.94 - was a different band to the all-sets path above
+ 						preRandRootRange[c,pr]=random((rootPosition*50))/3
+ 						preRandRoot[c,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+rootRange))
+ 						preRandStrandDecision[c,pr]=random(100)/100

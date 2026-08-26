@@ -325,7 +325,7 @@ var tString="" ;// temp string for reading and analizing
 			// PREVIEWER OPTI			
 			tString=file_text_read_string(theFile);
 			file_text_readln(theFile);
-			maxPreviewStrandsPerSet=analise(tString)
+			maxPreviewStrandsPerSet=min(analise(tString),100) // V1.94 - the strand*/preRand* caches hold 100
 			
 			tString=file_text_read_string(theFile);
 			file_text_readln(theFile);

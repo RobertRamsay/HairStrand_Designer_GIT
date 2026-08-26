@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			

@@ -195,7 +195,9 @@ or (_localLive==1 and previewCanvasComplete==0)
                 for(n=0;n<life;n+=optimalStep)
                     {
                     if root>n {rt=1-(clamp((n*(3800/life))/root,0,1))} else rt=0.01
-                    if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))}
+                    if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))} else tp=1
+                    a=1 // V1.94 - was never reset, so the body of every strand kept the
+                        // last fade-in sample's alpha instead of being fully opaque
 
                     // Thickness — LUT (matches dsin/dcos exactly)
                     var _li90  = round(n*_lifeRcp*360) mod 1440
@@ -323,7 +325,8 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                     for(n=0;n<life;n+=optimalStep)
                         {
                         if root>n {rt=1-(clamp((n*(3800/life))/root,0,1))} else rt=0.01
-                        if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))}
+                        if life-tip>n {tp=1-(clamp(abs((life-tip-n))/(tip*(life/3800)),0,1))} else tp=1
+                        a=1 // V1.94 - see the first point loop
 
                         // Thickness — LUT
                         var _li90  = round(n*_lifeRcp*360) mod 1440

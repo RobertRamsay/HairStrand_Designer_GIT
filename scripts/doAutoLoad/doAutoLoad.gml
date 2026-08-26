@@ -137,7 +137,7 @@ if canLoad
             tString=file_text_read_string(theFile); file_text_readln(theFile); taperInfluence[s]=analise(tString)
             }
 
-        tString=file_text_read_string(theFile); file_text_readln(theFile); maxPreviewStrandsPerSet=analise(tString)
+        tString=file_text_read_string(theFile); file_text_readln(theFile); maxPreviewStrandsPerSet=min(analise(tString),100) // V1.94 - the strand*/preRand* caches hold 100
         tString=file_text_read_string(theFile); file_text_readln(theFile); optimalStep=analise(tString)
 
         if maxPreviewStrandsPerSet==0 or optimalStep==0

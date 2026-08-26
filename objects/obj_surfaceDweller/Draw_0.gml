@@ -4633,7 +4633,7 @@ if firstTime and skipIntro == 0
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.93  -  Preview thickness and tip fade now match the render")
+	draw_text(_cx, _ct + 158, "New in 1.94  -  Preview and render now share the same per-set seed")
 
 	if demoMode == 1
 	{

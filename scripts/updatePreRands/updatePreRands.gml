@@ -61,7 +61,7 @@ function updatePreRands(argument0){
 									clamp (hairLength*   (1+(lifeVariant/100)) , 10 , 3900)
 									)
 						preRandFreq[c,pr]=random_range(strandSetWaveFreqMinAdj[c],strandSetWaveFreqMaxAdj[c]) // new in 1.5 20th Oct
-						preRandYY[c,pr]=random(strandYRanRange[c])+120+(strandYRanRange[c]/2)
+						preRandYY[c,pr]=random_range(-strandYRanRange[c],strandYRanRange[c]*3)+120 // V1.94 - was a different band to the all-sets path above
 						preRandRootRange[c,pr]=random((rootPosition*50))/3
 						preRandRoot[c,pr]=(random_range(round(random_range(0,(rootPosition*50))),(rootPosition*50)+rootRange))
 						preRandStrandDecision[c,pr]=random(100)/100

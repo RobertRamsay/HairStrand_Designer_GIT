@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.93.0.0"
+versionHSD="1.94.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -717,7 +717,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.94.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)
@@ -764,7 +764,11 @@ for (setRands=0;setRands<11;setRands++) //f
 							//strandDecision=strandDecision[setRands,strandNum]
 			strandStraggleChoice[setRands,strandNum]=0
 							//
-							strandDepth[setRands,strandNum]=0
+							// V1.94 - seeded with a real value, not 0. The renderer now
+							// reads this cache for the first 100 strands, and the preview
+							// only fills it while img==9; generating straight from another
+							// map view would otherwise render every strand at depth 0.
+							strandDepth[setRands,strandNum]=random(100)/100
 			//strandColor[setRands,strandNum]=c_white
 			}
 		

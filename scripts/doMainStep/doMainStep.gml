@@ -143,6 +143,7 @@ renderF=0 // incremental render - current set being rendered
             if (renderF == 0) {
                 curlRotator = 0;
                 renderH = 0;
+                idList = 0;   // V1.94 - was never reset, so ID map colours shifted run to run
                 random_set_seed(seedVal);
                 xx1 = 0; yy1 = 0; xx2 = 0; yy2 = 0;
                 cache_strandPointer = 0;
@@ -362,6 +363,23 @@ renderF=0 // incremental render - current set being rendered
 
                 // Current batch index
                 var f = renderF;
+
+                // -------------------------------------------------------------
+                // V1.94 PER-SET SEED
+                // The preview (mainCalc) and the pre-random tables (updatePreRands)
+                // both seed from randomSeedVal[set] at the start of every set. The
+                // renderer used to seed ONCE, from seedVal, at renderF==0 - and it
+                // renders one set per frame, so by the time set 1 began the stream
+                // had been moved on by set 0's draws AND by whatever mainCalc did in
+                // the Draw event in between. That made the render disagree with the
+                // preview and, worse, not reproduce itself. Seeding here puts every
+                // set on its own seed, frame boundaries and preview activity be
+                // damned, and matches where the cached strand tables came from.
+                // -------------------------------------------------------------
+                // The +f*7919 keeps each set on its own stream. randomSeedVal
+                // defaults to 1 for every set, so seeding with it alone would make
+                // every set an exact clone beyond the cached strands.
+                random_set_seed(randomSeedVal[f] + (f * 7919));
                 if (doLogOnce == 1) { file_text_write_string(logFile, "SET ID:" + string(f)); file_text_writeln(logFile); }
                 
                 setID = f;
@@ -371,7 +389,12 @@ renderF=0 // incremental render - current set being rendered
                 a = 1;
 
                 // Calculate Strand Set properties
-                hairLength = strandLengthOverride[f] + random(lifeVariant * 2);
+                // V1.94 - was random(lifeVariant*2), re-rolled here. Two problems:
+                // it disagreed with the preview (which uses preRandLifeVariant), and
+                // lifeVariant is not assigned until inside the strand loop below, so
+                // this was rolling against the PREVIOUS set's variance.
+                // Guarded like mainCalc: an override of 0 must not collapse the set.
+                if (strandLengthOverride[f] > 0) hairLength = strandLengthOverride[f] + preRandLifeVariant[f];
                 if (setCountOverrode[f] == 1) strandSet = strandCountOverride[f]; else strandSet = strands;
 
                 // -------------------------------------------------------------
@@ -382,6 +405,11 @@ renderF=0 // incremental render - current set being rendered
                     var d = clamp(floor((255 / strandSet) * h), 20, 255);
                     depthTone = make_color_rgb(d, d, d);
                     dpth = random(100) / 100;
+                    // V1.94 - every other per-strand value below reuses the preview's
+                    // cached value for the first maxPreviewStrandsPerSet strands; dpth
+                    // was the one that did not, so the render's depth/tone blend never
+                    // matched what the preview showed.
+                    if (h < maxPreviewStrandsPerSet) dpth = strandDepth[f, h];
 					xxx = (1024 / 11) * h
 					yyy = 400
                     subSpriteChoice = preRandSubSprite[f, h];
@@ -433,7 +461,11 @@ renderF=0 // incremental render - current set being rendered
                     if (h < maxPreviewStrandsPerSet) amp = strandAmp[f, h];
 
                     yp = 0;
-                    yy = (random(yjit) + 120) + yOffset[f];
+                    // V1.94 - was random(yjit)+120, i.e. [120,320). preRandYY (which the
+                    // cached strands below 100 come from) is [-yRan, yRan*3)+120, so the
+                    // uncached strands used to sit in a different, wider band - a visible
+                    // seam in the root line at strand 100.
+                    yy = (random_range(-strandYRanRange[f], strandYRanRange[f] * 3) + 120) + yOffset[f];
                     if (h < maxPreviewStrandsPerSet) yy = strandYY[f, h] + yOffset[f];
 
                     nx = 0;
@@ -463,6 +495,11 @@ renderF=0 // incremental render - current set being rendered
                     var t_maxScale = setThickMaxAdj[f];
                     var cmx = setRootThickAdj[f] / 30;              // V1.91 per-set
                     var cmy = setTipThickAdj[f] / 30;               // V1.91 per-set
+                    // V1.94 - dpthAdd was re-rolled inside the point loop; the preview
+                    // uses one value per strand from preRandDepthAdd. Same table now, so
+                    // the depth/colour blend agrees. (Reinstating the per-point speckle
+                    // means moving this line back into the loop as random_range.)
+                    dpthAdd = preRandDepthAdd[f, min(h, 99)];
                     var _fadeInS  = clamp(setFadeInAdj[f],  1, 40); // V1.91 per-set
                     var _fadeOutS = clamp(setFadeOutAdj[f], 1, 40); // V1.91 per-set
                     var padFactor = 0.05 + (padding / 1000);
@@ -510,14 +547,17 @@ renderF=0 // incremental render - current set being rendered
                     // PASS 1: POINT CALCULATION — LUT version
                     // ---------------------------------------------------------
                     pt_count = 0;
-                    var prevX_cache = xx;
+                    var prevX_cache = xOffset[f] + xx;   // V1.94 - finalX includes xOffset
                     a = 1;
                     var _lifeRcp = 1 / life; // avoid repeated division
 
                     for (n = 0; n < life; n++) {
                         // Root and tip gradients
-                        if (root > n) { rt = 1 - (clamp((n * (3800 / life)) / root, 0, 1)); }
-                        if (life - tip > n) { tp = 1 - (clamp(abs((life - tip - n)) / (tip * (life / 3800)), 0, 1)); }
+                        // V1.94 - the preview has these else branches; without them the
+                        // render latched the last computed rt/tp and smeared root colour
+                        // down the strand.
+                        if (root > n) { rt = 1 - (clamp((n * (3800 / life)) / root, 0, 1)); } else { rt = 0.01; }
+                        if (life - tip > n) { tp = 1 - (clamp(abs((life - tip - n)) / (tip * (life / 3800)), 0, 1)); } else { tp = 1; }
 
                         // Thickness — LUT (dsin/dcos degree-based, exact match)
                         var _li90  = round(n * _lifeRcp * 360) mod 1440;
@@ -529,7 +569,6 @@ renderF=0 // incremental render - current set being rendered
                         var tB = lerp(scy, scz, cmy);
                         var scA = (clamp((tA + tB) * thicknessBase, 0.15, 100) / 2);
 
-                        dpthAdd = clamp(random_range(-100, 100) / 1000, 0, 1);
                         colr = make_color_rgb(clamp(255 * (dpth + dpthAdd), 0, 255), 255 * rt, 255 * tp);
 
                         // Custom colour — pre-extracted channels
