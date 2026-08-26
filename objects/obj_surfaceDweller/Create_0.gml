@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.92.0.0"
+versionHSD="1.93.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -119,6 +119,18 @@ v191ManualLoadOk=0
 // was 5 with an upper clamp of 10, which under-drew every strand by ~1.45x and
 // stopped growing entirely past scA 2 - hence "the final looks way thicker".
 previewWidthK=7.5
+
+// V1.93 - preview alpha calibration.
+// The final render stamps a sprite at EVERY point along the strand, so on any
+// one output row roughly 20*scA of them overlap and their alpha compounds:
+// the visible opacity is 1-(1-a)^(20*scA), not a. That stays near-solid far
+// longer than a does and then collapses, which is why the rendered tip ends
+// abruptly. The preview draws ONE non-overlapping segment per sampled point,
+// so it has to apply that curve itself.
+// The old code instead did clamp(a,0.25,1) - a hard 25% floor, so the preview
+// tip never faded out at all. Measured against a real stamped strand the new
+// curve is within 0.003 mean opacity; the old clamp was out by 0.10.
+previewAlphaK=20
 yRanRange=20 // new is 1.53
 
 editingPath[0]=StragglePath_A1
@@ -705,7 +717,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

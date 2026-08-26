@@ -1,7 +1,7 @@
 /// @description Insert description here
 // You can write your code in this editor
 
-mainS ="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 

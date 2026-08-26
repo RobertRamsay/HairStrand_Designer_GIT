@@ -228,7 +228,7 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     pleaseGen=true
 
     // This running build always saves the current project format afterwards.
-    mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+    mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
 
     // Synchronise the Begin-Step snapshot so the restore itself does not cause
     // an unnecessary autosave on the following frame.

@@ -248,7 +248,7 @@ or (_localLive==1 and previewCanvasComplete==0)
                     colrCustom=make_color_rgb(_cr,_cg,_cb)
 
                     draw_set_color(colrCustom)
-                    draw_set_alpha(clamp(a,0.25,1))
+                    draw_set_alpha(clamp(1-power(1-clamp(a,0,1),max(1,previewAlphaK*scA)),0,1)) // V1.93 - see previewAlphaK
 
                     if set_active[setID]==0 and !generating
                         {
@@ -382,7 +382,7 @@ if (img==9 and mouse_x<1024 and mouse_check_button(mb_left)) or mouse_check_butt
                         colrCustom=make_color_rgb(tempRt,tempGt,tempBt)
 
                         draw_set_color(colrCustom)
-                        draw_set_alpha(clamp(a,0.25,1))
+                        draw_set_alpha(clamp(1-power(1-clamp(a,0,1),max(1,previewAlphaK*scA)),0,1)) // V1.93 - see previewAlphaK
 
                         if set_active[setID]==0 and !generating
                             {

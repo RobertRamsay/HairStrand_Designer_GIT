@@ -16,7 +16,7 @@ if instance_exists(obj_surfaceDweller)
         // then let Alarm 1 append the authoritative colour block next frame.
         if keyboard_check_pressed(ord("S")) and canSave and demoMode==0
             {
-            mainS="Hair Strand Designer - Project File - Version1.92.0 - 26thAug2026 (C) Robert Ramsay"
+            mainS="Hair Strand Designer - Project File - Version1.93.0 - 26thAug2026 (C) Robert Ramsay"
             v185ManualSavePending=1
             v185ManualSavePath=""
             // Begin Step runs before Alarm processing, so use 2 to guarantee the
