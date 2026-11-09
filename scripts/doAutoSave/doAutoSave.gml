@@ -38,7 +38,7 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			
@@ -514,6 +514,11 @@ var o=obj_surfaceDweller
 							file_text_write_string(theFile,"setNoiseFreqAdj["+string(set)+"]:"+string(o.setNoiseFreqAdj[set])+";");
 							file_text_writeln(theFile);
 								}
+
+							// V1.96 - clumping. Self-describing block, found by its
+							// marker on load (clumpReadFile), so its position does
+							// not matter to the positional loader above it.
+							with (o) clumpWriteBlock(other.theFile);
 
 
 				}

@@ -426,7 +426,7 @@ if pleaseGen draw_sprite(spr_genMessage, 0, 512, 32)
 
 if point_in_rectangle(mouse_x, mouse_y, 1056, 980, 1086, 1010)
 {
-	smallTip = "Click the dice to randomize the strand seed number\nRight click to randomise all non-overridden sets"
+	smallTip = "Dice - click for a new random seed. Right-click gives every set that is not overridden its own new seed"
 
 	
 
@@ -2987,6 +2987,22 @@ if textBox_noiseFreq == 1
 
 
 // ============================================================
+// DUAL SLIDERS: CLUMPING (V1.96)
+// Row 17 "Clumping"  - Amount | Count
+// Row 18 "Clump Var" - Start  | Scatter
+// Both rows are baked into spr_UI below Mixer 3, at the same 28px pitch.
+// Same behaviour as the Noise row; see uiClumpSlider in clumpTools.
+// ============================================================
+#region
+uiClumpSlider(0, 1198,      436 + (28*17), 1318)      // Amount
+uiClumpSlider(1, 1198 + 60, 436 + (28*17), 1318 + 34) // Count
+uiClumpSlider(2, 1198,      436 + (28*18), 1318)      // Start
+uiClumpSlider(3, 1198 + 60, 436 + (28*18), 1318 + 34) // Scatter
+#endregion
+// END SLIDERS: CLUMPING
+
+
+// ============================================================
 // SLIDER: STRAND LENGTH
 // ============================================================
 #region
@@ -4596,9 +4612,18 @@ if tick > 359.99 tick = 0
 // Tooltip and status text
 draw_set_font(font_tipFont)
 draw_set_valign(fa_top)
-draw_text(360, 1035, smallTip)
+// V1.96 - every button and slider row now has a helper tip (uiTips).
+// The tip has its own line along the bottom of the bar, under the buttons,
+// where it gets the full width: it used to be wedged between the preview
+// buttons and HELP INFO and had to wrap into three short lines.
+uiTips()
+if smallTip != "" draw_text_ext(12, 1058, smallTip, -1, 1000)
 draw_set_valign(fa_bottom)
-draw_text(1050, 950, Tooltip)
+// V1.96 - was (1050,950), which is now the Clump Var row, and squeezed above
+// Seed it crowded the dice. It now sits in the clear space right of the
+// Clumping / Clump Var boxes (below Copy/Paste, which ends at y 901), wrapped
+// to 330px (two even lines, no orphan word) and bottom-aligned with Clump Var.
+draw_text_ext(1395, 955, Tooltip, 15, 330)
 draw_set_halign(fa_left)
 
 #endregion
@@ -4820,6 +4845,15 @@ if uiExtras == 1
 		draw_set_color(red_color)
 		if setNoiseAmtOverrode[scan] != 0 or setNoiseFreqOverrode[scan] != 0
 			draw_circle(1120+(scan*7), 800, 2, 0)
+
+		// V1.96 - Clumping row 17, Clump Var row 18
+		draw_set_color(or_color)
+		if setClumpAmtOverrode[scan] != 0 or setClumpCountOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 912, 2, 0)
+
+		draw_set_color(blu_color)
+		if setClumpStartOverrode[scan] != 0 or setClumpScatterOverrode[scan] != 0
+			draw_circle(1120+(scan*7), 940, 2, 0)
 	}
 }
 
@@ -4845,6 +4879,24 @@ if mouse_check_button_pressed(mb_left) and point_in_rectangle(mouse_x, mouse_y, 
 	pleaseGen = true
 }
 draw_sprite(spr_but_StrandType, moreHairs, 266, 1028)
+
+// V1.96 - preview update mode toggle: LIVE (strands grow in) / BUSY (classic)
+// and the smoothing shader toggle. Their helper tips are in uiTips().
+if mouse_check_button_pressed(mb_left) and mouse_y >= 1027 and mouse_y <= 1051
+{
+	var _prefChanged = false
+	if mouse_x >= 352 and mouse_x <= 421 { pvMode = 1 - pvMode; _prefChanged = true }
+	if mouse_x >= 428 and mouse_x <= 497 { pvSmooth = 1 - pvSmooth; _prefChanged = true }
+	if _prefChanged
+	{
+		ini_open("HSD_Settings.ini")
+		ini_write_real("preview", "updateMode", pvMode)
+		ini_write_real("preview", "smooth", pvSmooth)
+		ini_close()
+	}
+}
+draw_sprite(spr_but_PreviewMode, pvMode, 356, 1028)
+draw_sprite(spr_but_Smooth, pvSmooth, 432, 1028)
 
 // Curl rotation control (visible only in multi-strand mode)
 if moreHairs == 1
@@ -4886,7 +4938,9 @@ draw_set_color(c_white)
 if mouse_check_button_pressed(mb_left) and point_in_rectangle(mouse_x, mouse_y, 846, 1027, 901, 1051)
 	showHelp = 1 - showHelp
 
-if showHelp == 1 draw_sprite(spr_HelpPanel, 0, 0, 0)
+// V1.96 - the panel was remade for 1.96 at double size (2042x2048) and is drawn
+// at half scale, so its text stays sharp on high-resolution displays.
+if showHelp == 1 draw_sprite_ext(spr_HelpPanel, 0, 0, 0, 0.5, 0.5, 0, c_white, 1)
 
 #endregion
 
@@ -4949,17 +5003,18 @@ if firstTime and skipIntro == 0
 	// ---- title ----
 	draw_set_halign(fa_center)
 	draw_set_valign(fa_middle)
-	draw_set_font(bigFont)
-	draw_set_color(c_white)
-	draw_text_transformed(_cx, _ct + 78, "HAIR STRAND DESIGNER", 2.4, 2.4, 0)
+	// V1.96 - a proper logo graphic (spr_logoTitle, Orbitron). It replaces the
+	// 15pt bigFont stretched 2.4x, which was visibly soft. The sprite is authored
+	// at 2x (1240x176) and drawn at half size, so it stays sharp on 4K displays.
+	draw_sprite_ext(spr_logoTitle, 0, _cx, _ct + 72, 0.5, 0.5, 0, c_white, 1)
 
 	draw_set_font(regFont)
 	draw_set_color(_muted)
-	draw_text(_cx, _ct + 118, "v" + string(versionHSD))
+	draw_text(_cx, _ct + 128, "v" + string(versionHSD))
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.95  -  Set state no longer leaks between sets or across a reload")
+	draw_text(_cx, _ct + 158, "New in 1.96  -  Strand clumping: Amount, Count, Start and Scatter")
 
 	if demoMode == 1
 	{

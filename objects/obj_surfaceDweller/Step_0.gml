@@ -59,7 +59,7 @@ if _colourProjectVersion<1.85 and !loading
 		setTipColOverrode[_legacyColourSet]=0
 		}
 	
-	mainS="Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay"
+	mainS="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
 	colourUiLastA=customColVarA
 	colourUiLastB=customColVarB
 	colourUiLastRoot=customRootCol

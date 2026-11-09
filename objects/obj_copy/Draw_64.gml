@@ -159,7 +159,17 @@ if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
         setNoiseAmtAdj : _o.setNoiseAmtAdj[_src],
         setNoiseAmtOverrode : _o.setNoiseAmtOverrode[_src],
         setNoiseFreqAdj : _o.setNoiseFreqAdj[_src],
-        setNoiseFreqOverrode : _o.setNoiseFreqOverrode[_src]
+        setNoiseFreqOverrode : _o.setNoiseFreqOverrode[_src],
+
+        // V1.96 clumping
+        setClumpAmtAdj : _o.setClumpAmtAdj[_src],
+        setClumpAmtOverrode : _o.setClumpAmtOverrode[_src],
+        setClumpCountAdj : _o.setClumpCountAdj[_src],
+        setClumpCountOverrode : _o.setClumpCountOverrode[_src],
+        setClumpStartAdj : _o.setClumpStartAdj[_src],
+        setClumpStartOverrode : _o.setClumpStartOverrode[_src],
+        setClumpScatterAdj : _o.setClumpScatterAdj[_src],
+        setClumpScatterOverrode : _o.setClumpScatterOverrode[_src]
     }
 
     copyBufferReady = 1
@@ -247,6 +257,16 @@ and copyBufferReady and _selected != -1
     _o.setNoiseAmtOverrode[_dst] = copyBuffer.setNoiseAmtOverrode
     _o.setNoiseFreqAdj[_dst] = copyBuffer.setNoiseFreqAdj
     _o.setNoiseFreqOverrode[_dst] = copyBuffer.setNoiseFreqOverrode
+
+    // V1.96 clumping
+    _o.setClumpAmtAdj[_dst] = copyBuffer.setClumpAmtAdj
+    _o.setClumpAmtOverrode[_dst] = copyBuffer.setClumpAmtOverrode
+    _o.setClumpCountAdj[_dst] = copyBuffer.setClumpCountAdj
+    _o.setClumpCountOverrode[_dst] = copyBuffer.setClumpCountOverrode
+    _o.setClumpStartAdj[_dst] = copyBuffer.setClumpStartAdj
+    _o.setClumpStartOverrode[_dst] = copyBuffer.setClumpStartOverrode
+    _o.setClumpScatterAdj[_dst] = copyBuffer.setClumpScatterAdj
+    _o.setClumpScatterOverrode[_dst] = copyBuffer.setClumpScatterOverrode
 
     // The colour picker exposes the selected set via custom*. Keep it in sync,
     // but also update the last-value trackers so Step_0 does not mistake Paste

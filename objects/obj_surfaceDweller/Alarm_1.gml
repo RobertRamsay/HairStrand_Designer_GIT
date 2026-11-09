@@ -57,6 +57,13 @@ if variable_instance_exists(id,"v185ManualSavePending") and v185ManualSavePendin
                 file_text_writeln(_saveFile)
                 }
 
+            // V1.96 - clumping (see clumpTools)
+            clumpWriteBlock(_saveFile)
+
+            // V1.96 - noise + per-set thickness/fade/noise, which the legacy
+            // S-key saver never wrote (see projectExtras)
+            extrasWriteBlock(_saveFile)
+
             file_text_close(_saveFile)
             _manualSaveDone=1
             }
@@ -160,6 +167,16 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
             }
         }
 
+    // V1.96 - clumping. Resets to defaults (off) when the file has no block,
+    // so loading an older project never inherits the previous one's clumps.
+    clumpReadFile(_loadPath)
+
+    // V1.96 - manual projects now carry noise and the per-set thickness /
+    // fade / noise overrides. A file without the block keeps what the main
+    // loader set. pleaseGen (set below) rebuilds the pre-random tables, which
+    // read the per-set thickness values.
+    extrasReadFile(_loadPath)
+
     // Pre-1.85, or a malformed/missing 1.85 block: legacy colours are global.
     if _foundColourBlock==0
         {
@@ -228,7 +245,7 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     pleaseGen=true
 
     // This running build always saves the current project format afterwards.
-    mainS="Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay"
+    mainS="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
 
     // Synchronise the Begin-Step snapshot so the restore itself does not cause
     // an unnecessary autosave on the following frame.

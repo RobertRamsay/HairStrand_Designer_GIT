@@ -15,6 +15,7 @@ function nullify_sliderInterracts() {
 	slider_interract_fadeOut=false;
 	slider_interract_noiseAmt=false;  // V1.90 NOISE
 	slider_interract_noiseFreq=false; // V1.90 NOISE
+	slider_interract_clump=[false,false,false,false]; // V1.96 CLUMPING
 	slider_interract_frizz=false;
 	slider_interract_length=false;
 	slider_interract_mixer1=false;

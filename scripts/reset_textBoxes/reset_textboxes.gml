@@ -19,6 +19,7 @@ function reset_textBoxes() {
 	textBox_mixer3_offset=0
 	textBox_noiseAmt=0
 	textBox_noiseFreq=0
+	textBox_clump=[0,0,0,0] // V1.96 CLUMPING
 	textBox_overrideCount=0
 	textBox_overrideLength=0
 	textBox_rootThick=0

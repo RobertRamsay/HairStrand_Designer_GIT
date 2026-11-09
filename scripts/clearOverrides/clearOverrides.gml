@@ -90,5 +90,9 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
 	setNoiseAmtAdj[s]=noiseAmt
 	setNoiseFreqAdj[s]=noiseFreq
 
+	// V1.96 - clump overrides off, values from the globals. A load replaces
+	// all of this from the file's clump block (Alarm 1, clumpReadFile).
+	clumpResetSet(s)
+
 	}
 }

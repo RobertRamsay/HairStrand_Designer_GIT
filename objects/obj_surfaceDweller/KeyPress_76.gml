@@ -644,6 +644,7 @@ if v191ManualLoadOk==1
 		if setNoiseAmtOverrode[_reseedSet]==0  setNoiseAmtAdj[_reseedSet]=noiseAmt
 		if setNoiseFreqOverrode[_reseedSet]==0 setNoiseFreqAdj[_reseedSet]=noiseFreq
 		}
+	// Clumping is restored by Alarm 1 (clumpReadFile) once the file is closed.
 	localUpdateSet=-1
 	forceUpdate=1
 	previewCanvasComplete=0

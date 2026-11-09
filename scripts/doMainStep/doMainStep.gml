@@ -33,8 +33,10 @@ function doMainStep() {
     }
 
     // Reset pointers for a fresh generation request
+    // V1.96 - was updatePreRands(-1) on every step while pleaseGen was set.
+    // The tables now rebuild only for a set whose inputs changed (previewJob).
+    preRandsRefresh();
     if (pleaseGen == true) {
-        updatePreRands(-1); // -1 targets all random values
         renderF = 0;        // Reset incremental set pointer
         renderH = 0;        // Reset per-set strand pointer
     }
@@ -396,6 +398,13 @@ renderF=0 // incremental render - current set being rendered
                 if (setCountOverrode[f] == 1) strandSet = strandCountOverride[f]; else strandSet = strands;
                 strandSet = min(strandSet, 100);   // the pre-random tables hold 100 strands per set
 
+                // V1.96 - the three mixer paths depend only on the set and n, so
+                // sample them once per set here (3 x 3900 path_get_x calls) rather
+                // than at every point of every strand (3 x ~3000 x up to 100).
+                mixerCacheBuild(f, 1, strandSetVariAdj[f]);
+                // V1.96 - clump membership for this set (clumpTools)
+                clumpPrepareSet(f, strandSet, 3902);
+
                 // -------------------------------------------------------------
                 // PER-STRAND GENERATION LOOP
                 // -------------------------------------------------------------
@@ -528,6 +537,20 @@ renderF=0 // incremental render - current set being rendered
                     // ---------------------------------------------------------
                     pt_count = 0;
                     var prevX_cache = xOffset[f] + xx;   // V1.94 - finalX includes xOffset
+
+                    // V1.96 clumping, per strand - identical rule to previewDrawStrands
+                    var _cMode = 0, _cBin = 0, _cIdx = 0, _cW = 0, _cLen = 0, _cK = 0, _cArr = 0;
+                    if (clumpOnS == 1) {
+                        _cBin = clumpBin[h];
+                        if (clumpIsLead[h] == 1) _cMode = 1;
+                        else if (clumpLeadLen[_cBin] > 1) {
+                            _cMode = 2;
+                            _cW    = clumpAmtS * clumpStick[h];
+                            _cLen  = clumpLeadLen[_cBin];
+                            _cK    = clumpLeadLife[_cBin] / clumpLeadStep[_cBin];
+                            _cArr  = clumpLeadX[_cBin];
+                        }
+                    }
                     a = 1;
                     var _lifeRcp = 1 / life; // avoid repeated division
 
@@ -573,10 +596,7 @@ renderF=0 // incremental render - current set being rendered
                         curlRotator += preRandCurling[f, h];
                         nx = xx + (lut_sin[_liWave] * ((yy - yOffset[f]) / 100));
 
-                        var xA = lerp(0, path_get_x(editingPath[0], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj1[f] * 100))), strandSetMixerAdj1[f]);
-                        var xB = lerp(0, path_get_x(editingPath[1], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj2[f] * 100))), strandSetMixerAdj2[f]);
-                        var xC = lerp(0, path_get_x(editingPath[2], (n - _lvS) / (4096 + (strandSetMixerOffsetAdj3[f] * 100))), strandSetMixerAdj3[f]);
-                        var tempX = (lerp(lerp(xA, xB, 0.5), xC, 0.5) / _lvS) * 8;
+                        var tempX = mixCacheX[n];   // V1.96 - see mixerCacheBuild
 
                         straggleXX = lerp(xx + tempX, setXpos, (n / 3000) * (strandSetTaperAdj[f] * 0.01));
                         var algFinalX = lerp((lerp(xx, nx, (strandSetWavynessAdj[f] * 0.01) * ampFactor)), straggleXX, 0.5 + ((_lvS - 50) / 100));
@@ -594,6 +614,18 @@ renderF=0 // incremental render - current set being rendered
 
                         finalX = xOffset[f] + algTaper + _nzOfs;
 
+                        // V1.96 CLUMPING - pull toward this tress's leader
+                        if (_cMode == 1) { clumpLeadX[_cBin][_cIdx] = finalX; _cIdx++; }
+                        else if (_cMode == 2) {
+                            var _u = clamp(((n * _lifeRcp) - clumpStartS) * clumpRampS, 0, 1);
+                            if (_u > 0) {
+                                var _fi = min((n * _lifeRcp) * _cK, _cLen - 1);
+                                var _i0 = floor(_fi);
+                                var _lx = lerp(_cArr[_i0], _cArr[min(_i0 + 1, _cLen - 1)], _fi - _i0);
+                                finalX = lerp(finalX, _lx, _cW * _u * _u * (3 - (2 * _u)));
+                            }
+                        }
+
                         pt_finalX[pt_count] = finalX; pt_yy[pt_count] = yy; pt_scA[pt_count] = scA; pt_a[pt_count] = a;
                         pt_colr[pt_count] = colr; pt_colrCustom[pt_count] = colrCustom; pt_depthTone[pt_count] = depthTone;
                         pt_ang[pt_count] = angChoice; pt_curl[pt_count] = curlRotator; pt_sub[pt_count] = subSpriteChoice;
@@ -603,6 +635,11 @@ renderF=0 // incremental render - current set being rendered
                         pt_count++;
                         yy++;
                         yp++;
+                    }
+                    if (_cMode == 1) {
+                        clumpLeadLen[_cBin]  = _cIdx;
+                        clumpLeadLife[_cBin] = life;
+                        clumpLeadStep[_cBin] = 1;
                     }
 
                     // ---------------------------------------------------------

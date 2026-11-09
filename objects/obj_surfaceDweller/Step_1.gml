@@ -244,6 +244,7 @@ if mouse_check_button_pressed(mb_left)  // edit mixers clicking mixer edit mixer
 				setFadeOutAdj[setSelectedID]=fadeOut
 				setNoiseAmtAdj[setSelectedID]=noiseAmt
 				setNoiseFreqAdj[setSelectedID]=noiseFreq
+				clumpResetSet(setSelectedID) // V1.96
 
 				}
 
@@ -310,6 +311,7 @@ if keyboard_check_pressed(vk_f5)
 				setFadeOutAdj[setToReset]=fadeOut
 				setNoiseAmtAdj[setToReset]=noiseAmt
 				setNoiseFreqAdj[setToReset]=noiseFreq
+				clumpResetSet(setToReset) // V1.96
 			}
 		
 		}

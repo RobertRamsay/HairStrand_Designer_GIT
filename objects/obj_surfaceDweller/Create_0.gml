@@ -2,7 +2,7 @@ draw_set_color(c_white);
 
 demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
-versionHSD="1.95.0.0"
+versionHSD="1.96.0.0"
 
 showHeart=0
 uiExtras=1 // little dots for overrides.
@@ -367,6 +367,69 @@ noiseS2=0         // per-strand LUT step per point, octave 2
 noiseS3=0         // per-strand LUT step per point, octave 3
 noiseScale=0.06   // master amplitude tuning - raise for wilder deviation
 
+// V1.96 CLUMPING - strands of a set gather into tresses (see clumpTools).
+// All four are 0-40 notched sliders. Amount 0 = off, so older projects are
+// untouched until the user turns it up.
+clumpAmt=0        // how hard members pull to their leader at the tip
+clumpCount=6      // tresses per set (0 and 1 both mean one tress)
+clumpStart=8      // how far down the strand the pull begins
+clumpScatter=10   // per-strand looseness + a few strays
+textBox_clump=[0,0,0,0]
+clumpTip=[
+	"Clump Amount - how tightly the strands of each tress pull together toward the tip. 0 = off",
+	"Clump Count - how many tresses each set is split into, by root position",
+	"Clump Start - how far down the strand the clumping begins (0 = from the root)",
+	"Clump Scatter - loosens individual strands and lets a few strays escape"]
+// working state for the set currently being drawn
+clumpOnS=0; clumpAmtS=0; clumpStartS=0; clumpRampS=1
+for (var _cq=0;_cq<40;_cq++)
+	{
+	clumpLeadX[_cq]=array_create(4000,0)
+	clumpLeadV[_cq]=-1
+	clumpLeadLen[_cq]=0
+	clumpLeadLife[_cq]=1
+	clumpLeadStep[_cq]=1
+	}
+clumpBin=array_create(100,0)
+clumpIsLead=array_create(100,0)
+clumpStick=array_create(100,1)
+mixCacheX=array_create(3901,0)
+
+// V1.96 PROGRESSIVE PREVIEW (see previewJob)
+pvBudget=12000     // microseconds per frame the grow-in may spend drawing strands
+pvLiveBudget=16000 // microseconds per frame the live coarse pass aims for while values change
+pvUsPerPoint=4     // measured cost of one strand point, microseconds (self-updating)
+pvFullStep=10      // point spacing of the finished preview (what the rebuild always used)
+pvSettle=5         // frames a set must stay unchanged before it grows in at full quality
+pvChunk=2          // strands drawn for one set before moving on to the next
+pvRR=0             // round-robin position, so every set grows at the same rate
+pvBusy=0           // 1 while BUSY mode is waiting for the mouse to be released
+// Update mode: 0 = LIVE (coarse while dragging, strands grow in afterwards),
+// 1 = BUSY (the pre-1.96 feel: wait while a slider is held, redraw on release).
+// A preference, not project data, so it lives in its own small ini file.
+// Smoothing: 1 = SMOOTH (shd_previewSmooth runs as the preview is composited),
+// 0 = RAW (the strands exactly as drawn). Preview only.
+ini_open("HSD_Settings.ini")
+pvMode=clamp(ini_read_real("preview","updateMode",0),0,1)
+pvSmooth=clamp(ini_read_real("preview","smooth",1),0,1)
+ini_close()
+pvSmoothTexel=shader_get_uniform(shd_previewSmooth,"u_texel")
+pvSmoothRadius=shader_get_uniform(shd_previewSmooth,"u_radius")
+pvStatStrands=0    // counters, handy when profiling
+pvStatCoarse=0
+pvStatUs=0         // microseconds previewUpdate took last frame
+for (var _pv=0;_pv<maxSets;_pv++)
+	{
+	pvSig[_pv]=[]      // last signature drawn; empty = never drawn
+	pvState[_pv]=0     // 0 up to date, 1 settled and waiting, 2 changing (shown coarse), 3 growing in
+	pvV[_pv]=0         // next strand to draw while growing
+	pvCnt[_pv]=0       // strands this set will have
+	pvW[_pv]=undefined // this set's working state (mixer cache + clump membership)
+	pvDrawnStep[_pv]=10 // point spacing this set's surface was last drawn with (sizes the smoothing)
+	pvQuiet[_pv]=0
+	prSig[_pv]=[]      // inputs the pre-random tables were last built from (preRandsRefresh)
+	}
+
 
 seedUpdate=0
 seedValstring=0
@@ -434,6 +497,19 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
 	setFadeOutAdj[s]=fadeOut
 	setNoiseAmtAdj[s]=noiseAmt
 	setNoiseFreqAdj[s]=noiseFreq
+
+	// V1.96 clumping, same override pattern as the V1.91 rows
+	setClumpAmtOverrode[s]=0
+	setClumpCountOverrode[s]=0
+	setClumpStartOverrode[s]=0
+	setClumpScatterOverrode[s]=0
+	setClumpAmtAdj[s]=clumpAmt
+	setClumpCountAdj[s]=clumpCount
+	setClumpStartAdj[s]=clumpStart
+	setClumpScatterAdj[s]=clumpScatter
+
+	// Preview bounding box per set, cached by previewDrawStrands for doHighlighting
+	setBBl[s]=0; setBBr[s]=0; setBBt[s]=0; setBBb[s]=0; setBBxx[s]=0
 	// setTipThickAdj / setRootThickAdj / setThickVaryAdj are seeded just after
 	// tipThick / rootThick / thickVary are declared, further down this event.
 
@@ -723,7 +799,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.95.0 - 26thAug2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)
