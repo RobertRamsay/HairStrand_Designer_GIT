@@ -171,8 +171,8 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     // so loading an older project never inherits the previous one's clumps.
     clumpReadFile(_loadPath)
 
-    // V1.96 - manual projects now carry noise and the per-set thickness /
-    // fade / noise overrides. A file without the block keeps what the main
+    // V1.96 - manual projects now carry noise, the per-set thickness /
+    // fade / noise overrides and the per-set seeds. A file without the block keeps what the main
     // loader set. pleaseGen (set below) rebuilds the pre-random tables, which
     // read the per-set thickness values.
     extrasReadFile(_loadPath)

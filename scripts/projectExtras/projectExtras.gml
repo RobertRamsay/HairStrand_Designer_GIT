@@ -6,6 +6,7 @@
 //   - Noise amount / frequency                     (V1.90)
 //   - per-set Thick Min / Max overrides            (V1.71)
 //   - per-set Tip / Root / Vary / Fade / Noise     (V1.91)
+//   - per-set seeds and their override flags       (V1.70)
 // The autosave always had them, which is why only manual projects lost them.
 //
 // Alarm 1 appends this block to manual saves and scans for it on every load.
@@ -97,6 +98,13 @@ function extrasWriteBlock(_f)
 			file_text_write_string(_f, "V" + _nm + ":" + string(extrasGetAdj(_k, _s))  + ";"); file_text_writeln(_f)
 		}
 	}
+	// Per-set seeds (V1.70). Written with 6 decimals: the dice gives sets
+	// fractional seeds and string() alone would round them to 2 places.
+	for (var _s = 0; _s < 11; _s++)
+	{
+		file_text_write_string(_f, "SeedO_" + string(_s) + ":" + string(randomOverride[_s]) + ";"); file_text_writeln(_f)
+		file_text_write_string(_f, "SeedV_" + string(_s) + ":" + string_format(randomSeedVal[_s], 1, 6) + ";"); file_text_writeln(_f)
+	}
 	file_text_write_string(_f, "extrasEnd:1;"); file_text_writeln(_f)
 }
 
@@ -130,6 +138,15 @@ function extrasReadFile(_path)
 		if _key == "extrasEnd" break
 		else if _key == "noiseAmt"  noiseAmt  = clamp(_val, 0, 40)
 		else if _key == "noiseFreq" noiseFreq = clamp(_val, 0, 40)
+		else if string_copy(_key, 1, 6) == "SeedO_" or string_copy(_key, 1, 6) == "SeedV_"
+		{
+			_ps = real(string_copy(_key, 7, string_length(_key) - 6))
+			if _ps >= 0 and _ps < maxSets
+			{
+				if string_char_at(_key, 5) == "O" randomOverride[_ps] = (_val != 0) ? 1 : 0
+				else randomSeedVal[_ps] = _val
+			}
+		}
 		else
 		{
 			// "O<Name>_<set>" or "V<Name>_<set>"
