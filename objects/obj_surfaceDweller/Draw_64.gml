@@ -20,15 +20,25 @@ if canDrawUI==1
 
 	if fullscreenMode == 1 draw_text(1644, 848, "Toggle Topmost [F3]: " + string(topMostMode))
 
+	// V1.96 - the function-key list is now a block of buttons. Each one taps
+	// its key for a frame, so it runs exactly what the key itself runs.
+	// Helper tips are in uiTips().
+	if uiKeyHeld != -1 { keyboard_key_release(uiKeyHeld); uiKeyHeld = -1 }
 	if firstTime == false
 	{
-		draw_text(1644, 888,
-			"\nReset selected overrides (F4)"
-			+"\nReset all overrides (F5)"
-			+"\nSoft reset (F6)"
-			+"\nToggle Heart (F7)"
-			+"\nEdit Mixers (F8)"
-			+"\nLoad Palette Image (F9)")
+		var _toolKeys = [vk_f4, vk_f5, vk_f6, vk_f7, vk_f8, vk_f9]
+		for (var _tb = 0; _tb < 6; _tb++)
+		{
+			var _tbx = 1644 + ((_tb mod 3) * 72)
+			var _tby = 848 + ((_tb div 3) * 30)
+			var _tbOver = point_in_rectangle(mouse_x, mouse_y, _tbx, _tby, _tbx + 64, _tby + 23)
+			draw_sprite_ext(spr_but_Tools, _tb, _tbx, _tby, 1, 1, 0, _tbOver ? c_white : make_color_rgb(215, 215, 215), 1)
+			if _tbOver and mouse_check_button_pressed(mb_left)
+			{
+				keyboard_key_press(_toolKeys[_tb])
+				uiKeyHeld = _toolKeys[_tb]
+			}
+		}
 	}
 	draw_set_font(regFont)
 }
@@ -52,18 +62,17 @@ var ssy=1//screenScaleY
 
 	if ao_GenState!=2 and firstTime!=1 and canDrawUI==1
 		{
-		draw_set_font(smallFont)
-		if aoType==0  {draw_text(1274*ssx,312*ssy,"AO = THIN");aoExtra=0.75}
-		if aoType==1  {draw_text(1274*ssx,312*ssy,"AO = DEFAULT");aoExtra=0.87}
-		if aoType==2  {draw_text(1274*ssx,312*ssy,"AO = WIDE");aoExtra=1.05}
-		if aoType==3  {draw_text(1274*ssx,312*ssy,"AO = EXTREME");aoExtra=1.6}
-	draw_set_font(regFont)
-
+		// V1.96 - AO width is a button now (was plain text)
+		if aoType==0  aoExtra=0.75
+		if aoType==1  aoExtra=0.87
+		if aoType==2  aoExtra=1.05
+		if aoType==3  aoExtra=1.6
+		var _aoOver = point_in_rectangle(mouse_x,mouse_y,1272,290,1336,313)
+		draw_sprite_ext(spr_but_AO, aoType, 1272, 290, 1, 1, 0, _aoOver ? c_white : make_color_rgb(215, 215, 215), 1)
 
 			{
-			if point_in_rectangle(mouse_x*ssx,mouse_y*ssy,1268*ssx,290*ssy,1350*ssx,310*ssy)
+			if _aoOver
 				{
-				draw_rectangle(1268*ssx,290*ssy,1350*ssx,310*ssy,1)
 				if mouse_check_button_pressed(mb_left) aoType++
 				if mouse_check_button_pressed(mb_right) aoType--
 				if aoType<0 aoType=3

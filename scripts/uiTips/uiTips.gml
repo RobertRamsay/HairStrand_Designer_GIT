@@ -85,7 +85,7 @@ function uiTips()
 				smallTip = _names[_row] + " - " + _what[_row] + ". Click to view it"
 			else if _mx >= 1347 and _mx <= 1370
 				smallTip = "Export the " + _names[_row] + " on its own (it must be generated first)"
-			else if _row == 7 and _mx >= 1268 and _mx <= 1350 and _my >= 290 and _my <= 310
+			else if _row == 7 and _mx >= 1272 and _mx <= 1336 and _my >= 290 and _my <= 313
 				smallTip = "AO width - click to step through Thin, Default, Wide and Extreme. Right-click steps back"
 		}
 		return
@@ -162,5 +162,12 @@ function uiTips()
 		uiTip(1644, 542, 1899, 722, "Colour picker - click or drag to choose the selected tone")
 		uiTip(1650, 742, 1894, 755, "Colour history - click a swatch to reuse an earlier colour")
 		uiTip(1656, 758, 1887, 792, "Old and New - the selected tone before and after your change")
+		// function-key buttons (drawn in Draw GUI)
+		uiTip(1644, 848, 1708, 871, "Reset set (F4) - clears every override on the selected set, back to the main settings. Select a set first")
+		uiTip(1716, 848, 1780, 871, "Reset all (F5) - clears the overrides on every set, back to the main settings")
+		uiTip(1788, 848, 1852, 871, "Restart (F6) - soft reset: restarts Hair Strand Designer. Your work is autosaved and can be reloaded from the start screen")
+		uiTip(1644, 878, 1708, 901, "Heart (F7) - show or hide the beating heart")
+		uiTip(1716, 878, 1780, 901, "Mixers (F8) - open the mixer curve editor. Esc returns here")
+		uiTip(1788, 878, 1852, 901, "Palette (F9) - load an image to use as the colour palette")
 	}
 }

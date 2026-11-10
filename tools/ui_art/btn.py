@@ -42,3 +42,14 @@ c1=make('SMOOTH','PREVIEW'); c2=make('RAW','PREVIEW'); c1.save(os.path.join(S,'b
 c=Image.new('RGBA',(W*4,H),(42,42,42,255))
 for i,im in enumerate([Image.fromarray(orig[0].astype('uint8'),'RGBA'),a,c1,c2]): c.alpha_composite(im,(i*W,0))
 c.resize((W*4*6,H*6),Image.LANCZOS).save(os.path.join(S,'btn_cmp.png'))
+
+# ---- V1.96: function-key buttons (spr_but_Tools) and the AO width button (spr_but_AO) ----
+TOOLS=[('RESET','SET F4'),('RESET','ALL F5'),('RESTART','F6'),('HEART','F7'),('MIXERS','F8'),('PALETTE','F9')]
+AOW=[('AO WIDTH','THIN'),('AO WIDTH','DEFAULT'),('AO WIDTH','WIDE'),('AO WIDTH','EXTREME')]
+tl=[make(*t) for t in TOOLS]; al=[make(*t) for t in AOW]
+for i,im in enumerate(tl): im.save(os.path.join(S,'btn_tool_%d.png'%i))
+for i,im in enumerate(al): im.save(os.path.join(S,'btn_ao_%d.png'%i))
+c=Image.new('RGBA',(W*6,H*2),(42,42,42,255))
+for i,im in enumerate(tl): c.alpha_composite(im,(i*W,0))
+for i,im in enumerate(al): c.alpha_composite(im,(i*W,H))
+c.resize((W*6*4,H*2*4),Image.LANCZOS).save(os.path.join(S,'btn_cmp2.png'))

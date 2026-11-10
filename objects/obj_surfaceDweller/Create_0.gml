@@ -87,6 +87,7 @@ checkSum=0
 dynamicRes=0
 tickytime=0
 showHelp=0
+uiKeyHeld=-1   // V1.96 - key being "tapped" by a function-key button, released next frame
 smallTip=""
 Tooltip=""
 autosave=1
