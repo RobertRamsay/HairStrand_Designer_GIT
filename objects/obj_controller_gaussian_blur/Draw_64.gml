@@ -1,3 +1,10 @@
+// obj_controller_gaussian_blur Draw GUI. NOT USED (see Create).
+// Pass 1: view surface -> final_surface through the horizontal shader (always
+// on; its "if shader_enabled" is commented out). Pass 2: final_surface -> the
+// screen through the vertical shader, only when shader_enabled (Space toggles
+// it). Then the help text. var_mouse_pos_x / _y are worked out but not used.
+// The on-screen text says "Q & A to adjust" but the Step event tests other
+// keys.
 var_mouse_pos_x = mouse_x - camera_get_view_x(0);
 var_mouse_pos_y = mouse_y - camera_get_view_y(0);
 

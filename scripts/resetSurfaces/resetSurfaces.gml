@@ -1,3 +1,21 @@
+// =============================================================================
+// resetSurfaces - EMPTY. THIS FUNCTION DOES NOTHING.
+//
+// The whole body is inside the comment block below, so a call returns
+// immediately. It is still CALLED from doMainStep (when a surface is missing
+// before a render, and in the "else" branch of every map's background fill)
+// and from Draw_0 (when 'canvas' is missing). None of those calls recreate
+// anything. What actually brings a lost surface back is canvasCheck() (End
+// Step, and the top of doMainStep) and killSurfaces() (Begin Step).
+//
+// If one of those callers ever does reach its fallback with the surface still
+// missing, the surface_set_target that follows it will fail - look at
+// canvasCheck, not here.
+//
+// The old body is kept below for reference. It freed and recreated the nine
+// map canvases and reloaded each from a "*_Surface" file if one existed.
+// Note that every reload in it draws to 'canvas', whichever map it was for.
+// =============================================================================
 function resetSurfaces() {
 /*
 					surface_free(canvas)

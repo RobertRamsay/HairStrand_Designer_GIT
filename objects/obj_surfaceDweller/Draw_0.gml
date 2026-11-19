@@ -2,6 +2,94 @@
 // Main draw event for the Hair Strand Designer preview/control panel.
 // Handles: UI drawing, map toggle buttons, slider controls, colour pickers,
 //          blur pass, surface display, and all mouse/keyboard interactions.
+//
+// WHAT THIS EVENT DOES
+// Runs once per frame. It draws the whole screen AND handles nearly all of the
+// mouse/keyboard input for the panel in the same pass: each control is
+// hit-tested, updated and drawn at the point where it appears in this file.
+// Later code draws over earlier code, so file order = draw order, and a click
+// is seen by EVERY block whose rectangle contains it (nothing "consumes" a click).
+//
+// ORDER OF SECTIONS (search for the banner text)
+//   UI BASE + PALETTE IMAGE            spr_UI backdrop, custom palette image, import button
+//   GENERATE SHORTCUT (G KEY)          starts a full 4K generate
+//   MAP ENABLE / DISABLE STATES        tick/export icons per map, render progress overlay
+//   PREVIEW CANVAS BACKGROUND + UV     background colour fill, UV reference image
+//   MAP TOGGLE BUTTON TOOLTIPS         helper tips for the 9 map tick boxes
+//   MAP ENABLE / DISABLE CLICK         tick boxes, per-map export, Generate button
+//   COLOUR SWATCH CLICK HANDLERS       legacy hover-driven swatch select (see note there)
+//   COLOUR HISTORY SWATCH ROW          24 recent colours
+//   PREVIEW MAP SELECTOR               click a map name to view it (sets img)
+//   GHOST SPRITE + MAIN CALCULATION    mainCalc(): the live strand preview
+//   RANDOMISATION DICE BUTTON          seeds
+//   VIEWER BOX POSITION                disabled (code commented out)
+//   SAVE / EXPORT, QUIT / ROOM SWITCH  top-bar buttons
+//   SLIDER: ... / DUAL SLIDERS: ...    the slider rows, one #region per slider
+//                                      (rows 0,2,3..13, then Clumping 17-18, Length row 1, Mixers 14-16)
+//   COLOUR SLIDERS: ROOT/TIP POSITION  gradient position sliders in the colour panel
+//   STRAND COUNT DISPLAY               per-set counts and the total
+//   COLOUR SWATCHES / MODE / SLIDERS   swatch fills, RGB-HSV-Grey buttons, 3 channel sliders
+//   HEX COLOUR EDITOR                  typed hex colour
+//   FLOW / ID DIRECTION MODE BUTTONS   toggles above the slider rows
+//   GEN STATE SYNC                     pleaseGen -> map states back to "needs generating"
+//   BLUR PASS                          B key / BLUR button, blurs the viewed 4K map
+//   SURFACE DISPLAY                    draws the viewed map + zoom view, tip text (uiTips)
+//   AO + COLOUR MAP MULTIPLIED PREVIEW hold J
+//   VIEWER BOX OUTLINE                 green zoom rectangle
+//   UV OVERLAY + LOAD / SAVE ICONS
+//   DIVIDING LINE + SIDE MAP MARKER    also calls checkAndOffset() = the set number buttons
+//   UI EXTRAS: OVERRIDE INDICATOR DOTS
+//   MISC UI                            filename, strand type, preview mode, curl, seed readout
+//   HELP PANEL TOGGLE
+//   STARTUP SPLASH SCREEN
+//   HEART ICON, DRAG WINDOW BAR, EXIT CONFIRMATION DIALOG, FRAME CLEANUP
+//
+// CONVENTIONS YOU NEED TO KNOW
+// - Coordinates are room pixels in a 1920x1080 room. The left 1024x1024 square
+//   is the preview canvas (the 4096 maps are shown at 0.25 scale, so canvas
+//   pixel = map pixel / 4). Everything right of x=1024 is the control panel.
+// - The panel art is ONE baked sprite (spr_UI). Labels, boxes and slider tracks
+//   are painted into it, so every hit rectangle and draw position here is a
+//   hard-coded number chosen to match that art. If the art moves, the numbers
+//   in this file (and in uiTips / checkAndOffset / exportIndividual) must follow.
+// - Slider rows: row centre y = 436 + 28*row. Track starts at x=1198 (ex).
+//   1 pixel of track = 1 unit of value, so a 0-100 slider is 100px wide.
+//   "Dual" rows hold two 0-40 sliders: left at ex=1198, right at ex=1198+60,
+//   with number boxes at x 1312-1340 (left) and 1347-1376 (right).
+//   Single rows use one number box, x 1312-1376. Readout text is at x=1318
+//   (right box: 1318+34).
+// - setSelectedID = index of the selected set, or -1 for "no set selected".
+//   With no set selected a slider edits the GLOBAL value (strands, wavyness...)
+//   and copies it into every set that has not been overridden.
+//   With a set selected it edits only that set's entry in the per-set array
+//   (strandSet*Adj[] / set*Adj[] / strand*Override[]) and sets the matching
+//   flag array (set*Overrode[] = 1) so later global edits skip that set.
+//   Overridden values are drawn in tbColOver instead of tbCol.
+// - pleaseGen = true means "settings changed, the 4K maps are stale". It shows
+//   the "please generate" message and (GEN STATE SYNC) drops finished maps
+//   back from state 2 to their enabled/disabled state.
+// - *_GenState per map: 0 = disabled, 1 = enabled / waiting to generate,
+//   2 = generated (can be viewed and exported). do* (doRGB, doNorm...) is the
+//   tick box itself.
+// - img = which map the canvas is showing: 0 RGB mask, 1 normal, 2 ID,
+//   3 depth, 4 colour, 5 mask, 6 flow, 7 AO, 8 frizz, 9 = live strand previewer.
+//   Note the on-screen row order (RGB, Normal, Mask, Colour, ID, Depth, Flow,
+//   AO, Frizz, Previewer) is NOT the img order.
+// - forceUpdate = 1 asks the preview (previewJob) for a rebuild; the text boxes
+//   set it on Enter. colorOnlyUpdate = 1 + previewCanvasComplete = 0 ask for a
+//   recolour only. The preview code clears forceUpdate/colorOnlyUpdate.
+// - smallTip = helper-tip text for the thing under the mouse. It is cleared
+//   every frame in Step_1 and drawn in SURFACE DISPLAY, after uiTips() has
+//   filled it in for anything this file did not already claim. First writer
+//   wins inside uiTips, so a tip set here takes priority.
+// - Text boxes: only one is open at a time (reset_textBoxes() closes all).
+//   The text being typed lives in the shared buffer `str` (hex editor: `str2`).
+// - Sliders: slider_interract_* is the "this slider is being dragged" latch,
+//   set on press inside the track and cleared for all sliders on mouse release
+//   (nullify_sliderInterracts). The latch is why a drag keeps working when the
+//   mouse leaves the track.
+// - `over`, `ex`, `ey`, `sly`, `slx` are re-declared with var in every slider
+//   block; each block is self-contained and they carry no meaning between blocks.
 
 debugMsg = "Preview Strands"
 
@@ -13,6 +101,8 @@ debugMsg = "Preview Strands"
 draw_sprite(spr_UI, 0, 0, 0) // draw base UI
 
 // Draw custom palette image if one is loaded
+// It is stretched to fill the 254x180 palette area at (1645,542) in the colour
+// panel, whatever the size of the loaded image.
 if newPalImg != -1
 {
 	var piw = 254 / sprite_get_width(newPalImg)
@@ -21,6 +111,9 @@ if newPalImg != -1
 }
 
 // Import palette button - dim when not hovered
+// 32x18 button at (1863,824), under the palette. Left click fakes an F9 key
+// press, so the real work is in the F9 key event. Right click removes the
+// custom palette image (newPalImg back to -1 = use the built-in palette).
 if !point_in_rectangle(mouse_x, mouse_y, 1863, 824, 1863+32, 824+18)
 {
 	draw_sprite_ext(s_importImagePal, 0, 1863, 824, 1, 1, 0, c_white, 0.6)
@@ -43,6 +136,9 @@ else
 	}
 }
 
+// generating is cleared every frame and only set again below by the G key or
+// the Generate button, so in this event it is true only on the frame the
+// generate was requested. (The render progress overlay further down tests it.)
 generating = false
 
 #endregion
@@ -53,6 +149,13 @@ generating = false
 // ============================================================
 #region
 
+// Same flag set as the on-screen Generate button (in MAP ENABLE / DISABLE
+// CLICK HANDLERS below) - keep the two in step.
+//   doOnce + retrigger : tell doMainStep to start the 4K render of every map
+//                        whose GenState is 1
+//   canSave = false    : block saving until the render has finished
+//   pleaseGen = false  : hides the "please generate" message
+//   obj_wait           : the "please wait" overlay object
 if keyboard_check_pressed(ord("G"))
 {
 	firstTime   = false
@@ -73,10 +176,16 @@ if keyboard_check_pressed(ord("G"))
 // ============================================================
 #region
 
+// The map list is the block at the top of the panel (x 1024-1376, y ~103-370):
+// one row per map, in this screen order: RGB mask, Normal, Mask, Colour, ID,
+// Depth, Flow, AO, Frizz. Rows are drawn 26px apart here; the click tests
+// further down use 27px, which is why later rows use slightly different numbers.
 var vSpace  = 26
 var placeY  = 107
 
 // Draw gen-state indicators for each map channel
+// Tick-box column at x=1240. The GenState value is used directly as the
+// sprite frame: 0 = disabled, 1 = enabled (waiting), 2 = generated.
 draw_sprite(spr_GeneratedStates, rgbMask_GenState, 1240, placeY)
 draw_sprite(spr_GeneratedStates, norm_GenState,    1240, placeY + vSpace*1)
 draw_sprite(spr_GeneratedStates, mask_GenState,    1240, placeY + vSpace*2)
@@ -88,6 +197,8 @@ draw_sprite(spr_GeneratedStates, ao_GenState,      1240, placeY + vSpace*7)
 draw_sprite(spr_GeneratedStates, frizz_GenState,   1240, placeY + vSpace*8)
 
 // Draw export-state overlay icons
+// Shown at x=1268 only for maps in state 2 (generated). The matching click
+// test is in exportIndividual().
 placeY = 106
 if rgbMask_GenState == 2 draw_sprite(spr_genExp, 0, 1268, placeY)
 if norm_GenState    == 2 draw_sprite(spr_genExp, 0, 1268, placeY + vSpace*1)
@@ -100,6 +211,11 @@ if ao_GenState      == 2 draw_sprite(spr_genExp, 0, 1268, placeY + vSpace*7)
 if frizz_GenState   == 2 draw_sprite(spr_genExp, 0, 1268, placeY + vSpace*8)
 
 // ---- RENDER PROGRESS OVERLAY ----
+// Drawn under the map list. renderF is the set currently being rendered
+// (0..sets), so renderF/(sets+1) is the fraction of sets done.
+// NOTE: generating was cleared at the top of this event and is only true here
+// on the frame G was pressed (the Generate BUTTON sets it further down, after
+// this block), so as written this overlay shows for one frame at most.
 if generating
 {
 	
@@ -155,10 +271,17 @@ if generating
 #region
 
 // Fill preview area with the background hair colour
+// Only in previewer mode (img 9); the other modes draw a map surface over the
+// whole canvas later, in SURFACE DISPLAY.
 draw_set_color(colrBack)
 if img == 9 draw_rectangle(0, 0, 1023, 1023, 0)
 
 // Draw UV reference image if loaded
+// sc = 1024 / image width (set in obj_UV_Image_Loader Create), so 1024/sc
+// source pixels drawn at scale sc exactly fill the 1024 canvas. a is the
+// loader's alpha.
+// This copy sits UNDER the strands; the UV OVERLAY section near the end draws
+// it again on top while U is held.
 if instance_exists(obj_UV_Image_Loader)
 {
 	if sprite_exists(obj_UV_Image_Loader.loadedSprite)
@@ -180,6 +303,9 @@ if instance_exists(obj_UV_Image_Loader)
 // ============================================================
 #region
 
+// Tick boxes are x 1241-1270. The rectangle 130..157 is the NORMAL row (the
+// second row); RGB is one row up (-vSpace) and the rest step down from it.
+// vSpace is re-declared as 27 here and stays 27 for the click tests below.
 var vSpace = 27
 
 if point_in_rectangle(mouse_x, mouse_y, 1241, 130-(vSpace*1), 1270, 157-(vSpace*1)) smallTip = "Generate RGB Mask Toggle"
@@ -200,11 +326,16 @@ if point_in_rectangle(mouse_x, mouse_y, 1241, 130+(vSpace*7), 1270, 157+(vSpace*
 // ============================================================
 #region
 
+// firstCalc is raised while the left button is held and cleared in FRAME
+// CLEANUP at the end of this event.
 if mouse_check_button(mb_left) firstCalc = 1
 
 if mouse_check_button_pressed(mb_left)
 {
 	// --- Enable / disable column (x: 1241–1270) ---
+	// Each row: if the map is not yet generated, flip its do* tick and copy it
+	// into the GenState (0 or 1). If it IS generated (state 2), a click throws
+	// the result away: state and tick both go to 0.
 	if mouse_x > 1241 and mouse_x < 1270
 	{
 		// RGB Mask
@@ -264,9 +395,14 @@ if mouse_check_button_pressed(mb_left)
 	}
 
 	// --- Export individual maps ---
+	// Script: tests the export-icon column (x 1347-1370) on the same rows and
+	// opens a save dialog for a map that is in state 2.
 	exportIndividual()
 
 	// --- Generate button (main) ---
+	// Wide button above the map list, x 1175-1375, y 67-97. Same flags as the
+	// G key section above (explained there). doMainStep tests this same
+	// rectangle for its own logging, so move both together.
 	if mouse_x > 1175 and mouse_x < 1375 and mouse_y > 67 and mouse_y < 97
 	{
 		firstTime   = false
@@ -294,6 +430,18 @@ if mouse_check_button_released(mb_left)
 // ============================================================
 #region
 
+// The five swatches are a column at x 1568-1632, y 541-671 in the colour panel
+// (Background, A, B, Root, Tip).
+// NOTE: there is NO mouse-button test here - this block fires on HOVER alone,
+// every frame the mouse is over a swatch. It is legacy code. The real,
+// click-only selection is kept in colourSelectedSlot (set in Step_0, which
+// tests these same rectangles with a real click), and
+// mainCalc(), which runs just below, overwrites the *_active flags, storeColor
+// and newColor from it. So what this block still does in practice is push the
+// hovered colour into the history ring (hCol, 24 entries, pointer wraps at 23)
+// once per frame while hovering.
+// For each swatch: mark it active, remember its colour as storeColor (the
+// "old" half of the comparison bar) and start newColor from it.
 if mouse_x > 1568 and mouse_x < 1632
 {
 	// Background colour
@@ -361,6 +509,8 @@ if mouse_x > 1568 and mouse_x < 1632
 // ============================================================
 #region
 
+// 24 squares, 10px apart, starting at (1652,744) under the palette. Display
+// only in this file: there is no click handling for them here.
 for (swatchX = 0; swatchX < 24; swatchX++)
 {
 	draw_set_color(hCol[swatchX])
@@ -375,6 +525,12 @@ for (swatchX = 0; swatchX < 24; swatchX++)
 // ============================================================
 #region
 
+// Clicking a map NAME (x 1024-1240, left of the tick boxes) switches the
+// canvas to that map by setting img. Rows are in screen order, so the img
+// numbers on the right are out of sequence on purpose. A tenth row below
+// Frizz is the live Previewer (img 9).
+// resetSets() deselects any selected set (setSelectedID = -1), so changing
+// view always returns the sliders to the global values.
 var vSpace = 27
 
 if mouse_check_button_pressed(mb_left)
@@ -402,9 +558,19 @@ if mouse_check_button_pressed(mb_left)
 // ============================================================
 #region
 
+// ghostSprite is a screen grab taken by checkAndOffset() when a set is
+// isolated (right-click while dragging it). It is drawn at 40% alpha over the
+// canvas; holding right mouse hides it. checkAndOffset() deletes it on the
+// next right click.
 if sprite_exists(ghostSprite) and !mouse_check_button(mb_right)
 	draw_sprite_part_ext(ghostSprite, 0, 0, 0, 1024, 1024, 0, 0, 1, 1, c_white, 0.4)
 
+// mainCalc() (scripts/mainCalc) does three things, in this order:
+//  1. restores the click-only colour slot (undoes the hover block above),
+//  2. previewUpdate() - rebuilds whichever sets' preview surfaces changed,
+//  3. draws the 11 preview surfaces onto the canvas (plus set highlighting).
+// It must run BEFORE the slider blocks: edits made by the sliders this frame
+// are picked up by previewUpdate() on the next frame.
 mainCalc() // === MAIN STRAND CALCULATION ===
 
 // V1.91 - localUpdateSet describes the per-set edit made on the PREVIOUS frame.
@@ -413,6 +579,7 @@ mainCalc() // === MAIN STRAND CALCULATION ===
 // what keeps a global edit from being mistaken for a local one.
 localUpdateSet = -1
 
+// "Please generate" banner, top centre of the canvas, while the maps are stale.
 draw_set_color(c_white)
 if pleaseGen draw_sprite(spr_genMessage, 0, 512, 32)
 
@@ -424,6 +591,13 @@ if pleaseGen draw_sprite(spr_genMessage, 0, 512, 32)
 // ============================================================
 #region
 
+// Dice button: 30x30 at (1056,980), bottom-left of the panel beside the Seed
+// readout. Seeds:
+//   seedVal            the global seed shown when no set is selected
+//   randomSeedVal[s]   the seed each set actually uses
+//   randomOverride[s]  1 = this set has its own seed; global re-rolls skip it
+// makeRandom is only the dice sprite frame: it flips here and alarm[0]
+// (2 frames later) sets it back to 0, giving a short "pressed" flash.
 if point_in_rectangle(mouse_x, mouse_y, 1056, 980, 1086, 1010)
 {
 	smallTip = "Dice - click for a new random seed. Right-click gives every set that is not overridden its own new seed"
@@ -441,6 +615,10 @@ if point_in_rectangle(mouse_x, mouse_y, 1056, 980, 1086, 1010)
 		if setSelectedID != -1
 		{
 			// Affect only the selected set
+			// The set is marked as overridden and given seedVal+1.
+			// NOTE: the test below indexes randomOverride with `s`, not
+			// setSelectedID. `s` is an instance variable left over from the
+			// last for-loop that used it, so which set is tested is not obvious.
 			if randomOverride[s] == 1 seedVal = randomSeedVal[setSelectedID]
 			randomOverride[setSelectedID]    = 1
 			randomSeedVal[setSelectedID]     = seedVal + 1
@@ -448,6 +626,8 @@ if point_in_rectangle(mouse_x, mouse_y, 1056, 980, 1086, 1010)
 		else
 		{
 			// Affect all non-overridden sets
+			// Each gets a fresh random(55555), which is a NON-integer seed
+			// (the right-click path below uses irandom instead).
 			seedValstring = seedVal
 			for (s = 0; s < sets+1; s++)
 			{
@@ -461,6 +641,8 @@ if point_in_rectangle(mouse_x, mouse_y, 1056, 980, 1086, 1010)
 	}
 
 	// Right click: fully re-randomise all non-overridden sets
+	// Loops all 12 slots (the left-click path loops sets+1). seedVal ends up
+	// holding the last seed handed out, and that is what the readout shows.
 	if mouse_check_button_pressed(mb_right)
 	{
 		randomize()
@@ -490,6 +672,9 @@ draw_sprite(spr_dice, makeRandom, 1071, 996) // draw dice button
 // ============================================================
 #region
 
+// DISABLED: the body is commented out, so this block does nothing. xxx/yyy
+// (top-left of the 512x512 zoom window, in 4096-map pixels) are not set
+// anywhere in this event; here they are only clamped and drawn.
 if mouse_check_button(mb_left) and mouse_x < 1024 and mouse_y < 1024 and !generating
 {
 //	xxx = (mouse_x * 4) - 256
@@ -504,6 +689,11 @@ if mouse_check_button(mb_left) and mouse_x < 1024 and mouse_y < 1024 and !genera
 // ============================================================
 #region
 
+// Top-right button of the panel's top bar (x 1333-1376, y 9-51): export the
+// maps. It fakes pressing S, so the work is in the S key event (KeyPress_83).
+// projectOnly = false means "export textures", as opposed to the project-only
+// Save icon further down, which sets it true before faking the same key.
+// NOTE: only keyboard_key_press is called here, with no matching release.
 if mouse_x > 1333 and mouse_x < 1376 and mouse_y > 9 and mouse_y < 51
 {
 	if mouse_check_button_pressed(mb_left)
@@ -522,6 +712,10 @@ if mouse_x > 1333 and mouse_x < 1376 and mouse_y > 9 and mouse_y < 51
 // ============================================================
 #region
 
+// Top-left button of the panel's top bar (x 1032-1077, y 9-51).
+// In the main room it runs User Event 0 (deselects sets and sets exiting =
+// true, which opens the EXIT CONFIRMATION DIALOG at the end of this event).
+// In the path-editing room the same button just returns to the main room.
 if mouse_x > 1032 and mouse_x < 1077 and mouse_y > 9 and mouse_y < 51
 {
 	if mouse_check_button_pressed(mb_left) and room == Room_HSD         event_user(0)
@@ -537,6 +731,21 @@ if mouse_x > 1032 and mouse_x < 1077 and mouse_y > 9 and mouse_y < 51
 // NOTE: Each slider textbox section below uses an identical numpad switch block.
 // To add a new key, add it to this pattern in each relevant section.
 // A helper script would reduce duplication — left as-is to preserve legibility.
+// (There is no actual macro: the block is copy-pasted. The newest rows,
+// Clumping / Clump Var, DO use a shared function: uiClumpSlider in clumpTools.
+// It is the same logic in one place and is the easiest version to read.)
+//
+// EVERY SLIDER BLOCK BELOW HAS THE SAME FIVE PARTS, IN THIS ORDER.
+// The Strand Count block is commented in full; the rest are labelled briefly.
+//   1. Setup      ex/ey = left end and centre line of the track, slx = notch x.
+//   2. Grab       press inside the track -> set this slider's drag latch.
+//   3. Drag       while latched: value = mouse x - ex, clamped. Writes the
+//                 per-set value or the global (see header). Sets pleaseGen.
+//   4. Draw       notch sprite on the track + the number in the box.
+//   5. Text box   click the number to type a value; applied on every frame
+//                 while the box is open, Enter sets forceUpdate.
+// If a slider misbehaves, compare its block against Strand Count line by line:
+// the usual cause is one name left unchanged from the block it was copied from.
 
 
 // ============================================================
@@ -544,14 +753,24 @@ if mouse_x > 1032 and mouse_x < 1077 and mouse_y > 9 and mouse_y < 51
 // ============================================================
 #region
 
+// Row 0 "Strands". Range 0-100. Global: strands.
+// Per set: strandCountOverride[], flag setCountOverrode[].
+// over = notch sprite frame (1 = highlighted while dragging)
+// ex   = x of the left end of the track = value 0
+// ey   = y of the row centre (row 0 = 436; other rows add 28 per row)
+// sly  = y the notch is drawn at (same as ey)
+// slx  = x the notch is drawn at = ex + value, because 1px = 1 unit
 var over = 0
 var ex   = 1198
 var ey   = 436
 var sly  = ey
 var slx  = ex + strands
-if setSelectedID != -1 slx = ex + strandCountOverride[setSelectedID]
+if setSelectedID != -1 slx = ex + strandCountOverride[setSelectedID]   // a selected set shows its own value
 
 // Activate slider on press within range
+// Track hit area: 100px wide, 10px above and below the centre line.
+// nullify_sliderInterracts() first drops every other slider's latch, so only
+// one slider can ever be dragging.
 if mouse_x >= ex and mouse_x <= ex+100
 {
 	if mouse_y > sly-10 and mouse_y < sly+10
@@ -561,6 +780,11 @@ if mouse_x >= ex and mouse_x <= ex+100
 }
 
 // Drag slider
+// Runs for as long as the button is held after a grab, wherever the mouse is
+// (the clamp keeps the notch on the track).
+// reset_textBoxes(): an open number box would otherwise re-apply its old text
+// on top of the dragged value every frame.
+// localUpdateSet records which set was edited (see the note after mainCalc()).
 if mouse_check_button(mb_left) && slider_interract_strands
 {
 	over = 1
@@ -570,12 +794,15 @@ if mouse_check_button(mb_left) && slider_interract_strands
 
 	if setSelectedID != -1
 	{
+		// A set is selected: change only that set and flag it as overridden.
 		strandCountOverride[setSelectedID] = clamp(slx-ex, 0, 100)
 		setCountOverrode[setSelectedID]    = 1
 		localUpdateSet = setSelectedID
 	}
 	else
 	{
+		// No set selected: change the global, then copy it into every set
+		// slot (all 12) that has not been overridden.
 		strands = clamp(slx-ex, 0, 100)
 		for (setChange = 0; setChange < 12; setChange++)
 		{
@@ -585,6 +812,12 @@ if mouse_check_button(mb_left) && slider_interract_strands
 }
 
 // Draw notch and value
+// Text colour: tbCol normally, tbColOver when the selected set overrides this
+// row. The number is drawn at x=1318, inside the box painted in spr_UI.
+// The notch x is clamp(slx, ex, ex+value), so the notch never sits to the
+// right of the stored value even if the mouse does. That matters on rows where
+// the value is limited further than the track (e.g. a Min that cannot pass
+// its Max).
 draw_set_color(tbCol)
 if (setSelectedID != -1 && setCountOverrode[setSelectedID] != 0) draw_set_color(tbColOver)
 draw_set_valign(fa_bottom)
@@ -594,6 +827,10 @@ if setSelectedID != -1 { draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+str
 draw_set_color(c_white)
 
 // Textbox click
+// The number box is x 1312-1376 on this row. A click inside opens it: every
+// other box is closed, and the typing buffer `str` is loaded with the current
+// value (the set's value if a set is selected). A click anywhere else closes
+// it. textBox_strands_value is a copy of the text kept alongside.
 if mouse_x > 1312 and mouse_y > ey-10 and mouse_x < 1376 and mouse_y < ey+10
 {
 	if mouse_check_button_pressed(mb_left)
@@ -619,10 +856,16 @@ if textBox_strands == 1
 	// Draw the buffer being typed, not the stored variable - the readout and
 	// the caret then always agree with each other and with what was keyed in.
 	draw_text(1318, ey+11, str)
+	// Caret: a 2px vertical line just after the text. tickytime counts 0..1
+	// and wraps (Step_1); the caret shows for 0.5-0.9 of each cycle = blink.
 	if tickytime > 0.5 and tickytime < 0.9
 		draw_line_width(1318+2+string_width(str), ey-9, 1318+2+string_width(str), ey+7, 2)
 	draw_set_color(c_white)
 
+	// Numpad keys are read from keyboard_key (the key currently held), so they
+	// are handled separately from the main-row digits below, which come from
+	// keyboard_lastkey. The length test (< 3 here) is the maximum number of
+	// digits the box accepts: 3 for 0-100 boxes, 2 for 0-40, 4 for Length.
 	#region // Numpad input
 	if string_length(str) < 3
 	{
@@ -645,6 +888,7 @@ if textBox_strands == 1
 	// Backspace runs first and OUTSIDE the digit-count gate. It used to sit
 	// inside it, so a box padded to the limit ("0000") accepted neither a
 	// digit nor a backspace and could only be escaped by clicking away.
+	// (8 = vk_backspace. An emptied box becomes "0" so real(str) never fails.)
 	if keyboard_lastkey == 8
 	{
 		str = string_copy(str, 1, string_length(str)-1)
@@ -655,10 +899,13 @@ if textBox_strands == 1
 	{
 		// 48-57 only. 46 is vk_delete, not '.', and accepting it appended
 		// whatever keyboard_lastchar still held - repeating the last digit.
+		// keyboard_lastkey is set back to -1 so each key press is used once.
 		if keyboard_lastkey >= 48 and keyboard_lastkey <= 57 str += keyboard_lastchar
 		keyboard_lastkey = -1
 	}
 
+	// Cap the typed text at the slider maximum, then apply it straight away:
+	// the value is written every frame the box is open, not only on Enter.
 	if real(str) > 100 str = "100"
 	textBox_strands_value = str
 
@@ -679,6 +926,9 @@ if textBox_strands == 1
 		}
 	}
 
+	// Enter asks the preview for a rebuild. The box itself is closed by FRAME
+	// CLEANUP at the very end of this event (reset_textBoxes on Enter).
+	// Unlike the drag path, typing does not set localUpdateSet.
 	if keyboard_check_pressed(vk_enter) forceUpdate = 1
 }
 
@@ -693,7 +943,7 @@ if textBox_strands == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*2)
+var ey   = 436 + (28*2)   // row 2 "Spacing". 0-100. Global: distancings. Per set: strandSetSpaceAdj[], flag setSpacingOverrode[]
 var sly  = ey
 var slx  = ex + distancings
 if setSelectedID != -1 slx = ex + strandSetSpaceAdj[setSelectedID]
@@ -831,9 +1081,11 @@ if textBox_distancings == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*3)
+var ey   = 436 + (28*3)   // row 3 "Distance". 0-100. Global only: setDistance
 var sly  = ey
 var slx  = ex + setDistance
+// This row has NO per-set version (it is the gap between sets), so there is
+// no setSelectedID branch, no override colour and no localUpdateSet here.
 
 if mouse_x >= ex and mouse_x <= ex+100
 {
@@ -936,7 +1188,7 @@ if textBox_setDistance == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*4)
+var ey   = 436 + (28*4)   // row 4 "Waviness". 0-100. Global: wavyness. Per set: strandSetWavynessAdj[], flag setWaveynessOverrode[]
 var sly  = ey
 var slx  = ex + wavyness
 if setSelectedID != -1 slx = ex + strandSetWavynessAdj[setSelectedID]
@@ -1069,9 +1321,21 @@ if textBox_wavyness == 1
 // ============================================================
 // DUAL SLIDERS: WAVE FREQUENCY MIN + MAX
 // ============================================================
+// Row 5 "Wave Freq". First of the DUAL rows: two 0-40 sliders share one row.
+//   left  slider: track x 1198-1238, number box x 1312-1340, text at 1318
+//   right slider: track x 1258-1298 (ex = 1198+60), box x 1347-1376, text at 1318+34
+// Number boxes take 2 digits (string_length(str) < 2) and cap at 40.
+// Min and Max are kept in order: Min is written as min(new, Max) and Max as
+// max(new, Min), both for the global pair and for each set's own pair, so
+// neither notch can cross the other.
+// Global: minFreq / maxFreq. Per set: strandSetWaveFreqMinAdj[] /
+// strandSetWaveFreqMaxAdj[], flags setWaveFreqMinOverrode[] / setWaveFreqMaxOverrode[].
 
 // ---- Min Freq (left half) ----
 #region
+// Left slider of row 5. Writes minFreq, or strandSetWaveFreqMinAdj[set].
+// In the global branch each non-overridden set gets min(minFreq, that set's
+// Max), so a set whose Max is overridden lower is not pushed past it.
 
 var over = 0
 var ex   = 1198
@@ -1206,6 +1470,8 @@ if textBox_minFreq == 1
 
 // ---- Max Freq (right half) ----
 #region
+// Right slider of row 5 (ex = 1198+60). Writes maxFreq, or
+// strandSetWaveFreqMaxAdj[set]. Mirror image of Min Freq, using max().
 
 var over = 0
 var ex   = 1198 + 60
@@ -1347,7 +1613,7 @@ if textBox_maxFreq == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*6)
+var ey   = 436 + (28*6)   // row 6 "Tapering". 0-100. Global: tapering. Per set: strandSetTaperAdj[], flag setTaperOverrode[]
 var sly  = ey
 var slx  = ex + tapering
 if setSelectedID != -1 slx = ex + strandSetTaperAdj[setSelectedID]
@@ -1484,7 +1750,8 @@ if textBox_tapering == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*7)
+var ey   = 436 + (28*7)   // row 7 "Variation". Global: lifeVariant. Per set: strandSetVariAdj[], flag setVariOverrode[]
+// Range is 1-100: both the drag and the typed value are clamped to a minimum of 1, never 0.
 var sly  = ey
 var slx  = ex + lifeVariant
 if setSelectedID != -1 slx = ex + strandSetVariAdj[setSelectedID]
@@ -1621,7 +1888,8 @@ if textBox_lifeVariant == 1
 
 var over = 0
 var ex   = 1198
-var ey   = 436 + (28*8)
+var ey   = 436 + (28*8)   // row 8 "Root Jitter". Global: yRanRange. Per set: strandYRanRange[], flag strandYRanRangeOverrode[]
+// Range is 1-100: both the drag and the typed value are clamped to a minimum of 1, never 0.
 var sly  = ey
 var slx  = ex + yRanRange
 if setSelectedID != -1 slx = ex + strandYRanRange[setSelectedID]
@@ -1754,6 +2022,16 @@ if textBox_YRanRange == 1
 // ============================================================
 // DUAL SLIDERS: THICKNESS MIN + MAX (strand width range)
 // ============================================================
+
+// Row 9 "Thick Rng". Dual row, each 1-40 (minimum 1, never 0). Min/Max are
+// kept in order with min()/max() exactly as on the Wave Freq row.
+// Global: minScale / maxScale. Per set: setThickMinAdj[] / setThickMaxAdj[],
+// flags setThickMinOverrode[] / setThickMaxOverrode[].
+// NOTE: unlike the other per-set rows, these two blocks have no
+// "if setSelectedID != -1 slx = ..." line, so slx always starts from the
+// GLOBAL value. With a set selected the notch is then drawn at
+// clamp(global, ex, ex+set value), i.e. at whichever of the two is smaller.
+// The number in the box is still the set's own value.
 
 // ---- Thickness Min (left) ----
 #region
@@ -2027,6 +2305,10 @@ if textBox_maxScale == 1
 // DUAL SLIDERS: TIP THICK + ROOT THICK (root/tip thickness range)
 // V1.91 - now per-set overridable (the row carries a notch in the panel art)
 // ============================================================
+// Row 10 "Thick Adj". Dual row, each 0-40, independent of each other (no
+// min/max ordering). Left = Tip, right = Root.
+// Global: tipThick / rootThick. Per set: setTipThickAdj[] / setRootThickAdj[],
+// flags setTipThickOverrode[] / setRootThickOverrode[].
 
 // ---- Tip Thick (left) ----
 #region
@@ -2304,6 +2586,8 @@ if textBox_rootThick == 1
 
 // ---- Thick Vary ----
 #region
+// Row 11 "Thick Var". Single 0-100 slider with the wide number box.
+// Global: thickVary. Per set: setThickVaryAdj[], flag setThickVaryOverrode[].
 
 var over = 0
 var ex   = 1198
@@ -2441,6 +2725,10 @@ if textBox_thickVary == 1
 // DUAL SLIDERS: FADE IN + FADE OUT
 // V1.91 - now per-set overridable
 // ============================================================
+
+// Row 12 "Fading". Dual row, each 1-40 (minimum 1, never 0), independent.
+// Global: fadeIn / fadeOut. Per set: setFadeInAdj[] / setFadeOutAdj[],
+// flags setFadeInOverrode[] / setFadeOutOverrode[].
 
 // ---- Fade In (left) ----
 #region
@@ -2716,6 +3004,10 @@ if textBox_fadeOut == 1
 // Row 13, directly under Fading. Amount 0 = off.
 // V1.91 - now per-set overridable
 // ============================================================
+
+// Dual row, each 0-40, independent.
+// Global: noiseAmt / noiseFreq. Per set: setNoiseAmtAdj[] / setNoiseFreqAdj[],
+// flags setNoiseAmtOverrode[] / setNoiseFreqOverrode[].
 
 // ---- Noise Amount (left) ----
 #region
@@ -2994,6 +3286,10 @@ if textBox_noiseFreq == 1
 // Same behaviour as the Noise row; see uiClumpSlider in clumpTools.
 // ============================================================
 #region
+// uiClumpSlider(k, track left x, row centre y, readout x). k picks the clump
+// parameter: 0 Amount, 1 Count, 2 Start, 3 Scatter. Each is 0-40, per-set
+// overridable (setClump*Adj[] / setClump*Overrode[]), and sets its own
+// smallTip. The function is the whole slider + number box in one place.
 uiClumpSlider(0, 1198,      436 + (28*17), 1318)      // Amount
 uiClumpSlider(1, 1198 + 60, 436 + (28*17), 1318 + 34) // Count
 uiClumpSlider(2, 1198,      436 + (28*18), 1318)      // Start
@@ -3006,6 +3302,15 @@ uiClumpSlider(3, 1198 + 60, 436 + (28*18), 1318 + 34) // Scatter
 // SLIDER: STRAND LENGTH
 // ============================================================
 #region
+// Row 1 "Length" (it sits out of order in this file, after the Clumping rows;
+// on screen it is the second row). Global: length. Per set:
+// strandLengthOverride[], flag setLengthOverrode[].
+// This is the only row where 1px is not 1 unit: length runs 38 to 3800 and
+// the 100px track maps to it as value = track pixels * 38.
+// So dragging moves in steps of 38, while the number box accepts any whole
+// value from 38 to 3800 (4 digits). An emptied box becomes "38", the minimum.
+// The grab area is a little wider than the track (ex+110) and the drag clamp
+// is ex+101; the value itself is still clamped to 1..100 steps.
 
 var over = 0
 var ex   = 1198
@@ -3143,6 +3448,12 @@ if textBox_length == 1
 // MIXER SLIDERS (3x dual-slider pairs: amount + offset)
 // Each mixer has: left = amount (0–40), right = offset (0–40)
 // ============================================================
+// Rows 14, 15, 16 = Mixer 1, 2, 3. Six blocks, all the plain dual-row pattern
+// (independent, 2-digit boxes). Clicking the mixer NAME to edit its curve is
+// not handled in this file.
+//   Mixer n amount: global mixer<n>,        per set strandSetMixerAdj<n>[],       flag setMixerAmt<n>Overrode[]
+//   Mixer n offset: global mixer<n>_offset, per set strandSetMixerOffsetAdj<n>[], flag setMixerOfs<n>Overrode[]
+// These rows have no override dots in UI EXTRAS further down.
 
 // ---- Mixer 1 Amount (left) ----
 #region
@@ -3961,8 +4272,17 @@ if textBox_mixer3_offset == 1
 // COLOUR SLIDERS: ROOT POSITION + TIP POSITION
 // ============================================================
 
+// Two short 0-100 sliders in the colour panel (track x 1522-1622), at y 686
+// and 705, under the Root / Tip swatches. They set rootPosition / tipPosition.
+// Global only (no per-set version), no number box, and they only set
+// pleaseGen - they do not reset text boxes or set forceUpdate.
+
 // ---- Root Position ----
 #region
+// NOTE: written differently from Tip Position below: here the drag code is
+// INSIDE the hover test, so the value only follows the mouse while the mouse
+// is still within the track rectangle (y within 11px). Tip keeps following
+// once grabbed, like the panel sliders.
 
 var over = 0
 var ex   = 1522
@@ -4016,6 +4336,9 @@ draw_sprite(spr_smallNotch, over, clamp(slx, ex, ex+100), sly)
 // END SLIDER: TIP POSITION
 
 // Reset all slider interactions on mouse release
+// This is the one place the drag latches are dropped. The three colour channel
+// sliders further down are latched the same way and rely on this line too
+// (it runs before them, so their last frame of drag is the frame before release).
 if mouse_check_button_released(mb_left) nullify_sliderInterracts()
 
 
@@ -4024,6 +4347,12 @@ if mouse_check_button_released(mb_left) nullify_sliderInterracts()
 // ============================================================
 #region
 
+// Small "N strands" label under each set number button (80px apart, starting
+// x=1040, y=1068) and the grand total at (1338,1010).
+// A set is counted only when set_active[mm] == 0. Create_0 sets every entry
+// to 0, so 0 is the normal "counted" state here.
+// A per-set count of 0 is treated as "no value, use the global strands", so a
+// set deliberately overridden to 0 is shown and counted with the global count.
 var total = 0
 draw_set_halign(fa_left)
 draw_set_font(smallFont)
@@ -4057,6 +4386,8 @@ draw_text(1338, 1010, "Total number of strands to generate: "+string(total)
 // ============================================================
 #region
 
+// Fill the five swatch boxes with their current colours (same column the
+// click/hover tests use: x 1569-1631, 27px apart from y 541).
 draw_set_color(colrBack)    draw_rectangle(1569, 541, 1631, 565, 0)
 draw_set_color(customColVarA)  draw_rectangle(1569, 568, 1631, 592, 0)
 draw_set_color(customColVarB)  draw_rectangle(1569, 595, 1631, 619, 0)
@@ -4064,6 +4395,8 @@ draw_set_color(customRootCol)  draw_rectangle(1569, 622, 1631, 646, 0)
 draw_set_color(customTipCol)   draw_rectangle(1569, 649, 1631, 673, 0)
 
 // Old / new colour comparison bar
+// Left half = storeColor (the colour the slot had when it was selected),
+// right half = newColor (what the sliders / hex box / picker are editing).
 draw_set_color(storeColor) draw_rectangle(1658, 760, 1771, 790, 0)
 draw_set_color(newColor)   draw_rectangle(1772, 760, 1885, 790, 0)
 
@@ -4075,6 +4408,10 @@ draw_set_color(newColor)   draw_rectangle(1772, 760, 1885, 790, 0)
 // ============================================================
 #region
 
+// Three small buttons at y 822-837 under the channel sliders. colorMode only
+// changes how the three sliders read and write newColor (0 RGB, 1 HSV,
+// 2 Grey); it does not change any colour by itself. It is also the frame of
+// the two sprites drawn below (the mode tag and the button strip).
 if mouse_check_button_pressed(mb_left)
 {
 	if mouse_x >= 1475 and mouse_x <= 1506 and mouse_y >= 822 and mouse_y <= 837 colorMode = 0 // RGB
@@ -4092,6 +4429,13 @@ draw_sprite(spr_ColorModes,   colorMode, 1473, 822)
 // COLOUR SLIDERS (RGB / HSV / Grey depending on colorMode)
 // ============================================================
 #region
+
+// Three channel sliders at y 771, 790, 809, track x 1471-1600.
+// Scale: 2 colour units per pixel (0-255 over ~128px), so
+//   notch x = 1471 + channel/2      and      channel = (mouse_x - 1471) * 2.
+// They edit newColor, then APPLY_NEW_COLOR copies newColor into whichever
+// swatch slot is active and asks the preview for a recolour.
+// The notch sprite frame is the slider's drag latch (highlight while dragged).
 
 // Calculate notch positions based on current colour mode
 if colorMode == 0 // RGB
@@ -4128,6 +4472,8 @@ draw_sprite(spr_smallNotch, slider_interract_bluVal, bluPos, 809)
 draw_set_color(c_white)
 
 // Draw channel value labels
+// Numbers at x=1608, one per slider (21px apart). Grey mode shows the R, G, B
+// values, which are all equal there.
 if colorMode == 0 or colorMode == 2
 {
 	draw_text(1608, 777,    string(color_get_red(newColor)))
@@ -4142,6 +4488,13 @@ if colorMode == 1
 }
 
 // Helper macro: apply newColor to whichever swatch is active
+// It is used four times below (three sliders + hex editor). After copying the
+// colour it sets colorOnlyUpdate + forceUpdate and clears
+// previewCanvasComplete, which makes the preview recolour itself. It does NOT
+// set pleaseGen. Because it is a macro the text is pasted in place, so it
+// reads and writes this instance's variables directly.
+// (A #macro is global to the project even though it is defined mid-event;
+// do not add comments on the macro's own lines.)
 #macro APPLY_NEW_COLOR \
 	if bkCol_active   == 1 colrBack      = newColor \
 	if ColA_active    == 1 customColVarA  = newColor \
@@ -4153,6 +4506,10 @@ if colorMode == 1
 	forceUpdate          = 1
 
 // Red / Hue slider
+// Grab within 6px of the line, then drag (latched). The slider changes ONE
+// channel and rebuilds newColor from it plus the other two channels read back
+// from newColor. In HSV mode hue is clamped to 254, not 255. In Grey mode all
+// three sliders do the same thing: set R = G = B.
 if mouse_x >= 1471 and mouse_x <= 1600 and mouse_y > 771-6 and mouse_y < 771+6
 {
 	if mouse_check_button_pressed(mb_left) { nullify_sliderInterracts(); slider_interract_redHue = true }
@@ -4199,9 +4556,15 @@ if mouse_check_button(mb_left) && slider_interract_bluVal
 // ============================================================
 #region
 
+// Hex readout / input for newColor, in the colour panel. The text is drawn at
+// (1535,738); the click rectangle for the field is x 1519-1632, y 715-735.
+// hexColEdit = true while typing. The typing buffer is str2 (6 characters max,
+// RRGGBB), separate from the sliders' str.
 draw_set_color(tbCol)
 
 // Build hex string from current colour components
+// Each channel becomes two hex digits. The "" -> "00" test is a safety net;
+// dec_to_hex already returns "00" for 0.
 hexColR = dec_to_hex(color_get_red(newColor));   if hexColR == "" hexColR = "00"
 hexColG = dec_to_hex(color_get_green(newColor));  if hexColG == "" hexColG = "00"
 hexColB = dec_to_hex(color_get_blue(newColor));   if hexColB == "" hexColB = "00"
@@ -4218,6 +4581,9 @@ if !hexColEdit
 if keyboard_check_pressed(vk_enter) hexColEdit = false
 
 // Click into / out of hex field
+// Clicking the field starts editing from the current hex text; any other
+// click ends it. Note this does not call reset_textBoxes(), so a slider
+// number box can stay open at the same time and both will read the keyboard.
 if mouse_check_button_pressed(mb_left)
 {
 	if mouse_x > 1519 and mouse_x < 1632 and mouse_y > 715 and mouse_y < 735
@@ -4273,6 +4639,10 @@ if hexColEdit
 	}
 	#endregion
 
+	// Applied on every frame while editing, not only on Enter: characters
+	// 1-2 = red, 3-4 = green, 5-6 = blue. While the text is still short the
+	// missing pairs are empty strings, so the colour changes as you type.
+	// APPLY_NEW_COLOR then pushes it into the active swatch and the preview.
 	editHexColor = str2
 	newColor = make_color_rgb(
 	    hex_to_dec(string_copy(editHexColor, 1, 2)),
@@ -4293,7 +4663,13 @@ APPLY_NEW_COLOR
 // ============================================================
 #region
 
+// A strip of five toggle buttons at y 389-408, between the map list and the
+// slider rows. Each one only affects ONE map, so instead of pleaseGen it puts
+// just that map's GenState back to its tick-box value (do*): a generated map
+// (2) drops to 1 = "needs generating again", a disabled one stays 0.
+
 // ID strand-vs-set toggle
+// idMode 0 = ID colour per strand, 1 = per set (see the labels in SURFACE DISPLAY).
 draw_sprite(spr_strandOrSet, idMode, 1272, 390)
 if mouse_x >= 1272 and mouse_x <= 1376 and mouse_y >= 389 and mouse_y <= 408
 {
@@ -4305,6 +4681,9 @@ if mouse_x >= 1272 and mouse_x <= 1376 and mouse_y >= 389 and mouse_y <= 408
 }
 
 // Flow direction toggles
+// Four 50px buttons from x=1050: Flip X, Flip Y, Blue mode, Hue. They change
+// how the flow map is encoded (dirFlipX / dirFlipY / dirBlue / dirHue) and
+// mark only the flow map as stale.
 draw_sprite(spr_FlipX,    dirFlipX, 1050, 390)
 draw_sprite(spr_FlipY,    dirFlipY, 1104, 390)
 draw_sprite(spr_BlueMode, dirBlue,  1158, 390)
@@ -4326,6 +4705,12 @@ if mouse_check_button_pressed(mb_left) and mouse_y >= 389 and mouse_y <= 408
 // ============================================================
 #region
 
+// While pleaseGen is set, every map's state is forced back to its tick-box
+// value: generated maps (2) become 1 (enabled, not generated), disabled stay
+// 0. This is what makes the export icons disappear and the "Not generated or
+// settings changed" warning appear after any setting is touched.
+// ORDER: this sits after all the sliders/buttons that set pleaseGen and
+// before SURFACE DISPLAY, so the warning shows on the same frame as the edit.
 if pleaseGen
 {
 	rgbMask_GenState = doRGB
@@ -4347,6 +4732,15 @@ if pleaseGen
 // ============================================================
 #region
 
+// Blurs the 4096x4096 map currently being viewed, IN PLACE: the result is
+// written back into the real canvas, so the blur is part of what gets
+// exported, and it cannot be undone except by generating again.
+// The test uses keyboard_check / mouse_check_button (held, not pressed), so
+// the blur is applied again on EVERY frame the key or button is held: holding
+// longer = more blur.
+// BLUR button: bottom bar, x 906-963, y 1027-1051.
+// The img -> canvas mapping is repeated in each step below because the
+// surfaces are separate variables; all five lists must stay identical.
 if (keyboard_check(ord("B")) or point_in_rectangle(mouse_x, mouse_y, 906, 1027, 963, 1051) and mouse_check_button(mb_left))
    and img != 9 // not in previewer mode
 {
@@ -4363,6 +4757,8 @@ if (keyboard_check(ord("B")) or point_in_rectangle(mouse_x, mouse_y, 906, 1027, 
 	if img == 8 surface_copy(blurSurface, 0, 0, frizz_canvas)
 
 	// Vertical blur pass
+	// Draws the ORIGINAL canvas through the vertical shader into blurSurface.
+	// 4096 = the surface size the shader needs to work out one texel.
 	shader_set(shd_gaussian_vertical)
 	shader_set_uniform_f(uni_resolution_vert, 4096, 4096)
 	shader_set_uniform_f(uni_blur_amount_vert, var_blur_amount * 1.0)
@@ -4380,6 +4776,10 @@ if (keyboard_check(ord("B")) or point_in_rectangle(mouse_x, mouse_y, 906, 1027, 
 	shader_reset()
 
 	// Horizontal blur pass (lighter amount)
+	// NOTE: this pass also draws the ORIGINAL canvas (not the vertically
+	// blurred blurSurface) into blurSurface, on top of the vertical result.
+	// So the two passes are layered, not chained. Horizontal strength is a
+	// quarter of the vertical.
 	shader_set(shd_gaussian_horizontal)
 	shader_set_uniform_f(uni_resolution_hoz, 4096, 4096)
 	shader_set_uniform_f(uni_blur_amount_hoz, var_blur_amount * 0.25)
@@ -4397,6 +4797,7 @@ if (keyboard_check(ord("B")) or point_in_rectangle(mouse_x, mouse_y, 906, 1027, 
 	shader_reset()
 
 	// Additive brightness compensation pass
+	// Adds 2.1% of the original back on top to offset the slight darkening.
 	gpu_set_blendmode(bm_add)
 	surface_set_target(blurSurface)
 	var amount = 0.021
@@ -4432,18 +4833,35 @@ if (keyboard_check(ord("B")) or point_in_rectangle(mouse_x, mouse_y, 906, 1027, 
 // ============================================================
 #region
 
+// For the map selected by img, every branch below does the same three things:
+//   1. draw the whole 4096 map at 0.25 scale onto the 1024 canvas (0,0);
+//   2. draw a 512x512 piece of it at 1:1 in the zoom view at (Vxpos,Vypos) =
+//      (1390,21), top right of the screen. xxx,yyy = top-left of that piece
+//      in map pixels (the green box drawn later shows where it is);
+//   3. if the map's GenState is 2, label it at the bottom of the canvas;
+//      otherwise tint the canvas red (15% alpha) and put a warning in Tooltip.
+// Tooltip is the large status text, drawn at the end of this region. It is a
+// different thing from smallTip (the one-line helper tip).
+// The branches are in img order (0-9), not screen order.
 draw_set_halign(fa_left)
 var Vxpos = 1390
 var Vypos = 21
 
+// tick drives the warning colour: 0-360 degrees in steps of 4 per frame.
 tick += 4
 if tick > 359.99 tick = 0
 
 // During generation: show imgOverride canvas centered on current set
+// (That line describes code that is no longer here: nothing below reads
+// imgOverride. The braces that follow are just a plain block.)
 
 
 {
 	// Helper: flash colour for "not generated" warning
+	// tt pulses 0..1; pcolor is black-to-orange. It is left as the draw colour
+	// in each "not generated" branch, so the Tooltip text pulses - except
+	// where a branch sets the colour back to white first (most of them do,
+	// so in practice only the RGB Mask warning is drawn in pcolor).
 	var tt     = abs(sin(degtorad(tick)))
 	var pcolor = make_color_rgb(tt*255, tt*128, tt*32)
 
@@ -4451,6 +4869,9 @@ if tick > 359.99 tick = 0
 	if img == 0
 	{
 		
+		// Surfaces can be lost (e.g. the window being minimised). Only this
+		// branch recreates them; the other branches just skip drawing when
+		// their surface is missing.
 		if !surface_exists(canvas) resetSurfaces()
 		draw_surface_ext(canvas, 0, 0, 0.25, 0.25, 0, c_white, 1)
 		draw_surface_part_ext(canvas, xxx, yyy, 512, 512, Vxpos, Vypos, 1, 1, c_white, 1)
@@ -4466,6 +4887,8 @@ if tick > 359.99 tick = 0
 	// ---- Normal Map ----
 	if img == 1 and surface_exists(nm_canvas)
 	{
+		// In multi-strand mode (moreHairs) the normal map is DISPLAYED through
+		// shd_normal; the stored surface is not changed by this.
 		if moreHairs == 1 shader_set(shd_normal)
 		draw_surface_ext(nm_canvas, 0, 0, 0.25, 0.25, 0, c_white, 1)
 		draw_surface_part_ext(nm_canvas, xxx, yyy, 512, 512, Vxpos, Vypos, 1, 1, c_white, 1)
@@ -4599,6 +5022,8 @@ if tick > 359.99 tick = 0
 	}
 
 	// ---- Previewer (strand preview) ----
+	// Nothing is drawn on the canvas here: the strands were already drawn by
+	// mainCalc(). The zoom view area shows a help picture instead.
 	if img == 9
 	{
 		draw_set_color(c_orange)
@@ -4616,6 +5041,9 @@ draw_set_valign(fa_top)
 // The tip has its own line along the bottom of the bar, under the buttons,
 // where it gets the full width: it used to be wedged between the preview
 // buttons and HELP INFO and had to wrap into three short lines.
+// uiTips() only fills smallTip if nothing earlier in this event (or in the
+// Step code) has already set it, and does nothing while the splash is up.
+// Any control that wants its own tip must therefore set smallTip BEFORE here.
 uiTips()
 if smallTip != "" draw_text_ext(12, 1058, smallTip, -1, 1000)
 draw_set_valign(fa_bottom)
@@ -4634,6 +5062,11 @@ draw_set_halign(fa_left)
 // ============================================================
 #region
 
+// Display only - no surface is changed. While J is held, and only when both
+// maps are generated, the colour map is drawn again over the canvas and zoom
+// view and the AO map is drawn over it with a multiply blend
+// (result = destination * source). Works whatever map img is showing.
+// ORDER: must come after SURFACE DISPLAY, because it paints over it.
 if ao_GenState == 2 and color_GenState == 2 and surface_exists(ao_canvas) and surface_exists(color_canvas)
 {
 	if keyboard_check_direct(ord("J"))
@@ -4663,6 +5096,11 @@ if ao_GenState == 2 and color_GenState == 2 and surface_exists(ao_canvas) and su
 if img != 9
 {
 	// Clamp viewer region to valid range
+	// xxx,yyy are in 4096-map pixels and the window is 512 wide, so the
+	// largest legal top-left is 4096-512. Dividing by 4 converts to canvas
+	// pixels for the box (black outline 1px outside the green one).
+	// NOTE: the clamp runs here, AFTER the zoom view was drawn above, so an
+	// out-of-range xxx/yyy is corrected one frame late.
 	if xxx < 0        xxx = 0
 	if yyy < 0        yyy = 0
 	if xxx > 4096-512 xxx = 4096-512
@@ -4684,6 +5122,10 @@ if img != 9
 #region
 
 // UV preview (right-click UV button or hold U)
+// Draws the UV reference image again, now ON TOP of the maps/strands, while
+// U is held or the right button is held on the UV button (bottom bar,
+// x 985-1017, y 1029-1059). Loading the image (left click on that button) is
+// handled in doMainStep, not here.
 if (mouse_x > 985 and mouse_x < 1017 and mouse_y > 1029 and mouse_y < 1059 and mouse_check_button(mb_right))
    or keyboard_check(ord("U"))
 {
@@ -4696,6 +5138,9 @@ if (mouse_x > 985 and mouse_x < 1017 and mouse_y > 1029 and mouse_y < 1059 and m
 }
 
 // Load button
+// Icon centred at (1110,50) in the top bar, 36x36 hit area. A click fakes the
+// L key, so loading itself is the L key event (KeyPress_76). canLoad is set
+// true merely by hovering. `over` is the icon's highlight frame.
 var over = 0
 if mouse_x > 1110-18 and mouse_x < 1110+18 and mouse_y > 50-18 and mouse_y < 50+18
 {
@@ -4716,6 +5161,11 @@ if mouse_x > 1110-18 and mouse_x < 1110+18 and mouse_y > 50-18 and mouse_y < 50+
 draw_sprite(spr_loadHSD, over, 1110, 50)
 
 // Save button (project only)
+// Icon centred at (1160,50). projectOnly = true, then a faked S key: the S key
+// event saves the project file without exporting textures.
+// In the demo build the icon is drawn faded with a "NO SAVE" label; the click
+// test above it is NOT disabled here, so any demo restriction has to be
+// enforced in the S key event.
 over = 0
 if mouse_x > 1160-18 and mouse_x < 1160+18 and mouse_y > 50-18 and mouse_y < 50+18
 {
@@ -4747,6 +5197,9 @@ draw_set_color(c_red)
 draw_line_width(1024, 0, 1024, 1080, 5) // vertical panel divider
 
 // Marker arrow indicating which map is being viewed
+// One fixed y per row of the map list, listed in SCREEN order (so the img
+// numbers are out of sequence). The y values were placed by eye against
+// spr_UI and are not an exact 27px step.
 if img == 0 draw_sprite(spr_sideMarker, 0, 1036, 123)
 if img == 1 draw_sprite(spr_sideMarker, 0, 1036, 150)
 if img == 5 draw_sprite(spr_sideMarker, 0, 1036, 176)
@@ -4758,6 +5211,15 @@ if img == 7 draw_sprite(spr_sideMarker, 0, 1036, 305)
 if img == 8 draw_sprite(spr_sideMarker, 0, 1036, 332)
 if img == 9 draw_sprite(spr_sideMarker, 0, 1036, 359)
 
+// checkAndOffset() (scripts/checkAndOffset) is the whole SET BUTTON row along
+// the bottom of the panel and set positioning on the canvas:
+//  - click a set number (80px apart from x=1082, y=1046) -> setSelectedID;
+//    clicking the already-selected set solos it (setToSolo)
+//  - right click anywhere -> deselect (setSelectedID = -1) and clear the ghost
+//  - with a set selected: arrow keys nudge it (Ctrl = 1, Shift = 100,
+//    default 20), and dragging on the canvas moves it (xOffset/yOffset)
+// It runs this late in the event, so the slider blocks above see a new
+// selection on the NEXT frame.
 checkAndOffset()
 draw_set_font(regFont)
 
@@ -4769,6 +5231,19 @@ draw_set_font(regFont)
 // ============================================================
 #region
 
+// Small coloured dots that show which sets override which slider row.
+// uiExtras is set to 1 in Create_0 (a switch to turn all of this off).
+// For each set (scan = 0..10, the 11 sets that have buttons) up to two dots:
+//  - a 2px dot on the slider row itself, left of the track, at
+//    x = 1120 + 7*set, y = the row centre (436 + 28*row, give or take 1px).
+//    Reading along a row shows which sets override it.
+//  - for seven of them only (Strands, Length, Spacing, Waviness, Tapering,
+//    Variation, Root Jitter), also a 3px dot next to that set's number
+//    button at the bottom (x 1100/1106/1112 + 80*set, y 1039/1045/1051),
+//    forming a small cluster per set.
+// Colours repeat between rows; the row position tells them apart.
+// Rows with no dots: Distance (row 3, global only), Wave Freq (row 5) and the
+// three Mixer rows (14-16).
 if uiExtras == 1
 {
 	for (scan = 0; scan < 11; scan++)
@@ -4868,11 +5343,14 @@ draw_set_color(c_white)
 #region
 
 // Last loaded filename
+// Drawn at (1210,70), inside the Generate button's rectangle.
 draw_set_font(smallFont)
 draw_text(1210, 70, lastFileName)
 draw_set_font(regFont)
 
 // Multi-strand / curl type toggle button
+// Bottom bar, x 266-330. moreHairs: 0 = single strand, 1 = multi strand.
+// Changes the strands themselves, so it sets pleaseGen.
 if mouse_check_button_pressed(mb_left) and point_in_rectangle(mouse_x, mouse_y, 266, 1030, 330, 1050)
 {
 	moreHairs = 1 - moreHairs
@@ -4882,6 +5360,10 @@ draw_sprite(spr_but_StrandType, moreHairs, 266, 1028)
 
 // V1.96 - preview update mode toggle: LIVE (strands grow in) / BUSY (classic)
 // and the smoothing shader toggle. Their helper tips are in uiTips().
+// Bottom bar: preview mode x 352-421 (pvMode), smoothing x 428-497 (pvSmooth).
+// These are display preferences, not project settings: they do not set
+// pleaseGen, and they are written straight to HSD_Settings.ini (section
+// "preview") so they survive a restart.
 if mouse_check_button_pressed(mb_left) and mouse_y >= 1027 and mouse_y <= 1051
 {
 	var _prefChanged = false
@@ -4899,6 +5381,10 @@ draw_sprite(spr_but_PreviewMode, pvMode, 356, 1028)
 draw_sprite(spr_but_Smooth, pvSmooth, 432, 1028)
 
 // Curl rotation control (visible only in multi-strand mode)
+// A tiny vertical slider just right of the strand-type button: a 7px wide
+// strip at x 333-340, y 1028-1051, with a dot as its handle.
+// curlRotAmt is 0..1: 0 at the bottom (y 1050), 1 at the top (22px higher).
+// There is no drag latch: it only responds while the mouse is inside the strip.
 if moreHairs == 1
 {
 	draw_circle(336, 1050-(curlRotAmt*22), 3, 0)
@@ -4913,6 +5399,8 @@ if moreHairs == 1
 }
 
 // Active colour slot highlight sprites
+// A frame around whichever swatch is the active slot (the flags mainCalc()
+// restored from colourSelectedSlot earlier in this event).
 if bkCol_active   == 1 draw_sprite(spr_colHL, 0, 1566, 540)
 if ColA_active    == 1 draw_sprite(spr_colHL, 0, 1566, 567)
 if ColB_active    == 1 draw_sprite(spr_colHL, 0, 1566, 594)
@@ -4920,6 +5408,8 @@ if RootCol_active == 1 draw_sprite(spr_colHL, 0, 1566, 620)
 if TipCol_active  == 1 draw_sprite(spr_colHL, 0, 1566, 647)
 
 // Seed value display
+// At (1214,1006), beside the dice. Shows the selected set's own seed (in the
+// override colour if that set has one) or the global seedVal. Read-only here.
 draw_set_color(tbCol)
 if setSelectedID != -1 and randomOverride[setSelectedID] != 0 draw_set_color(tbColOver)
 draw_set_font(regFont)
@@ -4935,6 +5425,10 @@ draw_set_color(c_white)
 // ============================================================
 #region
 
+// HELP INFO button: bottom bar, x 846-901. Toggles showHelp. The panel is
+// drawn from (0,0), over the canvas, and because it is drawn this late it
+// covers everything drawn before it. It does not block input: controls
+// underneath still respond to clicks.
 if mouse_check_button_pressed(mb_left) and point_in_rectangle(mouse_x, mouse_y, 846, 1027, 901, 1051)
 	showHelp = 1 - showHelp
 
@@ -4954,6 +5448,16 @@ if showHelp == 1 draw_sprite_ext(spr_HelpPanel, 0, 0, 0, 0.5, 0.5, 0, c_white, 1
 // ============================================================
 #region
 
+// Shown while firstTime is true (from launch until a button here, or a
+// Generate, clears it). Create_0 skips it when RegenCheck.txt exists at
+// launch: it sets firstTime = false, and skipIntro = 1 if the file says "Regen".
+// The splash only DRAWS over the UI; it does not stop the code above from
+// running, so everything under it is still live (see the card note below).
+// Both buttons and Enter set the same three things:
+//   firstTime = false            closes the splash
+//   readyToCheckAutoloads = 1    read by doMainStep / Step_1 (autosave and autoload gating)
+//   dynamicRes = 1               read in Step_1
+// and differ only in autoloading (1 = load Autosave.txt, 0 = start fresh).
 if firstTime and skipIntro == 0
 {
 	// ---- one-off autosave probe (splashAutosaveFound starts at -1) ----
@@ -5027,6 +5531,10 @@ if firstTime and skipIntro == 0
 	draw_line(_cl + 60, _ct + 210, _cr - 60, _ct + 210)
 
 	// ---- buttons ----
+	// Each button is 240x54. With an autosave present there are two, either
+	// side of the card centre (_cx); otherwise GET STARTED sits alone, centred.
+	// _loadL/_loadR and _startL/_startR are the left/right edges used for both
+	// drawing and the hit tests.
 	var _bw = 240
 	var _bh = 54
 	var _by = _ct + 258
@@ -5051,6 +5559,9 @@ if firstTime and skipIntro == 0
 	// LOAD AUTOSAVE - only when a file was found, and it pulses
 	if splashAutosaveFound == 1
 	{
+		// gameTick360 counts 0..360 once per step (Step_1), so this pulses
+		// 0..1 about every 45 frames. The fill colour is a dark-to-bright
+		// green ramp; hovering uses a brighter ramp.
 		var _pulse = abs(dsin(gameTick360 * 4))
 		var _hovL  = point_in_rectangle(mouse_x, mouse_y, _loadL, _by, _loadR, _by + _bh)
 
@@ -5141,6 +5652,7 @@ if firstTime and skipIntro == 0
 // ============================================================
 // RUNTIME INFO BAR + KEYBOARD SHORTCUTS LEGEND
 // ============================================================
+// (Empty: there is no code under this heading any more.)
 
 
 
@@ -5149,6 +5661,11 @@ if firstTime and skipIntro == 0
 // ============================================================
 #region
 
+// showHeart is toggled by the F7 key event (KeyPress_118). The heart is drawn
+// at half size at (1000,1000), bottom right of the canvas. Saturation is 0, so
+// the "colour" is a grey whose brightness pulses with gameTick360: it is used
+// as the sprite's blend colour, making the heart beat between dark and full.
+// The beat is 4x slower when a map is being viewed than in previewer mode.
 if showHeart == 1
 {
 	var beatMul = (img != 9) ? 0.25 : 1
@@ -5165,6 +5682,9 @@ draw_set_color(c_white)
 // ============================================================
 #region
 
+// Visual hint only: when the mouse is in the top 10 pixels a grey strip and
+// the words DRAG WINDOW are drawn. The actual window dragging is not done in
+// this event.
 if mouse_y < 10
 {
 	draw_rectangle_color(0, 0, room_width, 10, c_dkgray, c_dkgray, c_ltgray, c_ltgray, 0)
@@ -5184,6 +5704,12 @@ if mouse_y < 10
 // ============================================================
 #region
 
+// exiting is set true by User Event 0 (the quit button in the top bar).
+// A small box is drawn on the canvas at (330,480)-(640,520). Y or a click on
+// the "Y" in the text quits; N, a click on the "N", or any right click
+// cancels. The two click rectangles (x 570-605 quits, x 613-635 cancels) are
+// fixed numbers at the right-hand end of the box, where the "Y / N" of the
+// drawn string falls, so they depend on the font and wording of that string.
 if exiting
 {
 	draw_rectangle_color(330, 480, 640, 520, c_dkgray, c_dkgray, c_black, c_black, 0)
@@ -5207,6 +5733,9 @@ if exiting
 firstCalc = 0
 
 // Reset textboxes if Enter pressed
+// This is what closes a slider number box after Enter. It must stay at the
+// END of the event: each open box has to see the Enter press first (to set
+// forceUpdate) before the box is closed here.
 if keyboard_check_pressed(vk_enter)
 {
 	dynamicRes = 1

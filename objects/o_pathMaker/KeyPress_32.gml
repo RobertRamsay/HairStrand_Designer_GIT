@@ -1,5 +1,12 @@
-/// @description Insert description here
+/// @description Space: re-randomise the last point of every path
 // You can write your code in this editor
+// o_pathMaker Key Press Space (32). NOT REACHABLE (see this object's Create).
+// Moves ONE point on each of the 2000 paths to a new random position.
+// Which point: index p. p is not set here; it is the instance variable left
+// over from the Create loop, where it finished at 30 (= points), the last
+// point Create added. So every press re-rolls that same end point.
+// randomize() reseeds GameMaker's global random generator.
+// lpd is only a counter shown in the Draw GUI text (+1 here, -1 on Tab).
 //if keyboard_check_pressed(vk_f5)
 randomize()
 

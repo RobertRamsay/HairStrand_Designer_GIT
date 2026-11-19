@@ -13,6 +13,39 @@
 // Like the clump block it is "name:value;" lines found by marker, not by line
 // position. A file without it (an autosave, or an older manual project) leaves
 // whatever the main loader already set, so nothing changes for those files.
+//
+// WHERE IT SITS IN A MANUAL PROJECT FILE (all written by Alarm 1, in this order,
+// appended after KeyPress_83 has closed the file):
+//   ... legacy positional lines, ending with the V1.55 block (KeyPress_83)
+//   "V1.85 - Per Set Colour Overrides"  + 4 global colours + 8 lines x 11 sets
+//   "V1.96 - Clumping"   ... "clumpEnd:1;"     (clumpWriteBlock, clumpTools)
+//   "V1.96 - Set Extras" ... "extrasEnd:1;"    (extrasWriteBlock, below)
+//
+// LINES IN THIS BLOCK
+//   V1.96 - Set Extras          the marker (EXTRAS_BLOCK_MARKER)
+//   noiseAmt:<n>;  noiseFreq:<n>;              the two global noise values
+//   O<Name>_<set>:<0|1>;        override flag  } for each set 0-10 and each of
+//   V<Name>_<set>:<n>;          the value      } the 9 names in extrasName()
+//   SeedO_<set>:<0|1>;          set uses its own seed (randomOverride)
+//   SeedV_<set>:<n>;            that seed (randomSeedVal), 6 decimals
+//   extrasEnd:1;                stops the reader
+// Lines are matched by NAME, so their order inside the block does not matter.
+// A line with no ":" ends the read early, the same as extrasEnd.
+//
+// ADDING ANOTHER PER-SET VALUE HERE
+//   1. raise EXTRAS_COUNT
+//   2. add a case with the same index to ALL SIX switch functions below
+//      (extrasName, extrasGetAdj, extrasSetAdj, extrasGetOver, extrasSetOver,
+//      extrasGlobal). In each one the LAST name is the "default:" branch, so
+//      turn the current default into a numbered case and make the new one the
+//      default, or the new index silently reads/writes NoiseFreq.
+//   3. the name must not contain "_" (the reader splits the key at the first
+//      "_": name before it, set number after it).
+//   Old files simply lack the new lines and keep what the main loader set.
+//   The autosave does not use this block: add the value to doAutoSave /
+//   doAutoLoad as well, and to obj_copy so COPY / PASTE carries it.
+//
+// All functions here run in obj_surfaceDweller's scope (called from Alarm 1).
 // =============================================================================
 
 #macro EXTRAS_BLOCK_MARKER "V1.96 - Set Extras"
@@ -22,6 +55,11 @@
 // 0 ThickMin  1 ThickMax  2 TipThick  3 RootThick  4 ThickVary
 // 5 FadeIn    6 FadeOut   7 NoiseAmt  8 NoiseFreq
 
+// The six functions below are one lookup table in six views: index _k picks
+// the same setting in each. They exist so the writer and reader can loop over
+// "setting k of set s" instead of naming 18 arrays.
+
+/// Name used in the file for value _k ("O"/"V" + this + "_" + set number).
 function extrasName(_k)
 {
 	switch (_k)
@@ -32,6 +70,7 @@ function extrasName(_k)
 	}
 }
 
+/// Per-set VALUE _k of set _s (the set...Adj arrays).
 function extrasGetAdj(_k, _s)
 {
 	switch (_k)
@@ -52,6 +91,8 @@ function extrasSetAdj(_k, _s, _v)
 	}
 }
 
+/// Per-set OVERRIDE FLAG _k of set _s (the set...Overrode arrays).
+/// 1 = the set has its own value, 0 = it follows the global slider.
 function extrasGetOver(_k, _s)
 {
 	switch (_k)
@@ -84,6 +125,9 @@ function extrasGlobal(_k)
 }
 
 
+/// Append the block to the already-open text file _f.
+/// Called only by Alarm 1 during a manual save, after the colour and clump
+/// blocks. Not called by doAutoSave.
 function extrasWriteBlock(_f)
 {
 	file_text_write_string(_f, EXTRAS_BLOCK_MARKER); file_text_writeln(_f)
@@ -111,6 +155,10 @@ function extrasWriteBlock(_f)
 
 /// Restore the block from _path if present. Returns true if it was found.
 /// When it is missing nothing is touched.
+/// Called by Alarm 1 one frame after every load (manual and autoload), once
+/// the main loader has closed the file. It opens the file itself, skips lines
+/// until the marker, then reads "name:value;" lines until extrasEnd, a line
+/// with no colon, or end of file.
 function extrasReadFile(_path)
 {
 	if _path == "" or !file_exists(_path) return false
@@ -133,6 +181,7 @@ function extrasReadFile(_path)
 		if _colon <= 0 break
 		_key = string_copy(_line, 1, _colon - 1)
 		_num = string_replace(string_copy(_line, _colon + 1, string_length(_line) - _colon), ";", "")
+		// real() throws on text with no digits, so an empty value becomes 0.
 		_val = (string_digits(_num) == "") ? 0 : real(_num)
 
 		if _key == "extrasEnd" break
@@ -140,6 +189,8 @@ function extrasReadFile(_path)
 		else if _key == "noiseFreq" noiseFreq = clamp(_val, 0, 40)
 		else if string_copy(_key, 1, 6) == "SeedO_" or string_copy(_key, 1, 6) == "SeedV_"
 		{
+			// Set number starts at character 7; character 5 is the O or V.
+			// Flags are forced to exactly 0 or 1.
 			_ps = real(string_copy(_key, 7, string_length(_key) - 6))
 			if _ps >= 0 and _ps < maxSets
 			{
@@ -155,7 +206,7 @@ function extrasReadFile(_path)
 			{
 				_nm = string_copy(_key, 2, _us - 2)
 				_ps = real(string_copy(_key, _us + 1, string_length(_key) - _us))
-				_pk = -1
+				_pk = -1 // index of the name in extrasName(); stays -1 if not known
 				for (_q = 0; _q < EXTRAS_COUNT; _q++) if extrasName(_q) == _nm { _pk = _q; break }
 				if _pk >= 0 and _ps >= 0 and _ps < maxSets
 				{

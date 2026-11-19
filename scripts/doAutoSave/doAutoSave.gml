@@ -1,13 +1,102 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// doAutoSave()  -  write the whole project to Autosave.txt
+//
+// WHAT IT IS
+//   The silent project saver. No dialog, no maps: just the settings, as a text
+//   file. Runs in obj_surfaceDweller's scope (it reads the settings through
+//   "o.", which is obj_surfaceDweller itself, and sets saving / autosaving on
+//   the caller).
+//
+// WHERE THE FILE GOES
+//   "Autosave.txt" has no folder, so GameMaker puts it in the game's save
+//   area:  %LOCALAPPDATA%\HairStrand_Designer\Autosave.txt
+//   It is overwritten in full every time. doAutoLoad() reads it back.
+//
+// WHEN IT RUNS
+//   - doMainStep: every left-mouse release (once the splash has been answered)
+//   - obj_surfaceDweller End Step (Step_2): every left-mouse release as well,
+//     so one release normally writes the file twice. Harmless, just redundant.
+//   - obj_surfaceDweller Alarm 1: a few frames after a colour / colour-override
+//     change (noticed by objects/g Begin Step), and straight after a manual
+//     S-key project save so the autosave matches it.
+//   Nothing is written when demoMode==1, autosave==0 or canSave is false.
+//
+// FILE FORMAT  (one "Description:value;" per line)
+//   The loader does NOT look at the description. Everything down to the end
+//   of the V1.91 block is read back BY LINE POSITION, so the order written
+//   here must be exactly the order doAutoLoad() reads. One line added, removed
+//   or moved in the middle shifts every value after it into the wrong variable.
+//
+//   In order (line counts in brackets):
+//     header "... - Version1.96.0 - ..."   (1)  loader takes the version from
+//                                               characters 46-49 of this line
+//     instruction line (instr)             (1)
+//     Seed, Blur, IDmode                   (3)
+//     doRGB doNorm doColor doMask doID doDepth doFrizz doFlow doAO  (9)
+//     Current map                          (1)
+//     Flow Flip X, Flip Y, Blue, Hue       (4)
+//     Global Scale In/Out, Fade In/Out     (4)
+//     Background + 4 strand colours, HEX   (5)  RRGGBB via dec_to_hex_save
+//     Strand Count / Length Override       (2 x 11 sets)
+//     MinScale ... Set Distances           (15)
+//     X offset, Y offset, algorithm infl.  (3 x 11 sets)
+//     Wave freq min/max, Frizz, Mixer 1-3 amount+offset   (9)
+//     Root / Tip Thickness, Thickness Variation           (3)
+//     Taper Influence                      (11)
+//     maxPreviewStrandsPerSet, optimalStep (2)
+//     mixer path points, X then Y          (2 x 11 points x 3 paths)
+//     "***VERSION 1.5 and later specific;" (1)  marker, loader checks the text
+//     per-set override flags + values      (26 x 11 sets)
+//     length                               (1)
+//     "V1.53 - 21st Nov 2020"              (1)  then Root Jitter: 2 x 11, + yRanRange
+//     "V1.55 - 28th Dec 2020"              (1)  then MultiStrandMode, MicroCurl
+//     "V1.70 - 21st Mar 2023"              (1)  then per-set seeds: 2 x 11
+//     "V1.71 - 28th Jan 2024"              (1)  then per-set thick min/max: 4 x 11
+//     "V1.85 - Per Set Colour Overrides"   (1)  then per-set colours: 8 x 11
+//     "V1.90 - Noise"                      (1)  then noiseAmt, noiseFreq
+//     "V1.91 - Per Set Thickness Fade Noise" (1) then 14 x 11
+//     "V1.96 - Clumping" block (clumpWriteBlock in clumpTools) - found by
+//       scanning for its marker, so it is the only part that is position-free.
+//
+//   Only 11 sets (0-10) are saved, even though the arrays hold maxSets (15).
+//
+// HOW THIS DIFFERS FROM A MANUAL PROJECT FILE (S key, KeyPress_83)
+//   The manual saver writes the same lines but stops after the V1.55 block.
+//   Alarm 1 then appends a V1.85 colour block (with 4 extra "global..." lines
+//   at its start), the clump block, and "V1.96 - Set Extras" (projectExtras).
+//   The autosave has no Set Extras block because it already carries those
+//   values in its own V1.70 / V1.71 / V1.90 / V1.91 sections.
+//
+// ADDING A NEW SAVED VALUE
+//   Safest: add it to a marker-found block (clumpWriteBlock/clumpReadFile or
+//   extrasWriteBlock/extrasReadFile, or a new block written after them and
+//   read in Alarm 1). Those are read by name, so old files keep loading.
+//   If it has to go in the positional part, add it at the very END of this
+//   function's writes (before the clump block), under a new "Vx.xx - Name"
+//   marker line, and add the matching read in the same place in doAutoLoad()
+//   guarded by the version number and !file_text_eof. Then decide whether the
+//   manual save needs it too (KeyPress_83 / KeyPress_76 / projectExtras),
+//   and add it to obj_copy if it is a per-set value.
+//   Bump the version text in the header line when the format changes; the
+//   same string is also in Create_0, objects/g and Alarm_1.
+//
+// SIDE EFFECTS
+//   Uses the instance variables s, a and set as loop counters (not "var"), so
+//   they are overwritten in the caller. fileCustom is left as "Autosave.txt",
+//   which is why Alarm 1 / canvasCheck keep the manual save path separately
+//   in v185ManualSavePath.
+// =============================================================================
 function doAutoSave(){
 /// @description Insert description here
 // You can write your code in this editor
 
 
-if canSave and demoMode==0 and autosave==1
+if canSave and demoMode==0 and autosave==1 // demo builds never write a project; autosave=1 is set in Create
 	{
-	autosaving=1
+	autosaving=1 // tells objects/g and Alarm 1 that file IO is in progress
 	//quicksave
 	//
 	
@@ -28,8 +117,8 @@ if canSave and demoMode==0 and autosave==1
 		//	instance_create_depth(0,0,-1000,obj_save)
 			
 			
-			fileCustom = "Autosave.txt"
-			
+			fileCustom = "Autosave.txt" // no folder = the save area, %LOCALAPPDATA%\HairStrand_Designer
+
 
 		if fileCustom != ""
 		    {
@@ -38,6 +127,9 @@ if canSave and demoMode==0 and autosave==1
 			theFile = file_text_open_write(fileCustom);
 			
 // Autosaves are always written as the current project format.
+// The loader reads the version as real(string_copy(header,46,4)), i.e. the
+// "1.96" straight after "Version". Do not change the text before that number
+// or its length, or every version check in doAutoLoad / KeyPress_76 breaks.
 file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
@@ -47,7 +139,13 @@ file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.9
 			
 			// VARIABLES TO SAVE
 			#region
-// main variables	
+// main variables
+// FROM HERE ON, ORDER MATTERS: doAutoLoad() reads these lines back by position.
+// The text before the colon is only a label for humans; the loader ignores it.
+// The nine do* lines and "Current map" are written but the loader skips over
+// them (its assignments are commented out), so which maps are ticked and which
+// map is on screen are NOT restored. They must still be written: they hold
+// the line positions for everything after them.
 var o=obj_surfaceDweller
 		file_text_write_string(theFile,"Seed:"+string(o.seedVal)+";");
 			file_text_writeln(theFile);
@@ -129,6 +227,9 @@ var o=obj_surfaceDweller
 			file_text_write_string(theFile,"Tip Color (HEX):"+string(dec_to_hex_save(o.globalTipCol))+";"); 
 			file_text_writeln(theFile);
 			
+			// "var sets" is a local that hides the instance variable sets for the
+			// rest of this function. 11 is the fixed number of sets in the file
+			// format; the loader's loops are hard-coded to 11 too.
 			var sets = 11
 			for (s=0;s<sets;s++) // support up to 11 sets potentaill greater later on
 				{
@@ -254,7 +355,10 @@ var o=obj_surfaceDweller
 				file_text_writeln(theFile);	
 				
 			// save path points and reassign when loaded
-			
+			// editingPath[0..2] are the three mixer curves (edited in Room_PathEditing).
+			// 11 points each, X line then Y line. The loader only reads this
+			// section when the header version is 1.36 or later.
+
 			for (a=0;a<11;a++) // V1.95 - the loader reads exactly 11 per path; path_get_number() would desync the entire file if a path ever gained or lost a point
 				{
 					var pathX=string(path_get_point_x(o.editingPath[0],a))
@@ -286,9 +390,13 @@ var o=obj_surfaceDweller
 				}
 			
 			// save in the new override stuff if the version is correct
+			// The loader compares this whole line, including the ";", and skips
+			// EVERYTHING below it if it does not match. Do not reword it.
+			// Each set then gets 26 lines: 14 "...Overrode" flags (1 = this set has
+			// its own value) followed by the 12 per-set values themselves.
 			//if real(verString)>=150
 				{
-					file_text_write_string(theFile,"***VERSION 1.5 and later specific"+";"); 
+					file_text_write_string(theFile,"***VERSION 1.5 and later specific"+";");
 					file_text_writeln(theFile);		
 					
 					
@@ -385,7 +493,11 @@ var o=obj_surfaceDweller
 						file_text_writeln(theFile);	
 						
 						// New in 1.53:
-						file_text_write_string(theFile,"V1.53 - 21st Nov 2020"); 
+						// The "Vx.xx - ..." lines from here down are section labels.
+						// The loader reads each one as a line in sequence (it does not
+						// search for them), and for V1.53 / V1.55 / V1.85 / V1.90 / V1.91
+						// it also checks the exact text. Keep them word for word.
+						file_text_write_string(theFile,"V1.53 - 21st Nov 2020");
 						file_text_writeln(theFile);	
 						
 						// save vars
@@ -414,8 +526,11 @@ var o=obj_surfaceDweller
 						
 		
 
-					file_text_write_string(theFile,"V1.70 - 21st Mar 2023"); 
-					file_text_writeln(theFile);	
+					// Per-set seeds: randomOverride = this set uses its own seed,
+					// randomSeedVal = that seed. string() keeps only 2 decimals here;
+					// the manual save's Set Extras block writes 6 (see projectExtras).
+					file_text_write_string(theFile,"V1.70 - 21st Mar 2023");
+					file_text_writeln(theFile);
 					for (set=0;set<11;set++)
 							{	
 							file_text_write_string(theFile,"randomOverride["+string(set)+"]:"+string(o.randomOverride[set])+";"); 
@@ -447,6 +562,10 @@ var o=obj_surfaceDweller
 							
 							// V1.85 - per-set colour overrides. Stored as native colour
 							// integers so save/load is lossless and simple.
+							// Unlike a manual save, the autosave block has NO four
+							// "global..." lines after the marker: it starts at set 0.
+							// Alarm 1 re-reads this block after every load and accepts
+							// both layouts.
 							file_text_write_string(theFile,"V1.85 - Per Set Colour Overrides");
 							file_text_writeln(theFile);
 							for (set=0;set<11;set++)
@@ -518,6 +637,7 @@ var o=obj_surfaceDweller
 							// V1.96 - clumping. Self-describing block, found by its
 							// marker on load (clumpReadFile), so its position does
 							// not matter to the positional loader above it.
+							// A new positional section must be written ABOVE this line.
 							with (o) clumpWriteBlock(other.theFile);
 
 
@@ -660,6 +780,9 @@ var o=obj_surfaceDweller
 		*/
 		
 		
+	// Left over from the manual saver this was copied from: forces S and Enter
+	// up so a held key cannot re-trigger a save, and clears the "project only"
+	// request flag used by KeyPress_83.
 	keyboard_key_release(ord("S")) // release key system
 	keyboard_key_release(vk_enter)
 	saving= false
@@ -680,6 +803,9 @@ var o=obj_surfaceDweller
 		}
 	}
 // do some fake clicks to restore window to be active
+// (the fake clicks are in the commented-out block below; only the flags remain)
+// Always cleared, even when nothing was written, because doMainStep sets
+// autosaving=1 before calling and would otherwise never autosave again.
 saving= false
 autosaving=0
 /*

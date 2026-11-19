@@ -1,8 +1,36 @@
-/// @description Insert description here
-// You can write your code in this editor
+/// @description Key S - save project file and export the finished maps
+// -----------------------------------------------------------------------------
+// EVENT : Key Press, key code 83 = "S". Also fired by two buttons in Draw_0 via
+//         keyboard_key_press(ord("S")): the export button (top right, sets
+//         projectOnly=false first) and the project-save button.
+// DOES  : 1. asks for a project name (skipped when projectOnly is true)
+//         2. asks where to save, writes the LEGACY section of the project .txt
+//         3. unless projectOnly, exports every finished map (GenState 2) as PNG,
+//            one save dialog per map
+//         Disabled in the demo (demoMode) and while canSave is false (a render
+//         is running: G sets canSave=false, doMainStep sets it true at the end).
+//
+// WHAT THIS EVENT DOES NOT WRITE
+//   Per-set colours, clumping, noise, per-set thickness / fade / noise overrides
+//   and per-set seeds are NOT written here. Alarm 1 appends them as marker-headed
+//   blocks next frame, after this event has closed the file. Object g latches
+//   that request (v185ManualSavePending, alarm[1]=2) in its Begin Step and S key
+//   events. So a complete project file = this event + Alarm 1.
+//
+// FILE FORMAT: one "Description:value;" per line, read back BY POSITION by
+//   KeyPress_76 (L). The order of the writes below IS the file format. Do not
+//   insert, remove or reorder a line without making the same change in
+//   KeyPress_76, and prefer adding new data to a marker block instead.
+//   doAutoSave() is a separate, longer writer for Autosave.txt.
+//
+// READS : everything it saves (through "o", which is this same instance), the
+//         nine *_GenState flags, moreHairs, projectOnly, prjName.
+// WRITES: prjName, fileCustom, theFile, file, saving, projectOnly.
+// -----------------------------------------------------------------------------
 
 if canSave and demoMode==0
 	{
+		// a topmost window would sit in front of the dialogs; restored on the last line
 		if fullscreenMode==1 window_set_topmost(0)
 	//quicksave
 	//
@@ -16,6 +44,9 @@ if canSave and demoMode==0
 
 // ALL AT ONCE SAVING... problems getting al the characters needed for the naming (lowercase and numbers only by the looks of it)
 	//if rgbMask_GenState==2
+	// prjName is the default file name for the project and the prefix of every
+	// exported map (prjName+"_Color" etc.). Cancelling the name box returns ""
+	// and abandons the whole save (the else-branch near the bottom).
 	if !projectOnly {prjName=get_string("Project Name","HSD_");} // no need for a project name call
 	
 	if prjName!="" 
@@ -29,10 +60,16 @@ if canSave and demoMode==0
 
 		if fileCustom != ""
 		    {
+				// saving=true pauses the renderer (doMainStep tests !saving) and
+				// the colour autosave check in object g while the file is open.
 				saving=true
 // initial line
+			// open_write replaces any existing file of that name.
 			theFile = file_text_open_write(fileCustom);
-			
+
+		// LINE 1: header. The loaders take the format version from it (the four
+		// characters after "Version"). Object g's Begin Step has already set
+		// mainS to the current header this frame.
 		file_text_write_string(theFile,string(mainS));
 			file_text_writeln(theFile);
 			
@@ -42,7 +79,11 @@ if canSave and demoMode==0
 			
 			// VARIABLES TO SAVE
 			#region
-// main variables	
+// main variables
+// "o" is this object itself (this code was lifted from obj_save, where it had to
+// reach across). o.x and plain x are the same variable here; both styles appear.
+// LINES 3..: seed, blur, ID mode, the nine map tick-boxes, the current view.
+// The loader reads the nine do* lines and "Current map" but ignores them.
 var o=obj_surfaceDweller
 		file_text_write_string(theFile,"Seed:"+string(o.seedVal)+";");
 			file_text_writeln(theFile);
@@ -107,6 +148,13 @@ var o=obj_surfaceDweller
 			file_text_write_string(theFile,"Global Fade Out:"+string(o.fadeOut)+";"); // internal
 			file_text_writeln(theFile);
 			
+			// The five colours as six hex digits RRGGBB (dec_to_hex_save).
+			// CAREFUL: customColVarA/B, customRootCol and customTipCol are the
+			// UI-facing colours. If a set is selected when S is pressed these
+			// four lines hold THAT SET's colours, not the project globals.
+			// That is why Alarm 1 appends the true global* values and every
+			// set's colours in the V1.85 block, and why the loader lets that
+			// block win. Only a pre-1.85 build would rely on these four lines.
 			file_text_write_string(theFile,"Background Color (HEX):"+string(dec_to_hex_save(o.colrBack))+";"); 
 			file_text_writeln(theFile);
 			
@@ -122,6 +170,10 @@ var o=obj_surfaceDweller
 			file_text_write_string(theFile,"Tip Color (HEX):"+string(dec_to_hex_save(o.customTipCol))+";"); 
 			file_text_writeln(theFile);
 			
+			// "var sets" is a local = 11 sets written (0..10). It hides the
+			// instance variable sets (10) for the rest of this event.
+			// Count and length are written for every set whether or not the
+			// set's override flag is on; the flags come later in the file.
 			var sets = 11
 			for (s=0;s<sets;s++) // support up to 11 sets potentaill greater later on
 				{
@@ -247,7 +299,13 @@ var o=obj_surfaceDweller
 				file_text_writeln(theFile);	
 				
 			// save path points and reassign when loaded
-			
+			// The three mixer curves, two lines per point (X then Y), path 0 then
+			// 1 then 2. This writes however many points each path has, but the
+			// loader (KeyPress_76) always reads exactly 11 per path. They agree
+			// only while every mixer path has 11 points; if the path editor ever
+			// allows adding or removing points, every line after this section
+			// would be read out of step.
+
 			for (a=0;a<path_get_number(editingPath[0]);a++)
 				{
 					var pathX=string(path_get_point_x(editingPath[0],a))
@@ -280,8 +338,12 @@ var o=obj_surfaceDweller
 			
 			// save in the new override stuff if the version is correct
 			//if real(verString)>=150
+			// MARKER 1. The loader compares the whole line, including the ';',
+			// so this text must not change. After it, for each set 0..10, 26
+			// lines: 8 override flags, 6 mixer override flags, 6 mixer values,
+			// 6 other per-set values - in the order written below.
 				{
-					file_text_write_string(theFile,"***VERSION 1.5 and later specific"+";"); 
+					file_text_write_string(theFile,"***VERSION 1.5 and later specific"+";");
 					file_text_writeln(theFile);		
 					
 					
@@ -379,7 +441,9 @@ var o=obj_surfaceDweller
 						
 						
 						// New in 1.53:
-						file_text_write_string(theFile,"V1.53 - 21st Nov 2020"); 
+						// MARKER 2 (exact text, no ';'). Per-set root Y jitter
+						// range + its override flag, then the global value.
+						file_text_write_string(theFile,"V1.53 - 21st Nov 2020");
 						file_text_writeln(theFile);	
 						
 						// save vars
@@ -396,7 +460,10 @@ var o=obj_surfaceDweller
 						file_text_writeln(theFile);	
 						
 						// New in 1.55
-						file_text_write_string(theFile,"V1.55 - 28th Dec 2020"); 
+						// MARKER 3 (exact text). Multi-strand mode and micro curl.
+						// Last section written by this event; Alarm 1's blocks
+						// are appended after it.
+						file_text_write_string(theFile,"V1.55 - 28th Dec 2020");
 						file_text_writeln(theFile);	
 						
 						file_text_write_string(theFile,"MultiStrandMode:"+string(moreHairs)+";"); 
@@ -417,7 +484,18 @@ var o=obj_surfaceDweller
 
 			
 // SAVE GENERATED MAPS
-		
+// The project file is closed first. Alarm 1 re-opens it in append mode next
+// frame to add the colour / clump / extras blocks.
+// Then, unless only the project was wanted, each map whose GenState is 2
+// (rendered and finished) is written as a 4096x4096 PNG. A map that is ticked
+// but not rendered (state 1) or off (state 0) is skipped silently - "my map did
+// not export" usually means it was not re-rendered after a change.
+// One Save dialog per map, default name prjName+"_<Map>". keyboard_key_press
+// (vk_enter) just before each dialog is the "auto Enter" trick meant to accept
+// the default name without a click; keyboard_clear(vk_enter) undoes it after.
+// The returned name is not checked: a cancelled dialog gives "" and
+// surface_save is still called with it.
+
 				file_text_close(theFile);
 			
 				//keyboard_clear(vk_enter) // clear Enter
@@ -509,6 +587,15 @@ if !projectOnly // saving the project only?
 		if norm_GenState==2
 			{
 			//editme
+			// NORMAL MAP has two export paths:
+			//  moreHairs==1 (multi strand): nm_canvas holds a height/bump
+			//    picture (drawn with spr_stranderBUMP), so it is run through
+			//    shd_normal into tNormsurf to become a real normal map, copied
+			//    to a temporary sprite, saved, and the sprite freed.
+			//  moreHairs==0 (single strand): nm_canvas already holds normal-map
+			//    colours (spr_nm on a 128,128,255 base) and is saved directly.
+			// "var normSprite" here is a local and hides the instance variable
+			// of the same name from Create_0.
 			if moreHairs==1
 				{
 				surface_set_target(tNormsurf)
@@ -664,8 +751,12 @@ if !projectOnly // saving the project only?
 		#endregion
 		
 		*/
-		
-		
+
+
+	// End of a completed save. The dialogs swallow key-ups, so S and Enter are
+	// released by hand or GameMaker would think they are still held (and S
+	// would not register as "pressed" next time). The same clean-up is repeated
+	// in the cancel branch and once more unconditionally at the very end.
 	keyboard_key_release(ord("S")) // release key system
 	keyboard_key_release(vk_enter)
 	saving= false

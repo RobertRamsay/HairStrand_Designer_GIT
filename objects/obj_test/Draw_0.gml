@@ -1,3 +1,6 @@
+// obj_test Draw. NOT USED (see Create), and disabled as well: the block below
+// is commented out. It listed the test keys and printed the last lines of
+// global.log (the trace() history) up from the bottom of the room.
 /*
 draw_set_font(fnt_test);
 draw_set_color(c_white);

@@ -1,5 +1,18 @@
-/// @description Insert description here
-// You can write your code in this editor
+/// @description Key F1 (release) - type in a seed value
+// -----------------------------------------------------------------------------
+// EVENT : Key Release, key code 112 = F1. Fires when F1 is let go.
+// DOES  : asks for a seed with a blocking dialog. If the answer is non-zero it
+//         becomes seedVal and is written to randomSeedVal[]:
+//           - no set selected (setSelectedID==-1): every set gets it
+//           - a set selected: only that set gets it
+//         seedUpdate=1 then makes previewUpdate() (previewJob) redraw all sets.
+//         The pre-random tables are rebuilt by preRandsRefresh() because
+//         randomSeedVal is one of their inputs.
+// WRITES: seedValstring (despite the name it holds a number), seedVal,
+//         randomSeedVal[], seedUpdate.
+// NOTE  : randomOverride[] is not touched here. A seed of 0 is ignored because
+//         the test is "if seedValstring".
+// -----------------------------------------------------------------------------
 //img=9
 	{
 	seedValstring=seedVal

@@ -13,6 +13,11 @@
 // alpha-weighted - otherwise the transparent black around each strand would
 // be averaged in and every strand would gain a dark fringe.
 //
+// Used only by mainCalc, when smoothing is on (pvSmooth) in the previewer view.
+// mainCalc sets u_texel to 1/1024 (the preview surface size) and u_radius per
+// set, from the dash length that set was last drawn with. Preview only - it
+// never touches the 4096 output maps.
+//
 varying vec2 v_vTexcoord;
 varying vec4 v_vColour;
 

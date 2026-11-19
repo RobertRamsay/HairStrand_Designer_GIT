@@ -1,6 +1,22 @@
-/// @description Insert description here
+/// @description obj_save: early project saver (not used)
 // You can write your code in this editor
-//keyboard_key_press(vk_enter) // auto Enter	
+// -----------------------------------------------------------------------------
+// obj_save Step. NOT USED: obj_save is never created (see its Create event).
+//
+// If it did run, every step it would open a save dialog and write a text file
+// containing just three lines: the header (mainS), the instruction line
+// (instr) and "Seed:<n>;". All the other writes are inside the block comment
+// below. That is far short of what the loaders expect, so such a file is not
+// a valid project. There is also no instance_destroy, so the dialog would
+// reopen every step.
+//
+// The commented-out section shows the oldest layout of the file and is where
+// the line order used by KeyPress_83 / doAutoSave started. Two differences
+// from the live format: it loops over 10 sets (the live format uses 11) and
+// it uses dec_to_hex for colours (the live savers use dec_to_hex_save, which
+// gives the RRGGBB order the loaders read). Do not copy lines from here.
+// -----------------------------------------------------------------------------
+//keyboard_key_press(vk_enter) // auto Enter
 			fileCustom = get_save_filename_ext("HSD_Project|*.txt", obj_surfaceDweller.prjName,"","Please save to a directory outside of the Application.");
 			
 

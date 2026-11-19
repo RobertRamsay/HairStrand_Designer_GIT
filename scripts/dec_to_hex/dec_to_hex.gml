@@ -1,3 +1,19 @@
+// -----------------------------------------------------------------------------
+// dec_to_hex(number)  -  a number as hex text, in whole bytes ("00", "1A2B" ...)
+//
+// Standard GMLscripts.com routine. Most significant byte first, the usual way
+// to write a hex number. 0 gives "00".
+//
+// IN THIS PROJECT it is used for DISPLAY only: Draw_0 calls it on the red,
+// green and blue parts of a colour separately to build the text in the colour
+// panel's hex box. (obj_save also mentions it, but only inside a commented-out
+// block.)
+//
+// It is NOT what the project file uses. A GameMaker colour number holds blue
+// in its top byte and red in its bottom byte, so this routine applied to a
+// whole colour would give BBGGRR. Saving uses dec_to_hex_save, which gives
+// RRGGBB, the order the loaders expect.
+// -----------------------------------------------------------------------------
 function dec_to_hex(argument0) {
 
 	/// dec_to_hex(dec)

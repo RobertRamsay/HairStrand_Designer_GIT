@@ -1,3 +1,15 @@
+// o_pathMaker Step - the preview drawing for the flyaway-path experiment.
+// NOT REACHABLE (see this object's Create), and DISABLED as well: everything
+// below is one block comment. Note the comment is opened but never closed, so
+// it runs to the end of the file. Anything added below this point is
+// commented out too; new code or notes must go ABOVE the opening marker.
+//
+// What it did when live: cleared pathPreview and drew the first N paths
+// (N from mouse x), each 0.4 px to the right of the last, in a random colour
+// from a fixed seed. Left state drew them with draw_path; holding the right
+// button drew them as line segments whose width and brightness peak in the
+// middle of the strand (the dsin(n*180) term), with mouse y setting how many
+// segments.
 /*
 surface_set_target(pathPreview)
 draw_clear(c_dkgray)

@@ -26,6 +26,58 @@
 //
 // Drawing can stop after any strand and resume next frame with an identical
 // result: doCalc and the clump code draw nothing from the random stream.
+//
+// -----------------------------------------------------------------------------
+// QUICK REFERENCE
+//
+// ENTRY POINTS
+//   previewUpdate()    called by mainCalc (Draw_0) once per frame, before the
+//                      preview surfaces are put on screen
+//   preRandsRefresh()  called by doMainStep (End Step) every step; rebuilds a
+//                      set's pre-random tables when its inputs change
+//
+// PER-SET STATE   pvState[b]
+//   0  up to date - nothing to do
+//   1  needs a full-quality redraw (first draw, settled after an edit, or forced)
+//   2  being edited right now - shown coarse, waiting to settle
+//   3  full-quality redraw in progress (growing in); pvV[b] = next strand
+//   Flow:  edit -> 2 -> (unchanged for pvSettle frames) -> 1 -> 3 -> 0
+//
+// OTHER PER-SET DATA
+//   pvSig[b]        the signature the surface was last drawn from ([] = never)
+//   pvQuiet[b]      frames since the signature last changed
+//   pvCnt[b]        strands the full-quality draw will have
+//   pvW[b]          struct holding this set's mixer cache and clump arrays
+//   pvDrawnStep[b]  point spacing the surface was last drawn with (10/20/40);
+//                   mainCalc sizes the smoothing shader from it
+//   setBBl/r/t/b[b] bounding box of what was drawn, 4096 space, no set offset;
+//                   used by mainCalc (smoothing area) and doHighlighting
+//
+// TUNING (set in Create_0; times are MICROSECONDS, 16667 = one frame at 60 fps)
+//   pvBudget, pvLiveBudget, pvUsPerPoint, pvFullStep, pvSettle, pvChunk -
+//   each is explained where it is set.
+//
+// SCALE  All strand maths is in 4096x4096 map pixels, exactly as the render.
+//   The surfaces are 1024x1024, so positions are multiplied by 0.25 only at
+//   the moment of drawing. The render visits every point (step 1); the
+//   preview visits every 10th (20th or 40th while live) and draws a short
+//   vertical dash at each.
+//
+// MUST STAY IN STEP WITH doMainStep
+//   previewDrawStrands + doCalc are the preview's copy of the render's strand
+//   maths: thickness profile, wave, mixers, taper, noise, clumping, root/tip
+//   tint, fades. A formula changed in one place and not the other makes the
+//   render stop matching the preview. Different ON PURPOSE:
+//     - step size, and dashes instead of sprites
+//     - alpha goes through the previewAlphaK opacity curve, width through
+//       previewWidthK (both explained in Create_0)
+//     - colours are read from setColVarA[b] etc.; the render gets the same
+//       colours through customColVarA etc., swapped in by Step_2
+//   The preview shows the colour-map look only; the other maps have no preview.
+//
+// GPU STATE  doMainStep switches alpha writes OFF every End Step and leaves
+//   them off. previewClearSet and previewDrawStrands switch them back ON
+//   before drawing to a preview surface, and leave them on.
 // =============================================================================
 
 
@@ -48,6 +100,9 @@ function previewPathHash()
 /// A few samples of the pre-random tables are included, so anything that
 /// rebuilds those tables (seeds, spacing, variation ...) is caught even if its
 /// source value is not listed here.
+/// IF A NEW SETTING AFFECTS HOW A STRAND IS DRAWN, ADD IT TO THIS LIST. A value
+/// missing from here can change without the preview noticing: the set keeps
+/// showing the old picture until something else triggers a redraw.
 function previewSetSig(_b, _pathHash)
 {
 	var _vis = ((setToSolo == _b or setToSolo == -1) and set_active[_b] == 0) ? 1 : 0
@@ -77,6 +132,10 @@ function previewSetSig(_b, _pathHash)
 
 
 /// How many strands the preview draws for set _b.
+/// Capped at the preview quality setting maxPreviewStrandsPerSet. The render
+/// is not capped by that setting (only at 100), so it can draw more strands
+/// than the preview shows; the extra ones are the higher strand numbers.
+/// Side effect: writes the instance variable strandSet.
 function previewSetCount(_b)
 {
 	if setCountOverrode[_b] == 1 { strandSet = strandCountOverride[_b] } else { strandSet = strands }
@@ -84,6 +143,8 @@ function previewSetCount(_b)
 }
 
 
+/// Clear set _b's preview surface and zero its bounding box (0,0,0,0 is what
+/// mainCalc reads as "nothing drawn"). Leaves alpha writes switched ON.
 function previewClearSet(_b)
 {
 	surface_set_target(previewSurf[_b])
@@ -169,7 +230,7 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 	var _tSpan2 = _tMax2 - _tMin, _tSpan = _tMax - _tMin
 	var _cStart = clumpStartS, _cRamp = clumpRampS
 	var _lastCol = -1, _lastAlpha = -1
-	var _segLen = _step * 0.25
+	var _segLen = _step * 0.25   // dash length on the 1024 surface: one step of 4096-space points x 0.25
 
 	surface_set_target(previewSurf[_b])
 	// doMainStep leaves alpha writes OFF at the end of every step. The old
@@ -231,8 +292,14 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 			scA *= 0.5
 
 			// Wave - LUT with amp inside the angle
+			// (_yy has no yOffset in it here, which matches the render's
+			//  (yy - yOffset)/100)
 			var _nx = _xx + (_ls[round(_n * _freq * _amp * 4) mod 1440] * (_yy / 100))
 
+			// The next four lines are the render's straggleXX / algFinalX /
+			// algTaper lerps written out as  a + (b - a) * t  (see doMainStep
+			// for what each one does). _mix is indexed by point number _ni,
+			// because the cache was built at this same step.
 			var _sg = _xx + _mix[_ni]
 			_sg += (_setX - _sg) * ((_n / 3000) * _taperK)
 			var _alg = _xx + ((_nx - _xx) * _wavyK)
@@ -246,6 +313,10 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 				      + (_ls[round(_nzP3 + (_n * _nzS3)) mod 1440] * 0.10)) * _nzAmp * _t
 
 			// V1.96 CLUMPING
+			// Leader (mode 1) records its path; follower (mode 2) is pulled
+			// toward it - explained in full in doMainStep. One difference: the
+			// leader path stored here has NO xOffset in it (the render's has),
+			// which is consistent because _fx has none either until it is drawn.
 			if _cMode == 1 { _cArr[@ _cIdx] = _fx; _cIdx++ }
 			else if _cMode == 2
 			{
@@ -262,6 +333,9 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 				}
 			}
 
+			// Skip drawing points that fall off the right or bottom of the map
+			// (4096 space). The maths above still runs for them, so a clump
+			// leader's path is complete even where it is off the canvas.
 			if _fx + _xo < 4098 and _yy + _yo < 4070
 			{
 				// Root / tip tint. Both are constant along most of the strand, so
@@ -293,6 +367,9 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 				var _w = scA * _widthK
 				draw_line_width(_px, _py, _px, _py + _segLen, (_w < 0.5) ? 0.5 : _w)   // V1.92
 
+				// Grow the set's bounding box (4096 space, no set offset).
+				// 0 means "not set yet", so the first point drawn sets the
+				// left and top edges.
 				if _bt == 0  _bt = _yy
 				if _yy < _bt _bt = _yy
 				if _yy > _bb _bb = _yy
@@ -316,6 +393,8 @@ function previewDrawStrands(_b, _step, _count, _vFrom, _deadline)
 
 		v++
 		pvStatStrands++
+		// The time budget is only tested BETWEEN strands, so a call always
+		// finishes the strand it is on and can overrun the deadline by one strand.
 		if _deadline > 0 and get_timer() >= _deadline break
 	} // end strand loop
 	surface_reset_target()
@@ -509,6 +588,8 @@ function previewUpdate()
 // Now each set's inputs are compared each step and only a set whose inputs
 // moved is rebuilt, through updatePreRands' existing single-set branch.
 // -----------------------------------------------------------------------------
+// Every value updatePreRands reads when it builds a set's tables must be in
+// this list. If one is missing, changing it will not rebuild the tables.
 function preRandInputSig(_e)
 {
 	return [

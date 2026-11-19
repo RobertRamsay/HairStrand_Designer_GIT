@@ -1,3 +1,38 @@
+// -----------------------------------------------------------------------------
+// EVENT : Step (Step_0). Runs every frame after Begin Step, the alarms and the
+//         key events, and before End Step (Step_2) and Draw_0.
+// DOES  : the per-set COLOUR model, and three fixes layered over the old Draw_0
+//         colour UI without rewriting it:
+//         1. first-run creation of the colour arrays (they are NOT in Create_0)
+//         2. downgrade path for projects older than format 1.85
+//         3. route a colour edit to the global colour or to the selected set
+//         4. F4 / F5 colour-override resets (the slider half is in Step_1)
+//         5. expose the right colours back to the UI (custom*)
+//         6. click-only colour slot selection
+//         7. colour history hover suppression
+//         8. dragging the 512x512 viewer window over a 4K map
+//
+// THE THREE LAYERS OF COLOUR VARIABLE (the key to this file)
+//   custom*  customColVarA / customColVarB / customRootCol / customTipCol
+//            What the colour UI shows and edits. NOT the truth: it holds the
+//            selected set's colours while a set is selected, otherwise the
+//            globals. Step_2 also swaps it temporarily while rendering.
+//   global*  globalColVarA / B / RootCol / TipCol
+//            The project-wide colours. Used by every set that has no override.
+//   set*     setColVarA[] / setColVarB[] / setRootCol[] / setTipCol[]  (per set)
+//            What is actually drawn for each set. Always filled in.
+//            set*Overrode[] = 1 means that set keeps its own colour when the
+//            global one changes.
+//   colourUiLast* : custom* as they were at the end of last frame's Step_0.
+//            "custom != last" is how an edit made by the picker (Step_2 / Draw_0
+//            of the previous frame) is detected here.
+//   colrBack (background) is global only - it has no per-set version.
+//
+// CALLED BY / DEPENDS ON: Draw_0 and Step_2 write custom* and the *_active
+//   flags; mainCalc() re-applies colourSelectedSlot inside Draw_0; Alarm 1 and
+//   Step_2 reload these arrays after a project load; object g (Begin Step)
+//   snapshots them to trigger the colour autosave.
+// -----------------------------------------------------------------------------
 //fix 17th May 2021 / edite 22nd may 2023 (about 2 years later haha)
 //if maxScale<minScale maxScale=minScale
 
@@ -7,6 +42,9 @@
 // - no selected set: edit the global colour and propagate to non-overridden sets
 // - selected set: edit only that set and mark that colour channel overridden
 // -----------------------------------------------------------------------------
+// One-off initialisation, done lazily on the first Step instead of in Create_0.
+// setColourOverridesReady only exists once this block has run; other code
+// (object g, Alarm 1) checks for it before touching the arrays.
 if !variable_instance_exists(id,"setColourOverridesReady")
 	{
 	globalColVarA=customColVarA
@@ -39,6 +77,19 @@ if !variable_instance_exists(id,"setColourOverridesReady")
 // If an older project/autosave is loaded, deliberately ignore any accidental
 // trailing colour block and treat its four legacy colours as global-only.
 // Once converted in memory, future saves use the current 1.95 project header.
+// (That comment predates 1.96 - the header written below is the 1.96 one.)
+// HOW THE VERSION IS READ: mainS is the first line of the project file, e.g.
+//   "Hair Strand Designer - Project File - Version1.96.0 - ..."
+// "Version" ends at character 45, so string_copy(mainS,46,4) is "1.96". This
+// depends on the header text never changing length before the number. real()
+// throws if those four characters are not a number.
+// This block runs every frame but only does anything while mainS still holds an
+// old header, i.e. on the frames between a legacy load finishing (loading goes
+// false) and Alarm 1 / Step_2 writing the current header back into mainS. In
+// practice Alarm 1 does the same job; this is the safety net.
+// The header string must stay identical in every place that assigns mainS
+// (Create_0, here, Step_2, Alarm 1, object g's Begin Step and S key). When the
+// version number is bumped, change all of them, and check doAutoSave too.
 var _colourProjectVersion=real(string_copy(mainS,46,4))
 if _colourProjectVersion<1.85 and !loading
 	{
@@ -67,6 +118,12 @@ if _colourProjectVersion<1.85 and !loading
 	colourUiLastSet=setSelectedID
 	}
 
+// EDIT ROUTING. The same pattern four times (A, B, root, tip):
+//   custom != colourUiLast  -> the UI changed this colour since last frame
+//   a set is selected       -> store it in that set and flag the set overridden
+//   no set selected         -> store it as the global and copy it to every set
+//                              that is not overridden
+// A set, once overridden, stays overridden until F4 / F5.
 var _colourChanged=0
 
 // Variation A
@@ -177,6 +234,14 @@ if keyboard_check_pressed(vk_f5)
 	_colourChanged=1
 	}
 
+// A colour changed: ask for redraws.
+//   color_GenState 2 -> 1 : the finished 4K colour map is now stale, so mark it
+//                           "wanted, not rendered" (it re-renders on the next G)
+//   colorOnlyUpdate=1     : tells previewUpdate() this forceUpdate is only a
+//                           colour edit, so it need not redraw every set - the
+//                           per-set signatures pick up which sets changed
+//   previewCanvasComplete : legacy flag, still written, no longer read by the
+//                           1.96 preview
 if _colourChanged==1
 	{
 	if color_GenState==2 color_GenState=1
@@ -220,6 +285,11 @@ if !variable_instance_exists(id,"colourSelectedSlot")
 	colourSelectedStoreColor=storeColor
 	}
 
+// The five source swatches are a column at x 1568..1632; the y bands below are
+// background, A, B, root, tip from top to bottom. The same rectangles are
+// repeated in the colour-history block further down - change both together.
+// colourSelectedStoreColor is the "old colour" half of the old/new comparison
+// swatch: the colour the slot had when it was picked.
 var _clickedColourSlot=-1
 if mouse_check_button_pressed(mb_left) and mouse_x>1568 and mouse_x<1632
 	{
@@ -281,6 +351,9 @@ if colourUiLastSet!=setSelectedID
 	if TipCol_active==1  newColor=customTipCol
 	}
 
+// Remember what the UI now shows. Must be the LAST thing done to custom* in this
+// event: anything that changes custom* after this line (the pickers in Step_2,
+// Draw_0) is what next frame's "custom != colourUiLast" test will pick up.
 colourUiLastA=customColVarA
 colourUiLastB=customColVarB
 colourUiLastRoot=customRootCol
@@ -339,6 +412,11 @@ else
 // are commented out. Restore the intended behaviour here without rewriting the
 // large Draw event: drag anywhere inside the 1024x1024 map preview to move the
 // 512x512 source window over the 4096x4096 generated texture.
+// The preview area shows the whole 4096 map at 1/4 size, so mouse*4 is the
+// texture pixel under the cursor; -256 centres the 512 window on it and the
+// clamp keeps the window inside the texture (0..3584).
+// Only in map views (img!=9) and never while rendering.
+// NOTE: the renderer (doMainStep) also writes xxx/yyy per strand while it runs.
 // -----------------------------------------------------------------------------
 if img!=9 and mouse_check_button(mb_left) and mouse_x>=0 and mouse_x<1024 and mouse_y>=0 and mouse_y<1024 and !generating
 	{

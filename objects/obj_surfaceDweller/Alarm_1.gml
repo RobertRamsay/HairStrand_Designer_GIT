@@ -1,6 +1,41 @@
 /// @description V1.85 per-set colour persistence
+// -----------------------------------------------------------------------------
+// EVENT : Alarm 1. The "after the file is closed" half of save and load.
+//         The old S / L key events and the autoload read and write the original
+//         fixed-order part of a project file. Everything added since 1.85 lives
+//         in marker-headed blocks at the END of the file and is handled here, a
+//         frame or two later, once the old code has closed the file.
+//
+// WHO SCHEDULES IT (three independent jobs, each with its own pending flag;
+// the flags may not exist yet, hence the variable_instance_exists tests):
+//   v185ManualSavePending   = 1, alarm[1]=2  by object g (Begin Step, when S is
+//                             pressed, and again in g's own S key event)
+//   v185LoadRecoveryPending = 1, alarm[1]=1  by clearOverrides(), which both the
+//                             L key (KeyPress_76) and doAutoLoad() call
+//   v185AutosavePending     = 1, alarm[1]=2  by object g (Begin Step) when its
+//                             snapshot of the colour arrays stops matching
+// Alarms count down after Begin Step and before the key events, so a value of 2
+// set in Begin Step fires on the NEXT frame, after this frame's S key event has
+// written and closed the file.
+//
+// PROJECT FILE LAYOUT (text, one "name:value;" per line)
+//   line 1        header (mainS) - the version number is read from here
+//   line 2        instruction line (instr)
+//   line 3...     the legacy section, read BY POSITION (see KeyPress_76/83)
+//   then, found BY MARKER TEXT, in any order, each optional:
+//     "V1.85 - Per Set Colour Overrides"   written/read in this event
+//     "V1.96 - Clumping"                   clumpWriteBlock / clumpReadFile
+//     "V1.96 - Set Extras"                 extrasWriteBlock / extrasReadFile
+// Autosave.txt: doAutoSave writes its own colour block (without the four
+// global lines - see the two layouts handled below) and the clump block, and
+// has no Set Extras block because its legacy section already holds those values.
+//
+// WRITES: global* / set* colour arrays and flags, custom*, colourUiLast*,
+//         newColor, mainS, pleaseGen, forceUpdate, colorOnlyUpdate, the
+//         v185Snap* snapshot, plus whatever the clump / extras readers restore.
+// -----------------------------------------------------------------------------
 
-var _manualSaveDone=0
+var _manualSaveDone=0 // 1 once the blocks were appended - triggers an autosave at the end
 
 // -----------------------------------------------------------------------------
 // MANUAL SAVE
@@ -13,6 +48,9 @@ if variable_instance_exists(id,"v185ManualSavePending") and v185ManualSavePendin
 
     // Prefer the path captured at the start of End Step. The file-dialog mouse
     // release may already have caused doAutoSave() to change fileCustom.
+    // (v185ManualSavePath is filled in by canvasCheck() at End Step of the frame
+    // S was pressed. If the save dialog was cancelled fileCustom is "" and
+    // _manualPath stays "", so nothing is appended anywhere.)
     var _manualPath=""
     if variable_instance_exists(id,"v185ManualSavePath") and v185ManualSavePath!="" and file_exists(v185ManualSavePath)
         _manualPath=v185ManualSavePath
@@ -24,6 +62,10 @@ if variable_instance_exists(id,"v185ManualSavePending") and v185ManualSavePendin
         var _saveFile=file_text_open_append(_manualPath)
         if _saveFile!=-1
             {
+            // Marker line. The loaders compare the whole line with ==, so this
+            // text must never change. After it: 4 global lines, then 8 lines for
+            // each of sets 0..10 in exactly this order. The readers below take
+            // the lines by position and ignore the names.
             file_text_write_string(_saveFile,"V1.85 - Per Set Colour Overrides")
             file_text_writeln(_saveFile)
 
@@ -82,6 +124,8 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     {
     v185LoadRecoveryPending=0
 
+    // Which file was just loaded: both loaders set lastFileName=fileCustom
+    // (a project path, or "Autosave.txt" for the autoload).
     var _loadPath=""
     if lastFileName!="" and file_exists(lastFileName)
         _loadPath=lastFileName
@@ -104,6 +148,10 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
                 file_text_readln(_readFile)
                 }
 
+            // Finds the word "Version" and takes the 4 characters after it
+            // ("1.96"), rather than the fixed column 46 used elsewhere, so it
+            // survives a header of a different length. No "Version" in the
+            // header leaves _loadedVersion at 0 = treated as a legacy file.
             var _versionPos=string_pos("Version",_header)
             if _versionPos>0 _loadedVersion=real(string_copy(_header,_versionPos+7,4))
 
@@ -175,9 +223,13 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     // fade / noise overrides and the per-set seeds. A file without the block keeps what the main
     // loader set. pleaseGen (set below) rebuilds the pre-random tables, which
     // read the per-set thickness values.
+    // Both readers open the file again themselves and search for their own
+    // marker, so their order here and their position in the file do not matter.
     extrasReadFile(_loadPath)
 
     // Pre-1.85, or a malformed/missing 1.85 block: legacy colours are global.
+    // customColVarA etc. here are the five legacy colour lines the main loader
+    // read from the top of the file a frame ago.
     if _foundColourBlock==0
         {
         globalColVarA=customColVarA
@@ -239,6 +291,8 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
     if RootCol_active==1 newColor=customRootCol
     if TipCol_active==1  newColor=customTipCol
 
+    // Refresh everything. pleaseGen=true resets the render pointers (renderF /
+    // renderH) in doMainStep; it does not start a render - only G does.
     colorOnlyUpdate=1
     previewCanvasComplete=0
     forceUpdate=1
@@ -249,6 +303,9 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
 
     // Synchronise the Begin-Step snapshot so the restore itself does not cause
     // an unnecessary autosave on the following frame.
+    // (v185Snap* is object g's copy of the colour model; g's Begin Step compares
+    // it with the live arrays every frame and raises v185AutosavePending on any
+    // difference.)
     v185SnapGlobalA=globalColVarA
     v185SnapGlobalB=globalColVarB
     v185SnapGlobalRoot=globalRootCol
@@ -272,6 +329,9 @@ if variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPe
 // DEBOUNCED AUTOSAVE
 // The Begin Step snapshot notices real model changes one frame after Step_0 has
 // committed them. Saving here therefore writes the actual per-set arrays/flags.
+// If a load or save is in progress the flag is left at 1, but the alarm is not
+// re-armed here: the save then waits for the next thing that sets alarm[1], or
+// for the ordinary mouse-release autosave in Step_2 / doMainStep.
 // -----------------------------------------------------------------------------
 if variable_instance_exists(id,"v185AutosavePending") and v185AutosavePending==1
     {

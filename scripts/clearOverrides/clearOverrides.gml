@@ -1,5 +1,40 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// clearOverrides()  -  put every set back to "follow the global sliders"
+//
+// Runs in obj_surfaceDweller's scope. Called only at the start of a project
+// load (KeyPress_76 for the L key, and doAutoLoad), BEFORE the file is parsed,
+// so nothing from the previous project is left in a set the new file does
+// not mention.
+//
+// WHAT IT DOES
+//   - clears every per-set "...Overrode" flag (0 = set follows the global)
+//   - deselects all sets (setSelected[], setSelectedID=-1)
+//   - puts the older per-set values (mixers, taper, wave, variation, spacing)
+//     back to fixed defaults
+//   - copies the CURRENT globals into the V1.91 per-set thickness/fade/noise
+//     values, and resets clumping per set (clumpResetSet)
+//   It does not touch per-set colours (the loaders / Alarm 1 handle those),
+//   per-set seeds, X/Y offsets, the per-set count/length values (only their
+//   flags are cleared) or the globals themselves.
+//
+// LOAD SIDE EFFECT (easy to miss)
+//   When loading==true this also sets v185LoadRecoveryPending and alarm[1]=1.
+//   That is what makes obj_surfaceDweller Alarm 1 re-open the file next frame
+//   and read the marker blocks (V1.85 colours, V1.96 Clumping, V1.96 Set
+//   Extras). So a loader MUST set loading=true before calling this, or those
+//   blocks are never read.
+//
+// ORDER TRAP
+//   During a load this runs before the new globals have been read, so the
+//   V1.91 arrays are seeded from the OLD project's globals. doAutoLoad
+//   re-seeds them itself after reading; KeyPress_76 does it at its end
+//   (v191ManualLoadOk); extrasReadFile does it again if its block is present.
+//
+// Uses the instance variables a and s as loop counters.
+// =============================================================================
 function clearOverrides(){
 
 // Both manual load and autoload set loading=true before calling this function.
@@ -11,6 +46,8 @@ if variable_instance_exists(id,"loading") and loading
 	alarm[1]=1
 	}
 
+// 20 is more than any set count in use: maxSets is 15 and files hold sets 0-10.
+// The mixer flags are cleared in the second loop below.
 for (a=0;a<20;a++)
 	{
 	//
@@ -26,7 +63,7 @@ for (a=0;a<20;a++)
 	setWaveFreqMaxOverrode[a]=0 // has this been overrode?
 	setVariOverrode[a]=0 // has this been overrode?
 	setSpacingOverrode[a]=0 // has this been overrode?
-	setVariOverrode[a]=0
+	setVariOverrode[a]=0 // (repeat of the line two above; harmless)
 	strandYRanRangeOverrode[a]=0
 	
 	// per-set colour override flags
@@ -71,6 +108,8 @@ for (s=0;s<maxSets;s++) // support up to 32 sets maybe greater later on
 	strandSetMixerOffsetAdj3[s]=0
 	
 	//other override values
+	// Fixed numbers, not the current globals (unlike the V1.91 block below).
+	// A V1.5+ project file overwrites all of these straight afterwards.
 	strandSetTaperAdj[s]=10 // default 10
 	strandSetWavynessAdj[s]=16 // default 16
 	strandSetWaveFreqMinAdj[s]=1 // default 1

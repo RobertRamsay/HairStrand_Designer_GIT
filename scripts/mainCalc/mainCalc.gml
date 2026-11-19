@@ -1,5 +1,33 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// mainCalc - PER-FRAME PREVIEW UPDATE + COMPOSITE
+//
+// CALLED BY  obj_surfaceDweller Draw_0, once per frame, while drawing to the
+//            screen (so everything drawn here lands in the 1024x1024 view).
+//
+// WHAT IT DOES, in order
+//   1. Puts back the colour slot the user actually clicked (see first comment).
+//   2. previewUpdate() (previewJob) - redraws whichever of the 11 preview
+//      surfaces are out of date. This is the only place the preview is rebuilt.
+//   3. Composites previewSurf[0..10] to the screen, set 0 first, set 10 on top,
+//      with or without the smoothing shader.
+//   4. Draws the BUSY text and the set highlight boxes (doHighlighting).
+//
+// The strand maths is NOT in here any more - it lives in previewDrawStrands.
+//
+// SCALE  Strand positions are kept in 4096x4096 map pixels. The preview
+//        surfaces are 1024x1024, so anything turned into a preview/screen
+//        position is multiplied by 0.25, and mouse positions are multiplied
+//        by 4 to go the other way.
+//
+// READS  previewSurf[], setBBl/r/t/b[] (per-set bounding box in 4096 space,
+//        without the set offset), xOffset[], yOffset[], pvDrawnStep[], pvSmooth,
+//        pvBusy, img (9 = previewer view), firstPass, colourSelectedSlot.
+// WRITES draw colour, blend mode (bm_normal), the *_active colour flags,
+//        storeColor, newColor. Uses the instance variable n as a loop counter.
+// =============================================================================
 function mainCalc(){
 
 // Draw_0's legacy colour-source block runs before mainCalc() and changes the
@@ -38,10 +66,12 @@ draw_set_color(c_white)
 // full-quality strands in over the following frames within a time budget.
 // It runs BEFORE the composite, so a set is never shown blank for a frame.
 // -----------------------------------------------------------------------
-var _wasFirstPass = firstPass
+var _wasFirstPass = firstPass   // previewUpdate clears firstPass, so remember it for the fade test below
 previewUpdate()
 
 gpu_set_blendmode(bm_normal)
+// While the left button is held over the canvas (dragging a set about) the
+// strands are shown at one-third opacity. Not on the very first frame.
 var alp=1.0
 if img==9 and mouse_x<1024 and mouse_check_button(mb_left) and !_wasFirstPass  alp=0.33
 
@@ -57,6 +87,15 @@ if pvSmooth==1 and img==9
     for(n=0;n<11;n++)
         {
         if setBBr[n]==0 and setBBb[n]==0 continue      // nothing drawn in this set
+        // _dash = length of one preview dash in SCREEN pixels: the point step
+        //         the set was last drawn with (10 full quality, 20 or 40 live)
+        //         x 0.25.
+        // _rad  = shader blend distance, a little over one dash, kept
+        //         between 2.5 and 14 px.
+        // _mg   = margin added round the box so the blur is not cut off.
+        // The box is the set's bounding box moved by its offset and scaled
+        // x 0.25 to screen pixels. The surface part is drawn at the same
+        // position it was cut from, so it lines up with an unfiltered draw.
         var _dash=pvDrawnStep[n]*0.25
         var _rad=clamp(_dash*1.15,2.5,14)
         var _mg=ceil(_rad)+8
@@ -72,6 +111,7 @@ if pvSmooth==1 and img==9
     }
 else
     {
+    // Smoothing off (or not in the previewer view): draw all 11 surfaces whole.
     for(n=0;n<11;n++)
         draw_surface_ext(previewSurf[n],0,0,1,1,0,c_white,alp)
     }
@@ -79,6 +119,9 @@ else
 // BUSY update mode only (the toggle beside SINGLE/MULTI STRAND)
 if pvBusy==1 draw_text(512,512,"BUSY")
 
+// Set outlines, number labels and click-to-select on the canvas.
+// NOTE: setSelected is an ARRAY (one flag per set), so "setSelected!=-1" does
+// not test whether a set is selected. The selected set is setSelectedID.
 if img==9 and setSelected!=-1 doHighlighting()
 
 } // end function

@@ -1,3 +1,29 @@
+// =============================================================================
+// OBJECT sentry_handler  -  crash/error reporting (GMSentry library).
+// NOT USED, and incomplete in this project.
+//
+// Checked: it is in no room and nothing creates or mentions it.
+// It is the handler object of GMSentry 1.0.12, a third-party library that
+// sends error reports to a sentry.io account over HTTP. The library's
+// scripts are NOT in this project: sentry_system_string, sentry_os_string,
+// sentry_os_version_string, sentry_datetime_string, sentry_browser_string and
+// sentry_set_option, all called below, do not exist anywhere else (checked).
+// So this event would stop with an error on its first sentry_ call if the
+// object were ever created.
+//
+// Hair Strand Designer therefore sends no crash reports and makes no network
+// requests through this object. endpoint and the dsn keys below are never
+// given a value.
+//
+// What the three events were for:
+//   Create      one-time set-up: the maps used to track requests, plus
+//               facts about the machine, OS and build that would be attached
+//               to every report ("precompute..."), and default options.
+//   Async HTTP  (Other_62) handles the server's reply to a sent report.
+//   Clean Up    frees the maps and lists made here.
+// "created" records that set-up finished, so Clean Up does not try to free
+// things that were never made (the singleton exit below leaves it false).
+// =============================================================================
 created = false; // tracks creation for cleanup
 
 // Singleton pattern

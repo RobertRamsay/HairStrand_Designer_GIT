@@ -1,3 +1,12 @@
+// obj_test Step. NOT USED (see Create).
+// Three groups: report hooked title-bar commands as they are clicked; keys
+// 1-4 run a command from code; Q/W/E/R enable or disable a command and T
+// shows or hides the taskbar button.
+// Two things to know before ever reviving this:
+//   - the last line is an unconditional game_end(): the program quits on the
+//     first step this object is alive.
+//   - the Q and W labels are swapped: Q toggles MINIMIZE but reports
+//     "Maximize", W toggles MAXIMIZE but reports "Minimize".
 if (window_command_check(window_command_minimize)) trace("Minimize clicked.");
 if (window_command_check(window_command_maximize)) trace("Maximize clicked.");
 if (window_command_check(window_command_restore)) {

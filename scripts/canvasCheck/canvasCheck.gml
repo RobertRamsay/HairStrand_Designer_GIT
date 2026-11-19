@@ -1,5 +1,38 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// canvasCheck - RECREATE ANY SURFACE THAT HAS GONE MISSING
+// (The list of surfaces and who manages them is in setupCanvases.)
+//
+// CALLED BY  Step_2 (End Step) at its very top, and doMainStep - at its top
+//            every step and again at the start of a render. So it runs at
+//            least twice a step; when nothing is missing it costs 22
+//            surface_exists() tests.
+//
+// WHAT IT DOES  For each of the eleven 4096 surfaces and the eleven 1024
+//   preview surfaces: if it no longer exists, create it again and (4096 ones
+//   only) fill it with its idle background. If anything was recreated it sets
+//   forceUpdate=1, which previewUpdate reads as "redraw every set".
+//
+// WHAT IT CANNOT DO  It cannot bring back what was ON a lost surface. A lost
+//   output map comes back blank, and nothing here changes its GenState, so a
+//   map can still read as "generated" (state 2) while its canvas is empty -
+//   press Generate again.
+//
+// ORDER OF EVENTS  Begin Step (Step_1) runs before this and has its own test:
+//   if ANY of the eleven 4096 surfaces is missing it calls killSurfaces(),
+//   which wipes and recreates ALL of them. So for the 4096 surfaces the blocks
+//   below normally find nothing left to do; they matter for a surface lost
+//   later in the same step, and for previewSurf[], which Step_1 does not test.
+//
+// ALPHA  These clears use draw_clear_alpha, but doMainStep leaves alpha writes
+//   switched off (gpu_set_colorwriteenable) from the first End Step onward and
+//   this script does not switch them back on.
+//
+// A recreated preview surface is not cleared here; previewClearSet clears it
+// before it is redrawn.
+// =============================================================================
 function canvasCheck(){
 // canvasCheck: called every Step_2.
 // GML surfaces can be silently purged by the OS (alt-tab, window resize, VRAM pressure).
@@ -18,6 +51,9 @@ function canvasCheck(){
 		}
 
 	// Check and individually recreate each lost surface
+	// Idle backgrounds, the same as killSurfaces: draw_clear_alpha black/0
+	// (RGB mask, mask, ID, colour, depth, frizz), black rectangle (flow,
+	// normal, tNormsurf), 200 grey + aoSprite (AO), white (blurSurface).
 	if !surface_exists(canvas) {
 		canvas = surface_create(surfSize, surfSize)
 		surface_set_target(canvas)
@@ -114,6 +150,8 @@ function canvasCheck(){
 	}
 
 	// If anything was lost, force a full preview redraw so content is regenerated
+	// (previewUpdate turns forceUpdate into "restart every idle or half-drawn
+	// set". This regenerates the PREVIEW only, not the 4096 output maps.)
 	if _surfaceLost {
 		forceUpdate  = 1
 		//previewCanvasComplete = 0

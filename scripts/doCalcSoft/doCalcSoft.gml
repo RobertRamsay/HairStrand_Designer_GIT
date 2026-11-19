@@ -1,5 +1,20 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// doCalcSoft - OLD VARIANT OF doCalc. NOT CALLED FROM ANYWHERE (as of V1.96).
+//
+// It is doCalc as it was before thickness and life moved into the pre-random
+// tables: same inputs (instance variables b = set, v = strand) and same
+// outputs, but it still rolls TWO values live from the random stream:
+//     thicknessBase  (from the global thickVary / maxScale, not per-set)
+//     life           (from the global hairLength / lifeVariant)
+// and it has no noise set-up.
+//
+// Do not wire this back in as it stands. Two live draws per strand would move
+// the global random stream every time the preview ran, and the preview and
+// the render would stop agreeing on strand length and thickness. Use doCalc.
+// =============================================================================
 function doCalcSoft(){
 	
 						

@@ -1,3 +1,19 @@
+// -----------------------------------------------------------------------------
+// hex_to_dec(hexString)  -  hex text to a number, e.g. "FF" gives 255
+//
+// Upper or lower case. An empty string gives 0.
+//
+// Used in two places:
+//   - the project loaders (doAutoLoad, KeyPress_76): each saved colour is six
+//     hex digits RRGGBB; they call this on each pair and feed the three
+//     results to make_color_rgb. A saved colour can be shorter than six digits
+//     (see dec_to_hex_save); the missing pairs arrive here as "" and give 0.
+//   - Draw_0, when a hex colour is typed into the colour panel's hex box.
+//
+// A character that is not 0-9 or A-F is NOT rejected: the total is still
+// shifted, so it counts as a 0 digit ("1G" gives 16). The error line for that
+// case is commented out below.
+// -----------------------------------------------------------------------------
 function hex_to_dec(argument0) {
 	var result=0;
 

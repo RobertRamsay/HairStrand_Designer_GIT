@@ -1,5 +1,42 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// doCalc - PER-STRAND SET-UP FOR THE PREVIEW
+//
+// Loads everything one strand needs before its points are walked: root X,
+// length, wave, start Y, root/tip tint lengths, thickness base and the noise
+// constants. It is the preview's equivalent of the top of the strand loop in
+// doMainStep.
+//
+// CALLED BY  previewDrawStrands (previewJob), once per strand, nowhere else.
+//
+// INPUT      It takes no arguments. It reads the INSTANCE variables
+//              b = set index (0..10)      v = strand index (0..99)
+//            so the caller must set both first.
+//
+// OUTPUT     Instance variables the caller then copies into locals:
+//              xx, setXpos, life, freq, amp, yy, root, rootRange, tip, dpth,
+//              thicknessBase, subSpriteChoice, angChoice,
+//              noiseOn, noiseP1..3, noiseS1..3, noiseAmpS
+//            It also fills the strand*[b,v] arrays (strandXX, strandLife ...).
+//            Those are a record of the last values used; the renderer no longer
+//            reads them - it goes to the preRand tables directly.
+//
+// IT DRAWS NOTHING FROM THE RANDOM STREAM, and must stay that way. Every value
+// comes from the preRand* tables (updatePreRands) or from a seed hash. That is
+// what lets the preview stop after any strand and carry on next frame, and
+// what keeps it from disturbing the renderer. Do not add random(), choose()
+// or irandom() here.
+//
+// MUST STAY IN STEP WITH doMainStep: the xx / setXpos formulas and the whole
+// NOISE block are duplicated in its strand loop. Change one, change the other.
+// One deliberate difference: yy here does NOT include yOffset[b] (the preview
+// adds the set offsets when it draws); doMainStep adds yOffset into yy.
+//
+// The commented-out lines are the old live-random versions of each value, kept
+// for reference.
+// =============================================================================
 function doCalc(){
 	
 
@@ -19,6 +56,11 @@ function doCalc(){
 							// SPACING
 							//xx=(320-(strandSetSpaceAdj[b]*10))+((strandSetSpaceAdj[b]*10)/2)+((random_range(0,strandSetSpaceAdj[b]*10)+(b*((setDistance*2)*5)))) 
 							// new pre rand 1.50
+							// xx      = this strand's root X in 4096 space: a random spot
+							//           (preRandSpacing) inside the set's span.
+							// setXpos = the set's gather point at the right-hand end of
+							//           the span; Taper pulls strands toward it.
+							// Each set is shifted right by b * setDistance * 10.
 							xx=(320-(strandSetSpaceAdj[b]*10))+((strandSetSpaceAdj[b]*10)*0.5)+((preRandSpacing[b,v]+(b*((setDistance*2)*5)))) 
 							strandXX[b,v]=xx
 					
@@ -86,7 +128,7 @@ function doCalc(){
 							root=preRandRoot[b,v]
 							strandRoot[b,v]=root
 							
-							tip=((tipPosition*10))
+							tip=((tipPosition*10)) // length of the tip tint at the far end of the strand
 							
 							// new pre rand 1.50
 							//strandDecision=random(100)/100 // influence of the strand 0.00 - 1.00
@@ -108,6 +150,19 @@ function doCalc(){
 							// index, so the result is seed-driven and repeatable
 							// WITHOUT drawing from the random stream (drawing
 							// from it here would shift every existing project).
+							// noiseP1..3 = start phase of three sine octaves, as
+							//              lut_sin indexes (0..1440 = 0..360 degrees)
+							// noiseS1..3 = index advance per point. _nCyc = 1440/life
+							//              is one full cycle over the strand; the
+							//              octaves run at 1.0x, 2.7x and 6.3x that.
+							// noiseAmpS  = sideways reach in 4096-space pixels;
+							//              grows with the Noise amount and with life.
+							// 12.9898 / 78.233 / 43758.5453 are the usual constants
+							// of the sin-based hash; 37.719, 17.31 and 53.77 are
+							// just offsets that keep sets, seeds and the three
+							// octaves apart. Changing any of them changes the
+							// noise shape of every existing project.
+							// A copy of this block lives in doMainStep.
 							// ------------------------------------------------
 							noiseOn=0
 							noiseP1=0; noiseP2=0; noiseP3=0

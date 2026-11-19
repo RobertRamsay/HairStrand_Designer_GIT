@@ -11,8 +11,31 @@
 //
 // The rectangles are the same ones the click handlers test, so if a button is
 // moved, move its line here too.
+//
+// HOW IT WORKS
+//   smallTip is the text obj_surfaceDweller draws on the bottom bar this frame.
+//   It is cleared every frame in Begin Step (Step_1); after that whoever sets
+//   it first wins. uiTips() is called from Draw_0 in obj_surfaceDweller's
+//   scope, so it goes last.
+//   Coordinates are room pixels in the 1920x1080 room, compared with
+//   mouse_x / mouse_y.
+//
+//   The screen is tested in bands, top to bottom of this file, and each band
+//   RETURNS once the mouse is inside it, whether or not a tip was found. So a
+//   new tip must go inside the band that covers its y (or x) range, or it will
+//   never be reached:
+//     y > 1020                 bottom bar
+//     y < 100                  file buttons and Generate
+//     y < 376, x 1024-1379     map list
+//     y 386-410                flow / ID mode buttons
+//     y 422-953, x 1036-1380   slider rows
+//     anything else            seed readout, then the colour area (x >= 1390)
+//
+// This file only shows text. It never changes a setting.
 // =============================================================================
 
+/// Set the tip to _text if the mouse is inside the rectangle and no tip has
+/// been set yet this frame. Corners are inclusive.
 function uiTip(_x1, _y1, _x2, _y2, _text)
 {
 	if smallTip == "" and point_in_rectangle(mouse_x, mouse_y, _x1, _y1, _x2, _y2) smallTip = _text
@@ -20,9 +43,9 @@ function uiTip(_x1, _y1, _x2, _y2, _text)
 
 function uiTips()
 {
-	if smallTip != "" return
+	if smallTip != "" return               // a more specific tip was already set this frame
 	if firstTime return                    // the splash is up
-	if mouse_x < 0 or mouse_y < 0 return
+	if mouse_x < 0 or mouse_y < 0 return   // mouse is off the window
 
 	var _mx = mouse_x, _my = mouse_y
 
@@ -36,7 +59,7 @@ function uiTips()
 		uiTip(124, 1027, 180, 1051, "Slow mode - previews up to 100 strands per set, the closest match to the render")
 		uiTip(182, 1027, 237, 1051, "Dyna mode - previews up to 30 strands per set")
 		uiTip(261, 1027, 331, 1051, "Strand type - SINGLE draws one clean hair per strand, MULTI uses frayed multi-hair sprites. Generated maps only")
-		if moreHairs == 1
+		if moreHairs == 1 // the curl control only exists in MULTI strand mode
 			uiTip(332, 1027, 346, 1052, "Curl - how much the multi-strand sprites twist along each strand (drag up or down)")
 		uiTip(352, 1027, 421, 1051, "Update mode - LIVE redraws as you drag, then grows the strands in. BUSY waits until you let go (the old behaviour)")
 		uiTip(428, 1027, 497, 1051, "Smoothing - SMOOTH runs a realtime shader that cleans up the stepped preview strands. RAW shows them as drawn. Preview only")
@@ -62,6 +85,12 @@ function uiTips()
 	// ------------------------------------------------------------------
 	// MAP LIST (rows are 27px apart, RGB Mask first)
 	// ------------------------------------------------------------------
+	// Row 0 starts at y 103, rows are 27 px tall: 0 RGB Mask ... 8 Frizz, and
+	// row 9 (346-376) is the Previewer line. Within a row the x position picks
+	// the tip: left of 1240 is the name (click to view), 1347-1370 is the export
+	// icon (same column exportIndividual tests), and on the AO row only,
+	// 1272-1336 is the AO width button. Between those there is no tip.
+	// _names and _what are indexed by row and must stay in the list order.
 	if _my < 376 and _mx >= 1024 and _mx < 1380
 	{
 		var _row = floor((_my - 103) / 27)
@@ -107,6 +136,12 @@ function uiTips()
 	// ------------------------------------------------------------------
 	// SLIDER ROWS (28px apart, Strands first). Clumping has its own tips.
 	// ------------------------------------------------------------------
+	// 19 rows (0-18) from y 422, 28 px each, ending at 954. The case numbers are
+	// row positions on the panel, so inserting a slider row means renumbering
+	// every case below it. Rows 14-16 are Mixer 1-3 (hence _r - 13 for the
+	// number shown); left of x 1190 on those rows is the mixer name, which
+	// opens the curve editor.
+	// _over is added to every slider that can be set per set (not Distance).
 	if _mx >= 1036 and _mx <= 1380 and _my >= 422 and _my < 954
 	{
 		var _r = floor((_my - 422) / 28)
@@ -141,6 +176,7 @@ function uiTips()
 
 	// ------------------------------------------------------------------
 	// SEED
+	// (not inside a band: reached only when none of the bands above returned)
 	// ------------------------------------------------------------------
 	uiTip(1200, 983, 1324, 1012, "Seed - press F1 to type a seed number. With a set selected it changes that set only")
 

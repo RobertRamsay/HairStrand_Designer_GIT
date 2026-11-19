@@ -8,6 +8,8 @@
 // inside 0,0 - 1023,1023 as a drag of the selected set, so a button sitting up
 // there moved sets every time it was pressed. It lives in the bottom info strip
 // instead, centred on the canvas (x 512) and below y 1024.
+// _bl/_bt/_br/_bb below are the button's left/top/right/bottom; the same
+// rectangle is used for drawing, hover and the click test.
 // The strip is already occupied at x 3-340 (speed modes, curl) and x 846-1017
 // (help, blur, UV loader), so 372-652 is the free middle.
 var _bl = 372

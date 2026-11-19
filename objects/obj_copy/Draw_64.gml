@@ -2,6 +2,52 @@
 /// Workflow: select set -> COPY -> select another set -> PASTE.
 /// Global values, current selection and solo state are deliberately not copied.
 
+// =============================================================================
+// OBJECT obj_copy  -  the COPY / PASTE buttons for a strand set.  IN USE.
+//
+// One instance is placed in Room_HSD at (1504, 896); the buttons are drawn
+// around that position, so moving the instance in the room editor moves them.
+// This Draw GUI event is the object's only event: it draws the two buttons
+// and handles their clicks every frame. The object is not persistent, so it
+// does not exist in the mixer editor room.
+//
+// It owns nothing but a clipboard. Every value it copies or pastes belongs to
+// obj_surfaceDweller (_o below).
+//
+// WHAT IS CARRIED OVER  (the value AND its "...Overrode" flag in each case)
+//   strand count, length
+//   taper, waviness, wave freq min/max, variation, spacing, root jitter
+//   mixer 1-3 amount and offset
+//   algorithm influence, taper influence
+//   per-set seed and its override flag
+//   thickness min/max                                  (V1.71)
+//   the four colours: tone A, tone B, root, tip        (V1.85)
+//   tip thick, root thick, thick vary, fade in/out, noise amount/freq (V1.91)
+//   clump amount, count, start, scatter                (V1.96)
+//
+// WHAT IS NOT
+//   xOffset / yOffset (the set's position on the canvas), which set is
+//   selected, and anything global.
+//
+// ADDING A NEW PER-SET VALUE
+//   It must be added in TWO places in this file, or COPY / PASTE will quietly
+//   leave it behind:
+//     1. the copyBuffer struct in the COPY section (value + override flag)
+//     2. the matching "_o.xxx[_dst] = copyBuffer.xxx" lines in PASTE
+//   The names in the struct are the same as the array names on purpose.
+//   A missing line in 1 with a line in 2 crashes on paste (no such struct
+//   member); a line in 1 without 2 does nothing visible.
+//
+// THE CLIPBOARD
+//   copyBuffer lives on this instance only. It is not saved in the project
+//   file and is lost when the program closes or restarts (F6). It holds a
+//   snapshot taken at COPY time, so later edits to the source set do not
+//   change what gets pasted.
+//
+// Mouse position uses the GUI-layer functions (device_mouse_x_to_gui) because
+// this is a Draw GUI event; obj_surfaceDweller's own UI uses mouse_x/mouse_y.
+// =============================================================================
+
 var _o = instance_find(obj_surfaceDweller, 0)
 if _o == noone
     {
@@ -28,6 +74,9 @@ var _my = device_mouse_y_to_gui(0)
 var _selected = _o.setSelectedID
 
 // Compact panel around the original obj_copy room position.
+// With the instance at (1504, 896): COPY is x 1436-1498, PASTE is x 1510-1580,
+// both y 876-901. These rectangles are used for the drawing and the click
+// test alike. The hint text sits 5 px above them, the confirmation 22 px above.
 var _copyL = x - 68
 var _copyR = x - 6
 var _pasteL = x + 6
@@ -61,6 +110,8 @@ draw_rectangle(_copyL, _top, _copyR, _bottom, false)
 draw_rectangle(_pasteL, _top, _pasteR, _bottom, false)
 
 // Button outlines / hover state.
+// Dim (55,55,55) = the button cannot be used right now: COPY needs a selected
+// set, PASTE needs a selected set AND something already copied.
 draw_set_color((_selected != -1) ? c_gray : make_color_rgb(55,55,55))
 if _copyHover and _selected != -1 draw_set_color(c_white)
 draw_rectangle(_copyL, _top, _copyR, _bottom, true)
@@ -79,6 +130,10 @@ draw_text(_pasteL + 10, y, "PASTE")
 // -----------------------------------------------------------------------------
 // COPY
 // Snapshot all user-facing per-set values plus their override flags.
+// A new per-set value needs a line here AND a line in PASTE below.
+// The values are read whether or not the flag is set, so a set that is
+// following the globals copies its stored per-set numbers and its 0 flags;
+// pasted, the destination then follows the globals too.
 // ----------------------------------------------------------------------------
 if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
     {
@@ -173,15 +228,24 @@ if _copyHover and mouse_check_button_pressed(mb_left) and _selected != -1
     }
 
     copyBufferReady = 1
-    copySourceSet = _src
-    copyMsg = "Copied Set " + string(_src + 1)
-    copyMsgTimer = 120
+    copySourceSet = _src // only used for the on-screen text
+    copyMsg = "Copied Set " + string(_src + 1) // sets are shown 1-based, stored 0-based
+    copyMsgTimer = 120 // frames the confirmation stays up
     }
 
 // -----------------------------------------------------------------------------
 // PASTE
 // Replace the currently selected set with the saved set state.
 // Override flags are copied too, preserving global-following behaviour.
+// Every line here must have a matching member in the copyBuffer struct above.
+// After the values are written, four follow-up steps are needed or the paste
+// appears not to work:
+//   1. colour picker sync (custom* and colourUiLast*)
+//   2. close any open number box (reset_textBoxes)
+//   3. mark generated maps as out of date (*_GenState 2 -> 1)
+//   4. force the preview to rebuild (the flags at the end)
+// Pasting onto the same set it was copied from is allowed and restores the
+// set to how it was at COPY time.
 // ----------------------------------------------------------------------------
 if _pasteHover and mouse_check_button_pressed(mb_left)
 and copyBufferReady and _selected != -1
@@ -300,6 +364,9 @@ and copyBufferReady and _selected != -1
         }
 
     // A full set paste can affect every generated map, not only colour.
+    // 2 = generated, 1 = ticked but needs generating. Maps that are off (0)
+    // stay off. The 4096 maps are not regenerated here; the user presses
+    // Generate again.
     if _o.rgbMask_GenState == 2 _o.rgbMask_GenState = 1
     if _o.norm_GenState == 2 _o.norm_GenState = 1
     if _o.mask_GenState == 2 _o.mask_GenState = 1
@@ -310,6 +377,9 @@ and copyBufferReady and _selected != -1
     if _o.ao_GenState == 2 _o.ao_GenState = 1
     if _o.frizz_GenState == 2 _o.frizz_GenState = 1
 
+    // Ask obj_surfaceDweller for a full preview rebuild. colorOnlyUpdate = 0
+    // because a paste can change shape as well as colour; the rest are its own
+    // "something changed, recalculate" flags, all raised to be safe.
     _o.previewCanvasComplete = 0
     _o.colorOnlyUpdate = 0
     _o.forceUpdate = 1

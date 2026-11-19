@@ -1,3 +1,25 @@
+// =============================================================================
+// killSurfaces - FREE ALL ELEVEN 4096 SURFACES AND RECREATE THEM BLANK
+// (The list of surfaces and who manages them is in setupCanvases.)
+//
+// CALLED BY  Step_1 (Begin Step) when ANY one of the eleven is found missing,
+//            and CleanUp_0 when obj_surfaceDweller is destroyed.
+//
+// EFFECT  Every generated map is wiped, not just the missing one. GenStates
+//   are not touched here, so a map can still read as "generated" (state 2)
+//   over a blank canvas until Generate is pressed again.
+//   The preview surfaces (previewSurf[]) are NOT touched - canvasCheck looks
+//   after those.
+//
+// It always RECREATES after freeing, including when called from CleanUp_0,
+// so after the clean-up call eleven new 4096 surfaces exist again.
+//
+// Reloads ao.png as aoSprite (if the file exists) and stamps it on the AO
+// canvas, the same as setupCanvases.
+//
+// 11 surfaces x 4096 x 4096 x 4 bytes is about 740 MB of video memory, which
+// is why everything is freed and flushed before anything is created.
+// =============================================================================
 function killSurfaces() {
 // killSurfaces: safely free all render canvases then recreate them clean.
 // Always free BEFORE recreating - never create without freeing first.
@@ -32,6 +54,7 @@ function killSurfaces() {
 	tNormsurf    = surface_create(surfSize, surfSize)
 
 	// Clear each canvas to its correct background colour
+	// (the idle backgrounds - doMainStep paints the real ones at render start)
 	surface_set_target(canvas)
 		draw_clear_alpha(c_black, 0)
 	surface_reset_target()

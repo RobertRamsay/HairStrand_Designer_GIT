@@ -1,3 +1,18 @@
+// =============================================================================
+// OBJECT obj_global_controller  -  room-cycling controller from a shader demo.
+// NOT USED (leftover).
+//
+// Checked: it is in no room and nothing creates or mentions it.
+// It belongs to a shader showcase project, not to Hair Strand Designer: it
+// checks that 19 demo shaders compiled, shows the FPS and room name, and
+// moves to the next room on Enter.
+//
+// Most of the shaders named below are NOT in this project. Only
+// shd_gaussian_horizontal and shd_gaussian_vertical exist here (the project's
+// shaders are those two, shd_normal and shd_previewSmooth). So this event
+// would fail if the object were ever created.
+// Do not place it in a room.
+// =============================================================================
 
 if !shader_is_compiled(shd_bright_contrast) show_message("Your hardware doesn\'t support shader - shd_bright_contrast");
 if !shader_is_compiled(shd_emboss) show_message("Your hardware doesn\'t support shader - shd_emboss");

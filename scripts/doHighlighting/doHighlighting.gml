@@ -1,5 +1,38 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+// =============================================================================
+// doHighlighting - SET BOXES, NUMBER LABELS AND CLICK-TO-SELECT ON THE CANVAS
+//
+// CALLED BY  mainCalc, every frame in the previewer view (img 9), after the
+//            preview surfaces have been composited - so it draws on top.
+//
+// For each visible set it takes the bounding box that previewDrawStrands
+// cached while drawing (setBBl/r/t/b, in 4096 space WITHOUT the set offset),
+// adds xOffset/yOffset and multiplies by 0.25 to get screen pixels, then:
+//   - hovering a set's box (mouse up): outline + its number (b+1)
+//   - left click in the box: that set becomes the selected set
+//   - the selected set: double outline, orange, or lime while being dragged
+//   - hovering a set's number button on the bottom bar (setHovveredID, set by
+//     checkAndOffset): shows that set's number label on the canvas
+//
+// It no longer calculates any strands. If a box does not match the strands,
+// look at where previewDrawStrands grows the box, not here.
+//
+// READS   setBB*[], xOffset[], yOffset[], setToSolo, setHovveredID, clickedID,
+//         moving, firstTime, strands / strandCountOverride, maxPreviewStrandsPerSet
+// WRITES  setSelected[], setSelectedID, setToSolo, numSel, hairLength, strandSet,
+//         leftmost/rightmost/topmost/bottommost, previewCanvasComplete (=1),
+//         seedVal, and the draw colour / alignment (left as set).
+//
+// SIDE EFFECT ON THE RANDOM STREAM: with dance==0 (the default) this re-seeds
+// the global stream from seedVal every frame it runs. Nothing in the preview or
+// render depends on the stream position any more, but any NEW code that calls
+// random() between frames will be reset by this.
+//
+// numSel stops more than one set reacting to the mouse in a frame: the first
+// box (lowest set number) under the mouse wins.
+// =============================================================================
 function doHighlighting(){
 #region
 if img==9 
@@ -54,10 +87,14 @@ if img==9
 							if clamp(strandSet,0,maxPreviewStrandsPerSet)>0 and !instance_exists(obj_pathEdit)
 								{
 							
-								var xpos=(_hlXX+xOffset[b])/4
+								var xpos=(_hlXX+xOffset[b])/4   // screen X of the last strand drawn in this set
 								if xpos< 1024 and firstTime==0
 									{
 										
+									// Number label when the set's button on the bottom bar is hovered.
+									// NOTE: the label Y uses (topmost+bottommost)/4 and then x0.25
+									// again, where the box itself uses x0.25 once - so the label
+									// sits near the top of the box, not at its centre.
 									if setHovveredID==b //and //b==setSelectedID
 										{
 										draw_set_color(c_black)
@@ -91,9 +128,14 @@ if img==9
 														setSelected[nC]=0 //deactivate all
 													}			
 												setSelectedID=b;setSelected[b]=true// move singular
+												// NOTE: this assigns to b, the FOR-LOOP COUNTER, so
+												// the loop carries on from clickedID+1 after a click
+												// (from set 0 again if clickedID is -1). numSel is
+												// set just below, so no second set can be selected.
 												b=clickedID
 											}
 											
+											// Solo: left held + right click, or Alt+Q, isolates set clickedID
 											if (mouse_check_button(mb_left)  and mouse_check_button_pressed(mb_right) and clickedID!=-1)
 											or (keyboard_check(vk_alt) and keyboard_check_pressed(ord("Q")) and clickedID!=-1)
 												 {setSelectedID=clickedID;setSelected[clickedID]=true;setToSolo=clickedID  }

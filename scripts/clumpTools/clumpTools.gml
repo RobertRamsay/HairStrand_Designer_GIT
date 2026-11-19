@@ -13,6 +13,36 @@
 // looseness come from the pre-random tables and a seed hash, so existing
 // projects, the preview and the final render all stay in step.
 // AMOUNT 0 turns the whole thing off at zero cost.
+//
+// WHAT IS IN THIS FILE
+//   clumpPrepareSet, mixerCacheBuild   per-set preparation, called by BOTH
+//       previewSetBegin (previewJob) and doMainStep before a set is drawn.
+//       The pull itself is applied in the point loops of previewDrawStrands
+//       and doMainStep - those two copies must stay identical.
+//   clumpGet*/clumpSet*, clumpApply, clumpResetSet, clumpSyncSets,
+//   uiClumpSlider                      the four clump sliders (UI side)
+//   clumpWriteBlock, clumpReadFile     the clump block in project files
+//
+// VALUES  All four sliders run 0..40. Globals: clumpAmt, clumpCount,
+//   clumpStart, clumpScatter. Per set: setClump*Adj[s] (the value in use) and
+//   setClump*Overrode[s] (1 = this set has its own value and no longer
+//   follows the global).
+//
+// OUTPUT OF clumpPrepareSet (instance variables, read by the point loops)
+//   clumpOnS                 1 if clumping applies to this set
+//   clumpAmtS                pull strength 0..1 (Amount / 40)
+//   clumpStartS, clumpRampS  where along the strand (0..0.9) the pull starts,
+//                            and 1/(remaining length) to turn that into 0..1
+//   clumpBin[v]              which clump strand v belongs to
+//   clumpIsLead[v]           1 if strand v leads its clump
+//   clumpStick[v]            0..1, how firmly strand v follows its leader
+//   clumpLeadX[bin][i]       the leader's X at each of its points - filled in
+//                            by the point loop while the leader is drawn
+//   clumpLeadLen/Life/Step[bin]   points stored, leader length, leader step;
+//                            also filled in by the point loop
+//
+// COPY-ON-WRITE  The preview keeps references to these arrays in pvW[b] as
+//   well as in the instance variables, so it must write to them with [@ ].
 // =============================================================================
 
 
@@ -75,6 +105,12 @@ function clumpPrepareSet(_b, _count, _leadSize)
 /// yet they were sampled with three path_get_x() calls at every point of every
 /// strand. Sample them once per set into mixCacheX[n div _step] instead.
 /// Same expressions as before, so the result is identical.
+/// _step: 1 for the render, 10/20/40 for the preview. _lvS: the set's Variation.
+/// Each path is read at a position that advances with distance down the strand;
+/// the Mixer Offset slider stretches that (4096 + offset*100 points = the whole
+/// path). Each path's X is scaled by its Mixer amount, the three are blended,
+/// and the result is divided by Variation and multiplied by 8.
+/// NOTE: _lvS is a divisor. A set with Variation 0 divides by zero here.
 function mixerCacheBuild(_b, _step, _lvS)
 {
 	var _d1 = 4096 + (strandSetMixerOffsetAdj1[_b] * 100)
@@ -281,6 +317,13 @@ function clumpWriteBlock(_f)
 
 /// Reset clumping to defaults, then restore it from _path if the file has a
 /// clump block. Returns true if a block was found.
+/// Line format, as written by clumpWriteBlock:
+///   clumpAmt:12;                       a global
+///   clumpO<k>_<s>:1;  clumpV<k>_<s>:7; override flag / value for parameter k
+///                                      (0 Amount, 1 Count, 2 Start, 3 Scatter)
+///                                      of set s
+///   clumpEnd:1;                        end of block
+/// Unknown keys are skipped, and a line with no colon ends the block.
 function clumpReadFile(_path)
 {
 	clumpAmt = 0; clumpCount = 6; clumpStart = 8; clumpScatter = 10

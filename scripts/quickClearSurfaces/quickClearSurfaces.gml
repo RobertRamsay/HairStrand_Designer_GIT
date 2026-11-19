@@ -1,3 +1,12 @@
+// =============================================================================
+// quickClearSurfaces - EMPTY. THIS FUNCTION DOES NOTHING, AND NOTHING CALLS IT.
+//
+// The whole body is inside the comment block below. It freed the canvas of
+// every map that was about to be regenerated (GenState 1, while 'generating').
+// Today each map's background is repainted at render start instead, in
+// doMainStep (MAP INITIALIZATION), without freeing the surface.
+// Kept for reference only.
+// =============================================================================
 function quickClearSurfaces() {
 /*
 	if rgbMask_GenState==1 and generating==true {surface_free(canvas)}//;canvas=surface_create(4096,4096)} // out texture surface

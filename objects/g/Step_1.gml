@@ -1,3 +1,37 @@
+// =============================================================================
+// g : Begin Step  -  save/autosave bookkeeping for obj_surfaceDweller
+//
+// Runs every frame, before any Key Press or Step event. Everything inside
+// "with (obj_surfaceDweller)" reads and writes obj_surfaceDweller's variables,
+// not g's. Three parts:
+//
+//   A. canDrawUI: once the splash is gone, make sure the main UI is drawn.
+//
+//   B. MANUAL SAVE LATCH: on the frame S is pressed, set
+//      v185ManualSavePending and alarm[1]=2 so Alarm 1 appends the marker
+//      blocks (V1.85 colours, V1.96 Clumping, V1.96 Set Extras) after the old
+//      S-key saver has closed the file. See g KeyPress_83 for what each flag
+//      means.
+//
+//   C. COLOUR-CHANGE AUTOSAVE: keeps a copy ("snapshot", the v185Snap*
+//      variables) of the four global colours and, for sets 0-10, the four
+//      per-set colours and their four override flags. Each frame it compares
+//      the live values with the copy. Any difference = the user changed a
+//      colour last frame: refresh the copy, set v185AutosavePending and
+//      alarm[1]=2. Alarm 1 then calls doAutoSave().
+//      The ordinary autosave fires on mouse release; this one fires on the
+//      values themselves, so a colour change is saved no matter which event
+//      handled the release first.
+//
+// WHY alarm[1]=2 AND NOT 1
+//   Alarms count down after Begin Step in the same frame. 1 would fire this
+//   frame, before the S-key event has written the file. 2 fires next frame.
+//
+// IF YOU ADD ANOTHER PER-SET COLOUR-LIKE VALUE that should autosave when it
+// changes without a mouse release, it needs a snapshot variable in all four
+// places: the first-time copy, the compare, the refresh (all below), and the
+// re-sync at the end of the load section of obj_surfaceDweller Alarm_1.
+// =============================================================================
 // Begin Step runs before the legacy Key Press events.
 // Latch manual Save before KeyPress_83 forcibly releases S, debounce autosave
 // from the real per-set colour state, and keep the normal UI visible after intro.
@@ -31,6 +65,9 @@ if instance_exists(obj_surfaceDweller)
             // Keep a snapshot of the authoritative colour model. When Step_0 changes
             // a global/per-set colour or override flag, schedule one autosave shortly
             // after the values settle. This avoids depending on mouse-release order.
+            // First frame after the colour arrays exist: just take the copy,
+            // nothing to compare against yet. (Inside the "with", id is
+            // obj_surfaceDweller, so these variables are created on it.)
             if !variable_instance_exists(id,"v185ColourSnapshotReady")
                 {
                 v185SnapGlobalA=globalColVarA
@@ -55,6 +92,9 @@ if instance_exists(obj_surfaceDweller)
             else
                 {
                 // A project load owns Alarm 1 until its recovery pass has finished.
+                // While any save or load is in flight the compare is skipped, so
+                // values changing as a file is read do not count as user edits.
+                // (Alarm 1 re-syncs the snapshot itself at the end of a load.)
                 var _ioBusy =
                     (variable_instance_exists(id,"v185LoadRecoveryPending") and v185LoadRecoveryPending==1)
                     or (variable_instance_exists(id,"v185ManualSavePending") and v185ManualSavePending==1)
@@ -83,6 +123,10 @@ if instance_exists(obj_surfaceDweller)
                             }
                         }
 
+                    // Refresh the copy straight away so one edit schedules one
+                    // autosave, not one per frame. While a colour is being dragged
+                    // this re-arms alarm[1]=2 every frame the value moves; Alarm 1
+                    // itself waits until no other save/load is running.
                     if _colourStateChanged
                         {
                         v185SnapGlobalA=globalColVarA

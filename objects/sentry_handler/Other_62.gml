@@ -1,3 +1,13 @@
+// sentry_handler Async HTTP (Other_62). NOT USED (the object is never created;
+// see Create). Runs when any HTTP request gets a response. async_load is
+// GameMaker's map describing that response.
+// requestMap links GameMaker's request id to the report's uuid, so replies to
+// requests this object did not send are ignored. Outcomes:
+//   HTTP 200      -> store the reply in resultMap; delete the local backup
+//                    file ("gmsentry_" + uuid) if backup_autoclean is on
+//   status 1      -> still downloading, wait
+//   anything else -> store "<http status> - <reply text>" in errorMap
+//   no status     -> print the raw response to the debug console
 var asyncId = ds_map_find_value(async_load,"id")
 var requestUuid = ds_map_find_value(requestMap, string(asyncId));
 

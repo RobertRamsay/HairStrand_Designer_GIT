@@ -1,3 +1,8 @@
+//
+// Passthrough vertex shader for shd_gaussian_horizontal: transforms the vertex
+// and hands the texture coordinate to the fragment shader. No per-vertex
+// colour is passed on, so the draw call's blend colour and alpha are ignored.
+//
 attribute vec3 in_Position;
 attribute vec4 in_Colour;
 attribute vec2 in_TextureCoord;
