@@ -60,6 +60,7 @@ Written for version 1.96 (November 2026).
 | The 4096 surfaces: creation, loss, recovery | `scripts/setupCanvases`, `canvasCheck`, `killSurfaces` |
 | The mixer curve editor | `objects/obj_pathEdit` |
 | The panel artwork, logo, buttons, help panel image | `tools/ui_art/*.py` (run from the project root) |
+| Claude / MCP control (V1.97) | `objects/obj_mcp` (the link), `scripts/mcpCommands` (the commands), `tools/hsd-mcp` (the Node bridge and its README) |
 
 ## 3. The final render (`doMainStep`)
 
@@ -141,7 +142,22 @@ per set, to `obj_copy` in both the copy struct and the paste, and to
 - **The surface checks reset nothing else.** After a surface is lost and
   recreated a map can still read "generated" over a blank canvas; regenerate.
 
-## 7. Building and testing without the IDE
+## 7. MCP control (V1.97)
+
+Claude Code can drive the running app through `tools/hsd-mcp/bridge.mjs`; see
+the README there. In the app:
+
+- `obj_mcp` (created by `obj_surfaceDweller`'s Create, persistent) owns the
+  loopback connection. It is off until Ctrl+Shift+F10 or the `-mcp` launch
+  option, and draws a small MCP tab at the top of the preview while on.
+- `scripts/mcpCommands` holds every command. They write the same variables the
+  sliders and buttons write, then set `pleaseGen` and autosave, so nothing else
+  in the program needs to know MCP exists.
+- The only hooks elsewhere: `mcpFileOverride` (Create_0), read by the S and L
+  key events instead of their file dialogs.
+- A new slider needs one line in `mcp_param_table()` to be reachable over MCP.
+
+## 8. Building and testing without the IDE
 
 Runtime: `C:\ProgramData\GameMakerStudio2-LTS2026\Cache\runtimes\runtime-2026.0.0.23`.
 
@@ -155,7 +171,7 @@ Runtime: `C:\ProgramData\GameMakerStudio2-LTS2026\Cache\runtimes\runtime-2026.0.
 - `python tools/check_comments_only.py` proves an edit changed comments only
   (it compares against the last commit with the comments stripped out).
 
-## 8. Leftovers you can ignore
+## 9. Leftovers you can ignore
 
 These are in the project but nothing creates or reaches them:
 `obj_save`, `obj_test`, `sentry_handler`, `obj_FS_Windowed`, `obj_background`,
@@ -165,7 +181,7 @@ These are in the project but nothing creates or reaches them:
 `analise_HexToDec`, `charToUnicode`, `trace`, `window_command_toggle`.
 `resetSurfaces` and `quickClearSurfaces` have empty bodies.
 
-## 9. Things noticed while commenting (not fixed)
+## 10. Things noticed while commenting (not fixed)
 
 Each has a `NOTE` comment beside it in the source. None is new; they are listed
 so they are not a surprise later. See `KNOWN_ODDITIES.md` for the full list.

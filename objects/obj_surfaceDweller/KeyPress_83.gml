@@ -55,7 +55,10 @@ if canSave and demoMode==0
 		//	instance_create_depth(0,0,-1000,obj_save)
 			
 			
-			fileCustom = get_save_filename_ext("HSD_Project|*.txt", prjName,"","Please save to a directory outside of the Application.");
+			// V1.97 - a save requested over MCP (hsd_save_project, obj_mcp)
+			// supplies the path in mcpFileOverride instead of the dialog.
+			if mcpFileOverride != "" fileCustom = mcpFileOverride
+			else fileCustom = get_save_filename_ext("HSD_Project|*.txt", prjName,"","Please save to a directory outside of the Application.");
 			
 
 		if fileCustom != ""

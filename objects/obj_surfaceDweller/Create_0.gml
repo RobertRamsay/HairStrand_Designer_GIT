@@ -1533,3 +1533,14 @@ updatePreRands(-1) //-1 is all
 	dynamicRes=0
 			
 			
+
+
+// -----------------------------------------------------------------------------
+// V1.97 - MCP LINK
+// obj_mcp lets Claude Code drive the app (scripts/mcpCommands, tools/hsd-mcp).
+// It is off until switched on (Ctrl+Shift+F10 or the -mcp launch option).
+// mcpFileOverride: a project path handed to the S / L key events by an MCP
+// save or load, used instead of their file dialog. "" = show the dialog.
+// -----------------------------------------------------------------------------
+mcpFileOverride = ""
+if !instance_exists(obj_mcp) instance_create_depth(0, 0, -2000, obj_mcp)

@@ -58,7 +58,10 @@ if canLoad
 			// whatever it held before and the else-branch at the bottom runs.
 			// theFile starts as "" in Create_0, which is what the != "" test
 			// below is really checking on a first load.
-			fileCustom = get_open_filename_ext("HSD_Project|*.txt", prjName,"","Please load a HSD file.");
+			// V1.97 - a load requested over MCP (hsd_load_project, obj_mcp)
+			// supplies the path in mcpFileOverride instead of the dialog.
+			if mcpFileOverride != "" fileCustom = mcpFileOverride
+			else fileCustom = get_open_filename_ext("HSD_Project|*.txt", prjName,"","Please load a HSD file.");
 		if fileCustom!="" theFile = file_text_open_read(fileCustom);
 
 		if theFile != ""  and fileCustom!=""//okay to open
