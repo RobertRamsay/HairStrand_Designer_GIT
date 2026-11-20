@@ -5,10 +5,17 @@
 // 2. One step of a map export, if one is running (mcp_export_step writes one
 //    4096 PNG per frame, so no frame is long enough to trip the heartbeat).
 // 3. While off or disconnected: retry every few seconds.
-// 4. Otherwise take ONE queued line: check the pairing key, answer events
-//    (ready / heartbeat) or run the command through mcp_dispatch() and send
-//    the reply. A resent request (same id and text) gets the same reply.
+// 4. Otherwise go through the queued lines: check the pairing key, answer
+//    every event (ready / heartbeat), and run at most ONE command a frame
+//    through mcp_dispatch(). A resent request (same id and text) gets the
+//    same reply. Events are all answered so that heartbeats do not pile up
+//    behind slow frames (a render frame or a 4096 PNG write can take seconds).
 // =============================================================================
+
+// How long since the last Step: used below so a long frame is not taken for
+// a silent bridge. Updated every frame, whatever state the link is in.
+var _gap = current_time - mcp_prev_step;
+mcp_prev_step = current_time;
 
 if (keyboard_check(vk_control) && keyboard_check(vk_shift) && keyboard_check_pressed(vk_f10)) mcp_toggle();
 
@@ -21,24 +28,27 @@ if (mcp_state == "off") {
 	exit;
 }
 
-// Raw TCP may not report a disconnect: the bridge sends a heartbeat every 2 s.
+// Raw TCP may not report a disconnect: the bridge sends a heartbeat every 2 s,
+// so 15 s of silence means the bridge is gone. A long frame of our own (a
+// render step or a 4096 PNG write can block for many seconds) is not silence
+// from the bridge, so the time it took is not counted.
+if (_gap > 1000) mcp_last_rx += _gap;
 if (current_time - mcp_last_rx > 15000) {
 	mcp_stop(mcp_state == "ready" ? "TIMED OUT" : "");
 	exit;
 }
-if (array_length(mcp_queue) == 0) exit;
-
-var _wire = mcp_queue[0];
-array_delete(mcp_queue, 0, 1);
-var _msg;
-try { _msg = json_parse(_wire); }
-catch (_parse_error) { mcp_stop("BAD JSON"); exit; }
-if (!is_struct(_msg) || !variable_struct_exists(_msg, "token") || !is_string(_msg.token) || _msg.token != mcp_token) {
-	mcp_stop("KEY MISMATCH"); exit;
-}
-mcp_last_rx = current_time;
-
-if (variable_struct_exists(_msg, "event")) {
+var _wire = "";
+var _msg = undefined;
+while (array_length(mcp_queue) > 0) {
+	_wire = mcp_queue[0];
+	array_delete(mcp_queue, 0, 1);
+	try { _msg = json_parse(_wire); }
+	catch (_parse_error) { mcp_stop("BAD JSON"); exit; }
+	if (!is_struct(_msg) || !variable_struct_exists(_msg, "token") || !is_string(_msg.token) || _msg.token != mcp_token) {
+		mcp_stop("KEY MISMATCH"); exit;
+	}
+	mcp_last_rx = current_time;
+	if (!variable_struct_exists(_msg, "event")) break;      // a command: run it below
 	if (_msg.event == "ready" && mcp_state == "handshake" && variable_struct_exists(_msg, "protocol") && _msg.protocol == 1) {
 		mcp_state = "ready";
 		mcp_status = "LINKED";
@@ -46,10 +56,11 @@ if (variable_struct_exists(_msg, "event")) {
 	} else if (_msg.event == "heartbeat" && mcp_state == "ready") {
 		mcp_send(json_stringify({ event : "heartbeat" }));
 	} else {
-		mcp_stop("BAD EVENT");
+		mcp_stop("BAD EVENT"); exit;
 	}
-	exit;
+	_msg = undefined;
 }
+if (is_undefined(_msg)) exit;
 if (mcp_state != "ready") { mcp_stop("NOT PAIRED"); exit; }
 if (!variable_struct_exists(_msg, "id") || !is_real(_msg.id) || _msg.id < 1 || _msg.id > 1000000000 || _msg.id != floor(_msg.id)
 	|| !variable_struct_exists(_msg, "method") || !is_string(_msg.method)

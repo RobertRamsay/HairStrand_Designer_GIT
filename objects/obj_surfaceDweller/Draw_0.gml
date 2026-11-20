@@ -572,6 +572,9 @@ if sprite_exists(ghostSprite) and !mouse_check_button(mb_right)
 // It must run BEFORE the slider blocks: edits made by the sliders this frame
 // are picked up by previewUpdate() on the next frame.
 mainCalc() // === MAIN STRAND CALCULATION ===
+// V1.97 - remembered for BACK TO THE PREVIEWER (before GEN STATE SYNC): a
+// change made in this event sets pleaseGen, and that is how it is noticed.
+var _pleaseGenBefore = pleaseGen
 
 // V1.91 - localUpdateSet describes the per-set edit made on the PREVIOUS frame.
 // mainCalc() has just consumed it, and the slider blocks further down this event
@@ -4705,6 +4708,18 @@ if mouse_check_button_pressed(mb_left) and mouse_y >= 389 and mouse_y <= 408
 // ============================================================
 #region
 
+// V1.97 - BACK TO THE PREVIEWER. Moving a slider (or typing a value, picking
+// a colour, rolling the dice: anything that marks the maps stale) while a
+// rendered map is on view (img 0-8) switches back to the Previewer, as the P
+// key does, so the change can be seen. Not during a render.
+// The slider test also catches a drag that continues after the maps were
+// already stale (pleaseGen already true, so it does not change this frame).
+if img != 9 and !doOnce and ((pleaseGen and !_pleaseGenBefore) or (mouse_check_button(mb_left) and uiSliderHeld()))
+{
+	currentMapPreview = img
+	img = 9
+}
+
 // While pleaseGen is set, every map's state is forced back to its tick-box
 // value: generated maps (2) become 1 (enabled, not generated), disabled stay
 // 0. This is what makes the export icons disappear and the "Not generated or
@@ -5234,8 +5249,8 @@ draw_set_font(regFont)
 // Small coloured dots that show which sets override which slider row.
 // uiExtras is set to 1 in Create_0 (a switch to turn all of this off).
 // For each set (scan = 0..10, the 11 sets that have buttons) up to two dots:
-//  - a 2px dot on the slider row itself, left of the track, at
-//    x = 1120 + 7*set, y = the row centre (436 + 28*row, give or take 1px).
+//  - a 2px dot on the slider row itself, left of the track, on the painted
+//    dot for that set (see _dotX / _dotY below).
 //    Reading along a row shows which sets override it.
 //  - for seven of them only (Strands, Length, Spacing, Waviness, Tapering,
 //    Variation, Root Jitter), also a 3px dot next to that set's number
@@ -5244,58 +5259,70 @@ draw_set_font(regFont)
 // Colours repeat between rows; the row position tells them apart.
 // Rows with no dots: Distance (row 3, global only), Wave Freq (row 5) and the
 // three Mixer rows (14-16).
+// V1.97 - the row dots are drawn on the centres of the dots painted into
+// spr_UI. Measured from a 2x screenshot: the painted dots are centred at
+// x = 1121.25 + 7 per set and, per row, at the y in _dotY plus 0.7.
+// draw_circle lands about 0.9px right and 0.7px below the point it is given,
+// so the numbers below are the painted centres minus that (-1 = row has no
+// dots). On a 2x display the result is within half a screen pixel (drawing
+// snaps to whole screen pixels, so it cannot get closer). They used to sit
+// 1px left, and the 1.91 / 1.96 rows (Thick Rng .. Noise, Clumping, Clump Var)
+// about 1.5px low. If spr_UI is redrawn, measure again (a screenshot, then
+// the centroid of the dark dots on each row).
+var _dotY = [435.2, 463.2, 491.3, -1, 547.1, -1, 602.9, 630.8, 658.8, 686.5, 714.3, 742.1, 770.1, 798.1, -1, -1, -1, 910.1, 938.1];
 if uiExtras == 1
 {
 	for (scan = 0; scan < 11; scan++)
 	{
+		var _dotX = 1120.35 + (scan * 7);
 		// Strand count override (orange)
 		draw_set_color(or_color)
 		if setCountOverrode[scan] != 0
 		{
 			draw_circle(1100+(scan*80), 1039, 3, 0)
-			draw_circle(1120+(scan*7),  435,  2, 0)
+			draw_circle(_dotX, _dotY[0], 2, 0)
 		}
 		// Length override (blue)
 		draw_set_color(blu_color)
 		if setLengthOverrode[scan] != 0
 		{
 			draw_circle(1100+(scan*80), 1045, 3, 0)
-			draw_circle(1120+(scan*7),  463,  2, 0)
+			draw_circle(_dotX, _dotY[1], 2, 0)
 		}
 		// Spacing override (green)
 		draw_set_color(grn_color)
 		if setSpacingOverrode[scan] != 0
 		{
 			draw_circle(1100+(scan*80), 1051, 3, 0)
-			draw_circle(1120+(scan*7),  491,  2, 0)
+			draw_circle(_dotX, _dotY[2], 2, 0)
 		}
 		// Wavyness override (purple)
 		draw_set_color(pur_color)
 		if setWaveynessOverrode[scan] != 0
 		{
 			draw_circle(1106+(scan*80), 1039, 3, 0)
-			draw_circle(1120+(scan*7),  547,  2, 0)
+			draw_circle(_dotX, _dotY[4], 2, 0)
 		}
 		// Taper override (red)
 		draw_set_color(red_color)
 		if setTaperOverrode[scan] != 0
 		{
 			draw_circle(1106+(scan*80), 1045, 3, 0)
-			draw_circle(1120+(scan*7),  603,  2, 0)
+			draw_circle(_dotX, _dotY[6], 2, 0)
 		}
 		// Vari override (yellow)
 		draw_set_color(yel_color)
 		if setVariOverrode[scan] != 0
 		{
 			draw_circle(1106+(scan*80), 1051, 3, 0)
-			draw_circle(1120+(scan*7),  631,  2, 0)
+			draw_circle(_dotX, _dotY[7], 2, 0)
 		}
 		// Y range override (orange)
 		draw_set_color(or_color)
 		if strandYRanRangeOverrode[scan] != 0
 		{
 			draw_circle(1112+(scan*80), 1051, 3, 0)
-			draw_circle(1120+(scan*7),  659,  2, 0)
+			draw_circle(_dotX, _dotY[8], 2, 0)
 		}
 
 		// V1.91 - the remaining notched rows. Row y = 436 + (28*row).
@@ -5303,32 +5330,32 @@ if uiExtras == 1
 		// Fading row 12, Noise row 13.
 		draw_set_color(blu_color)
 		if setThickMinOverrode[scan] != 0 or setThickMaxOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 688, 2, 0)
+			draw_circle(_dotX, _dotY[9], 2, 0)
 
 		draw_set_color(grn_color)
 		if setRootThickOverrode[scan] != 0 or setTipThickOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 716, 2, 0)
+			draw_circle(_dotX, _dotY[10], 2, 0)
 
 		draw_set_color(pur_color)
 		if setThickVaryOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 744, 2, 0)
+			draw_circle(_dotX, _dotY[11], 2, 0)
 
 		draw_set_color(yel_color)
 		if setFadeInOverrode[scan] != 0 or setFadeOutOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 772, 2, 0)
+			draw_circle(_dotX, _dotY[12], 2, 0)
 
 		draw_set_color(red_color)
 		if setNoiseAmtOverrode[scan] != 0 or setNoiseFreqOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 800, 2, 0)
+			draw_circle(_dotX, _dotY[13], 2, 0)
 
 		// V1.96 - Clumping row 17, Clump Var row 18
 		draw_set_color(or_color)
 		if setClumpAmtOverrode[scan] != 0 or setClumpCountOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 912, 2, 0)
+			draw_circle(_dotX, _dotY[17], 2, 0)
 
 		draw_set_color(blu_color)
 		if setClumpStartOverrode[scan] != 0 or setClumpScatterOverrode[scan] != 0
-			draw_circle(1120+(scan*7), 940, 2, 0)
+			draw_circle(_dotX, _dotY[18], 2, 0)
 	}
 }
 

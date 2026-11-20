@@ -80,7 +80,8 @@ function tokenMatches(value, expected) {
 
 /** The broker: one authenticated app connection, one outstanding app command. */
 export class EditorLink {
-  constructor({ port, token, timeoutMs = 15000, heartbeatMs = 2000, log = () => {} }) {
+  // 60 s: one render frame or 4096 PNG write can block the app for many seconds.
+  constructor({ port, token, timeoutMs = 60000, heartbeatMs = 2000, log = () => {} }) {
     this.port = port; this.token = token; this.timeoutMs = timeoutMs;
     this.heartbeatMs = heartbeatMs; this.log = log;
     this.socket = null; this.pending = null; this.seq = 0;
@@ -101,7 +102,7 @@ export class EditorLink {
     this.port = this.server.address().port;
     this.heartbeat = setInterval(() => {
       if (!this.socket) return;
-      if (Date.now() - this.lastSeen > 15000) {
+      if (Date.now() - this.lastSeen > 60000) {
         this.drop('Hair Strand Designer heartbeat timed out. The last change may have completed; inspect before retrying.');
       } else this.send({ event: 'heartbeat' });
     }, this.heartbeatMs);
@@ -214,7 +215,13 @@ export class EditorLink {
     const poll = async (statusMethod, busy) => {
       let last;
       for (;;) {
-        last = await this.requestWhenFree(statusMethod, {}, callId);
+        // The app may briefly drop and rejoin the link during a long render:
+        // keep asking until the deadline instead of failing the whole call.
+        try { last = await this.requestWhenFree(statusMethod, {}, callId); }
+        catch (error) {
+          if (Date.now() > deadline) throw error;
+          await sleep(1000); continue;
+        }
         if (!busy(last)) return last;
         if (Date.now() > deadline) return { ...last, timed_out: true };
         await sleep(500);

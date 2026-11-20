@@ -24,7 +24,7 @@ for (var _i = 0; _i < _size; _i++) {
 	if (_byte == 0) { mcp_stop("BAD DATA"); exit; }
 	if (_byte == 10) {
 		if (mcp_rx_len > 0) {
-			if (array_length(mcp_queue) >= 8) { mcp_stop("QUEUE FULL"); exit; }
+			if (array_length(mcp_queue) >= 64) { mcp_stop("QUEUE FULL"); exit; }
 			buffer_poke(mcp_rx, mcp_rx_len, buffer_u8, 0);
 			array_push(mcp_queue, buffer_peek(mcp_rx, 0, buffer_string));
 			mcp_rx_len = 0;

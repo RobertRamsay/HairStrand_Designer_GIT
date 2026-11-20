@@ -52,7 +52,7 @@ export class SharedClient {
     const id=++this.seq;
     return new Promise((resolve,reject)=>{
       // Waiting commands (render, export, preview) block for their own timeout; everything else is short.
-      const ms=LONG.has(method)?((args.timeout_seconds??300)+30)*1000:20000;
+      const ms=LONG.has(method)?((args.timeout_seconds??300)+30)*1000:75000;
       const timer=setTimeout(()=>{this.socket.destroy();reject(new Error('Broker timed out. Inspect the project before retrying any edit.'));},ms);
       this.pending.set(id,{resolve,reject,timer,callId});
       this.socket.write(JSON.stringify({id,method,args})+'\n');

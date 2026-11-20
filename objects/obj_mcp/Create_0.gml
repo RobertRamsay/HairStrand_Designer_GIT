@@ -33,6 +33,7 @@ mcp_rx = -1;                   // receive buffer for the line being assembled
 mcp_rx_len = 0;
 mcp_queue = [];                // complete lines waiting for the Step event
 mcp_last_rx = 0;               // current_time of the last message (heartbeat check)
+mcp_prev_step = current_time;  // when the last Step ran (long frames are not counted as silence)
 mcp_last_id = 0;               // ids must increase per connection
 mcp_last_wire = "";            // last command and its reply, for a resent request
 mcp_last_reply = "";

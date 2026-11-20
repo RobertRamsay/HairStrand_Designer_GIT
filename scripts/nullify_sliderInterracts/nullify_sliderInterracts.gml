@@ -17,6 +17,25 @@
 // The three arrays at the bottom are per-set controls, one latch per set.
 // Uses the instance variable a as its loop counter.
 // -----------------------------------------------------------------------------
+/// V1.97 - true while any slider's drag latch (the list cleared below) is set.
+/// Used by Draw_0 to switch back to the Previewer when a slider moves. A new
+/// slider latch must be added here as well as in nullify_sliderInterracts.
+function uiSliderHeld() {
+	if slider_interract_rootPosition or slider_interract_diminish or slider_interract_strands
+	or slider_interract_distancings or slider_interract_setDistancings or slider_interract_wavyness
+	or slider_interract_minFreq or slider_interract_maxFreq or slider_interract_tapering
+	or slider_interract_lifeVariant or slider_interract_minScale or slider_interract_maxScale
+	or slider_interract_fadeIn or slider_interract_fadeOut or slider_interract_noiseAmt
+	or slider_interract_noiseFreq or slider_interract_frizz or slider_interract_length
+	or slider_interract_mixer1 or slider_interract_mixer1_offset or slider_interract_mixer2
+	or slider_interract_mixer2_offset or slider_interract_mixer3 or slider_interract_mixer3_offset
+	or slider_interract_tipPosition or slider_interract_tipThick or slider_interract_rootThick
+	or slider_interract_thickVary or slider_interract_yRanRange
+	or slider_interract_redHue or slider_interract_grnSat or slider_interract_bluVal return true;
+	for (var _k = 0; _k < array_length(slider_interract_clump); _k++) if slider_interract_clump[_k] return true;
+	return false;
+}
+
 function nullify_sliderInterracts() {
 	slider_interract_rootPosition=false;
 	slider_interract_diminish=false;

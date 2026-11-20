@@ -270,6 +270,8 @@ function mcp_sync_colour_ui(_o)
 function mcp_after_edit(_o, _mapsStale)
 {
 	if _mapsStale _o.pleaseGen = true;
+	// as when the user moves a slider: show the Previewer so the change is visible
+	if _mapsStale and _o.img != 9 { _o.currentMapPreview = _o.img; _o.img = 9 }
 	with (_o) doAutoSave();
 }
 
