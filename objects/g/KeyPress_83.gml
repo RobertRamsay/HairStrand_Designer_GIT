@@ -9,7 +9,7 @@
 //
 // What the flags mean (all on obj_surfaceDweller):
 //   mainS                  the header line the saver is about to write. Forced
-//                          to the current version so the file is marked 1.96.
+//                          to the current version so the file is marked 1.97.
 //   v185ManualSavePending  1 = a manual save is happening; Alarm 1 must append
 //                          the V1.85 colour, V1.96 Clumping and V1.96 Set
 //                          Extras blocks to it.
@@ -33,7 +33,7 @@ if instance_exists(obj_surfaceDweller)
         {
         if canSave and demoMode==0
             {
-            mainS="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
+            mainS="Hair Strand Designer - Project File - Version1.97.0 - 20thNov2026 (C) Robert Ramsay"
             v185ManualSavePending=1
             v185ManualSavePath=""
             alarm[1]=2

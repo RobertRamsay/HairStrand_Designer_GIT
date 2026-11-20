@@ -67,7 +67,7 @@ demoMode=0 // for DEMO mode
 demoInfo="DEMO (no save options)"
 // Shown in the title line (Draw_64). NOT the project-file format version - that
 // lives in the mainS header string further down and is changed separately.
-versionHSD="1.96.0.0"
+versionHSD="1.97.0.0"
 
 showHeart=0 // 1 = draw the heart in Draw_0. Toggled by F7 (KeyPress_118)
 uiExtras=1 // little dots for overrides.
@@ -1375,7 +1375,7 @@ loading=false
 
 theFile=""
 
-mainS ="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.97.0 - 20thNov2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 // NEW VARIABLE ARRAYS DEISGNED TO CACHE PRE-DATA for more accuracy of representation in the renderer (not sure if it will work)

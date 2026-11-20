@@ -32,7 +32,7 @@
 // end of the file: anything added below it is commented out as well.
 // =============================================================================
 
-mainS ="Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay"
+mainS ="Hair Strand Designer - Project File - Version1.97.0 - 20thNov2026 (C) Robert Ramsay"
 instr="Variable description (colon : ) VariableValue (semiColon ;)";
 
 

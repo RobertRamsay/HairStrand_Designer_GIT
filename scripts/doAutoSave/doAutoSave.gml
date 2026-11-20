@@ -130,7 +130,7 @@ if canSave and demoMode==0 and autosave==1 // demo builds never write a project;
 // The loader reads the version as real(string_copy(header,46,4)), i.e. the
 // "1.96" straight after "Version". Do not change the text before that number
 // or its length, or every version check in doAutoLoad / KeyPress_76 breaks.
-file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay");
+file_text_write_string(theFile,"Hair Strand Designer - Project File - Version1.97.0 - 20thNov2026 (C) Robert Ramsay");
 			file_text_writeln(theFile);
 			
 // instruction line			

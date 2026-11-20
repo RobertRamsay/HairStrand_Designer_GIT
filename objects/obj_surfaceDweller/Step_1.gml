@@ -56,7 +56,7 @@ if mouse_check_button_released(mb_left) moveWindow=0
 //            Create_0 finds that file on the way back up, deletes it, and sets
 //            skipIntro=1 / firstTime=false so the splash is skipped;
 //            doMainStep then loads Autosave.txt by itself and Draw_64 shows
-//            the "Surfaces have been refreshed" notice.
+//            the "Changes Made, Please Press G" banner (maps are stale).
 // canvasCheck() (called from Step_2 and doMainStep) is the gentler version that
 // re-creates only the missing surface; it also covers previewSurf[], which this
 // test does not.

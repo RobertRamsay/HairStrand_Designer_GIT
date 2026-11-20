@@ -826,7 +826,7 @@ function mcp_save_project(_o, _args)
 	{
 		// What object g does when S is pressed: mark the file as current and
 		// have Alarm 1 append the colour / clumping / extras blocks afterwards.
-		mainS = "Hair Strand Designer - Project File - Version1.96.0 - 9thNov2026 (C) Robert Ramsay";
+		mainS = "Hair Strand Designer - Project File - Version1.97.0 - 20thNov2026 (C) Robert Ramsay";
 		v185ManualSavePending = 1;
 		v185ManualSavePath = "";
 		alarm[1] = 2;

@@ -70,20 +70,10 @@ if canDrawUI==1
 // The startup version / "new in" information now lives on the splash card
 // drawn at the end of the Draw event, so nothing is drawn over it here.
 
-// Surface-loss notice. skipIntro==1 means this run started from the automatic
-// restart in Step_1 (RegenCheck.txt was found by Create_0). The 4K maps were lost
-// with the surfaces, so tell the user to render again. Shown only while pleaseGen
-// is still true, i.e. until the next render (G) clears it. Drawn twice, black
-// then white one pixel off, for a drop shadow.
-
-if skipIntro==1 and pleaseGen
-	{
-		draw_set_font(regFont)
-	draw_set_color(c_black)
-	draw_text(9,29,"Surfaces have been refreshed, please Re-Render(G) if you need to.")
-	draw_set_color(c_white)
-	draw_text(10,30,"Surfaces have been refreshed, please Re-Render(G) if you need to.")
-	}
+// Surface-loss notice: removed in V1.97. After the automatic restart in Step_1
+// (RegenCheck.txt, skipIntro==1) the maps are stale, so the "Changes Made,
+// Please Press G or Generate" banner in the Draw event already says to render
+// again; a second line of text here only overlapped it.
 	
 var ssx=1//screenScaleX
 var ssy=1//screenScaleY

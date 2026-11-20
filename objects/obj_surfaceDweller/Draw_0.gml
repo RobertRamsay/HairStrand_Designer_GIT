@@ -5252,13 +5252,13 @@ draw_set_font(regFont)
 //  - a 2px dot on the slider row itself, left of the track, on the painted
 //    dot for that set (see _dotX / _dotY below).
 //    Reading along a row shows which sets override it.
-//  - for seven of them only (Strands, Length, Spacing, Waviness, Tapering,
-//    Variation, Root Jitter), also a 3px dot next to that set's number
-//    button at the bottom (x 1100/1106/1112 + 80*set, y 1039/1045/1051),
-//    forming a small cluster per set.
+//  - a 3px dot next to that set's number button at the bottom, forming a
+//    small cluster per set (x 1100..1130 + 80*set, y 1039/1045/1051). Since
+//    V1.97 every per-set override has one, including Wave Freq, the Mixers
+//    and per-set colours (grid at the end of this block).
 // Colours repeat between rows; the row position tells them apart.
-// Rows with no dots: Distance (row 3, global only), Wave Freq (row 5) and the
-// three Mixer rows (14-16).
+// Rows with no row dot: Distance (row 3, global only), Wave Freq (row 5) and
+// the three Mixer rows (14-16); those two still get a cluster dot.
 // V1.97 - the row dots are drawn on the centres of the dots painted into
 // spr_UI. Measured from a 2x screenshot: the painted dots are centred at
 // x = 1121.25 + 7 per set and, per row, at the y in _dotY plus 0.7.
@@ -5356,6 +5356,63 @@ if uiExtras == 1
 		draw_set_color(blu_color)
 		if setClumpStartOverrode[scan] != 0 or setClumpScatterOverrode[scan] != 0
 			draw_circle(_dotX, _dotY[18], 2, 0)
+
+		// V1.97 - the set-number cluster now covers every per-set override,
+		// not just the first seven. Same colour as that row's dot where the
+		// row has one. Cluster grid per set (x + 80*set, y 1039 / 1045 / 1051):
+		//          1039         1045         1051
+		//   1100   Strands      Length       Spacing      (above)
+		//   1106   Waviness     Tapering     Variation    (above)
+		//   1112   Wave Freq    Thick Rng    Root Jitter
+		//   1118   Thick Adj    Thick Var    Fading
+		//   1124   Noise        Clumping     Clump Var
+		//   1130   Mixers       Colours
+		// Wave Freq and the Mixers have no row dots, so they get their own
+		// colours (pink, cyan). The colour dot is drawn in the set's own
+		// overridden colour (Variation 1, else 2, else Root, else Tip).
+		var _cx = scan * 80
+		draw_set_color(make_color_rgb(255, 110, 180))
+		if setWaveFreqMinOverrode[scan] != 0 or setWaveFreqMaxOverrode[scan] != 0
+			draw_circle(1112+_cx, 1039, 3, 0)
+		draw_set_color(blu_color)
+		if setThickMinOverrode[scan] != 0 or setThickMaxOverrode[scan] != 0
+			draw_circle(1112+_cx, 1045, 3, 0)
+		draw_set_color(grn_color)
+		if setRootThickOverrode[scan] != 0 or setTipThickOverrode[scan] != 0
+			draw_circle(1118+_cx, 1039, 3, 0)
+		draw_set_color(pur_color)
+		if setThickVaryOverrode[scan] != 0
+			draw_circle(1118+_cx, 1045, 3, 0)
+		draw_set_color(yel_color)
+		if setFadeInOverrode[scan] != 0 or setFadeOutOverrode[scan] != 0
+			draw_circle(1118+_cx, 1051, 3, 0)
+		draw_set_color(red_color)
+		if setNoiseAmtOverrode[scan] != 0 or setNoiseFreqOverrode[scan] != 0
+			draw_circle(1124+_cx, 1039, 3, 0)
+		draw_set_color(or_color)
+		if setClumpAmtOverrode[scan] != 0 or setClumpCountOverrode[scan] != 0
+			draw_circle(1124+_cx, 1045, 3, 0)
+		draw_set_color(blu_color)
+		if setClumpStartOverrode[scan] != 0 or setClumpScatterOverrode[scan] != 0
+			draw_circle(1124+_cx, 1051, 3, 0)
+		draw_set_color(make_color_rgb(0, 200, 255))
+		if setMixerAmt1Overrode[scan] != 0 or setMixerOfs1Overrode[scan] != 0
+		or setMixerAmt2Overrode[scan] != 0 or setMixerOfs2Overrode[scan] != 0
+		or setMixerAmt3Overrode[scan] != 0 or setMixerOfs3Overrode[scan] != 0
+			draw_circle(1130+_cx, 1039, 3, 0)
+		var _colDot = -1
+		if !variable_instance_exists(id, "setColourOverridesReady") {}   // colour arrays not made yet (Step_0)
+		else if setColVarAOverrode[scan] == 1 _colDot = setColVarA[scan]
+		else if setColVarBOverrode[scan] == 1 _colDot = setColVarB[scan]
+		else if setRootColOverrode[scan] == 1 _colDot = setRootCol[scan]
+		else if setTipColOverrode[scan] == 1 _colDot = setTipCol[scan]
+		if _colDot != -1
+		{
+			draw_set_color(c_black)                // ring, so dark colours still show
+			draw_circle(1130+_cx, 1045, 4, 0)
+			draw_set_color(_colDot)
+			draw_circle(1130+_cx, 1045, 3, 0)
+		}
 	}
 }
 
@@ -5545,7 +5602,7 @@ if firstTime and skipIntro == 0
 
 	// ---- what is new ----
 	draw_set_color(_accent)
-	draw_text(_cx, _ct + 158, "New in 1.96  -  Strand clumping: Amount, Count, Start and Scatter")
+	draw_text(_cx, _ct + 158, "New in 1.97  -  Claude / MCP control (Ctrl+Shift+F10), back-to-preview on slider moves, full override dots")
 
 	if demoMode == 1
 	{
